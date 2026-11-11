@@ -12,8 +12,10 @@ mod serve;
 mod steps;
 mod validity;
 
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::{Component, Path, PathBuf};
+use std::rc::Rc;
 use std::time::Duration;
 
 use base64::Engine as _;
@@ -541,7 +543,8 @@ struct Captured {
     network: Vec<impeccable_browser::network_log::NetworkEntry>,
     blocked: Vec<Value>,
     allowed: Vec<Value>,
-    findings: Result<Vec<Finding>, String>,
+    /// Findings, then what the scan could not verify (`findingsNotes`).
+    findings: Result<(Vec<Finding>, Vec<String>), String>,
     captured_at: String,
     url: String,
     frames: Option<FramesData>,
@@ -853,9 +856,13 @@ fn capture(opts: &Options, io: &mut Io, secrets: &mut Vec<String>) -> Result<i32
         if !valid {
             entry["invalidFile"] = json!(format!("{stem}.invalid.png"));
         }
-        if let Err(error) = &shot.findings {
-            scan_failed = true;
-            entry["findingsError"] = json!(error);
+        match &shot.findings {
+            Err(error) => {
+                scan_failed = true;
+                entry["findingsError"] = json!(error);
+            }
+            Ok((_, notes)) if !notes.is_empty() => entry["findingsNotes"] = json!(notes),
+            Ok(_) => {}
         }
         let written = if valid {
             item.name.clone()
@@ -1381,7 +1388,7 @@ fn shoot(
     let findings = if item.state.is_some() {
         scan(page, ctx, vp)
     } else {
-        Ok(Vec::new())
+        Ok((Vec::new(), Vec::new()))
     };
     let url = page
         .evaluate_value("location.href")
@@ -1437,10 +1444,17 @@ fn shot_measure(raw: &Value) -> ShotMeasure {
     }
 }
 
-/// Rule findings for the page as it is now, filtered by the project config.
-fn scan(page: &mut Page<'_>, ctx: &Ctx<'_>, vp: &Vp) -> Result<Vec<Finding>, String> {
+/// Rule findings for the page as it is now, filtered by the project config,
+/// and the notes the scan left about what it could not verify.
+fn scan(
+    page: &mut Page<'_>,
+    ctx: &Ctx<'_>,
+    vp: &Vp,
+) -> Result<(Vec<Finding>, Vec<String>), String> {
+    let notes = Rc::new(RefCell::new(Vec::new()));
     let options = ScanOptions {
         viewport: Some((vp.width, vp.height)),
+        notes: Some(notes.clone()),
         ..ctx.scan.clone()
     };
     impeccable_browser::scan_loaded_page(
@@ -1452,14 +1466,18 @@ fn scan(page: &mut Page<'_>, ctx: &Ctx<'_>, vp: &Vp) -> Result<Vec<Finding>, Str
             height: vp.height,
         },
     )
-    .map(|f| filter_detection_findings(f, &ctx.config))
+    .map(|f| (filter_detection_findings(f, &ctx.config), notes.take()))
     .map_err(|e| e.message)
 }
 
 /// The initial state's findings come from a fresh page scanned right after
 /// load, the timing `detect <url>` uses, so both report the same findings
 /// even when an entrance animation is still running.
-fn scan_initial(browser: &mut Browser, ctx: &Ctx<'_>, vp: &Vp) -> Result<Vec<Finding>, String> {
+fn scan_initial(
+    browser: &mut Browser,
+    ctx: &Ctx<'_>,
+    vp: &Vp,
+) -> Result<(Vec<Finding>, Vec<String>), String> {
     let mut page = browser.new_isolated_page().map_err(|e| e.message)?;
     let result = setup(&mut page, ctx, vp)
         .and_then(|_| page.goto(&ctx.source.url, "networkidle0", NAVIGATION_TIMEOUT))
@@ -1524,7 +1542,7 @@ fn shot_entry(
         "horizontalOverflow": shot.raw_measure["overflow"],
         "blockedWrites": shot.blocked,
         "allowedWrites": shot.allowed,
-        "findings": shot.findings.as_ref().map(|f| json!(f)).unwrap_or_else(|_| json!([])),
+        "findings": shot.findings.as_ref().map(|(f, _)| json!(f)).unwrap_or_else(|_| json!([])),
         "derived": {},
     });
     if let ShotType::Element(target) = &shot.shot_type {

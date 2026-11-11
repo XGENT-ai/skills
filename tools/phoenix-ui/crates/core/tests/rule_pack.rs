@@ -78,6 +78,30 @@ impl RulePack for TestPack {
     }
 }
 
+/// A pack that takes one built-in rule over on the paragraphs it marks.
+#[derive(Debug)]
+struct TakeoverPack;
+
+static TAKEOVER: TakeoverPack = TakeoverPack;
+
+impl RulePack for TakeoverPack {
+    fn registry(&self) -> &'static [Antipattern] {
+        &[]
+    }
+
+    fn replaces_builtin(
+        &self,
+        dom: &dyn impeccable_core::browser::Dom,
+        el: ElId,
+    ) -> &'static [&'static str] {
+        if dom.direct_text_nodes(el).concat().contains(MARKER) {
+            &["tight-leading"]
+        } else {
+            &[]
+        }
+    }
+}
+
 fn page() -> (FakeDom, ElId) {
     let mut dom = FakeDom::new();
     let (_html, body) = dom.with_page();
@@ -202,4 +226,46 @@ fn skip_scan_skips_the_pack_too() {
         },
     );
     assert!(result.groups.is_empty() && result.page_level.is_empty());
+}
+
+#[test]
+fn a_pack_takes_over_a_builtin_rule_only_on_the_elements_it_names() {
+    let mut dom = FakeDom::new();
+    let (_html, body) = dom.with_page();
+    let mut tight = |text: &str| {
+        let p = dom.add(Some(body), "p");
+        dom.add_text(p, text);
+        dom.set_styles(p, &[("fontSize", "16px"), ("lineHeight", "16px")]);
+        p
+    };
+    let taken = tight("TODO(pack) this paragraph is long enough for the leading rule to read it.");
+    let kept = tight("This paragraph is just as tight and long enough, and nobody took it over.");
+    let has_tight = |result: &driver::CollectResult, el: ElId| {
+        findings_of(result, el).contains(&"tight-leading".to_string())
+    };
+
+    let built_in = driver::collect_browser_findings(&dom, &BrowserConfig::default());
+    assert!(has_tight(&built_in, taken) && has_tight(&built_in, kept));
+
+    let with_pack = driver::collect_browser_findings(
+        &dom,
+        &BrowserConfig {
+            rule_pack: Some(&TAKEOVER),
+            ..Default::default()
+        },
+    );
+    assert!(
+        !has_tight(&with_pack, taken),
+        "{:?}",
+        findings_of(&with_pack, taken)
+    );
+    assert!(has_tight(&with_pack, kept));
+    // Only the named id is dropped; the element's other built-in findings stay.
+    let rest = |result: &driver::CollectResult| -> Vec<String> {
+        findings_of(result, taken)
+            .into_iter()
+            .filter(|id| id != "tight-leading")
+            .collect()
+    };
+    assert_eq!(rest(&built_in), rest(&with_pack));
 }

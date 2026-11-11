@@ -75,3 +75,22 @@ in `ScanOptions.rule_pack`, `TextOptions.rule_pack`,
 appended after the built-in passes and before inline ignores, so
 `phoenix-ui-disable` waives them like built-in rules. The in-page WASM
 detector runs the built-in rules only.
+
+A pack can take a built-in rule over on an element: the driver asks
+`replaces_builtin(dom, el)` after the built-in element rules and drops the
+built-in findings with the ids it returns before appending the pack's own.
+The XGENT pack does this for `line-length` and `tight-leading` on Han-dominant
+body text, where `xgent/cjk-line-length` and `xgent/cjk-tight-leading` judge
+instead; switching a Chinese rule off does not bring the built-in back.
+
+When a pack is present, the URL engine runs a typography probe
+(`crates/browser/src/typography.rs`) after the snapshot and hands the result
+to `SnapshotDom::set_typography`. Rules read it through
+`Dom::text_line_texts` (the text on each rendered line) and
+`Dom::han_font_facts` (the fonts that rendered an element's Han characters,
+read over CDP from a hidden copy of that text that is removed again). Both
+answer `None` wherever nothing measured them, which is always the case for the
+in-page WASM `Dom`. A passage whose fonts could not be established gets no
+font fact; the probe writes a note to `ScanOptions.notes` instead, which
+`detect` prints as `note:` lines on stderr and `capture` records as
+`findingsNotes`.

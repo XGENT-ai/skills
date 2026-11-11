@@ -55,6 +55,14 @@ pub trait RulePack: Send + Sync + std::fmt::Debug {
         Vec::new()
     }
 
+    /// Built-in rule ids this pack takes over on `el`. The browser driver drops
+    /// built-in findings with these ids on that element before it appends the
+    /// pack's own. Default: none.
+    fn replaces_builtin(&self, dom: &dyn Dom, el: ElId) -> &'static [&'static str] {
+        let _ = (dom, el);
+        &[]
+    }
+
     /// Browser page-level rules, after the built-in page passes. A finding
     /// with `el: None` is attributed to `document.body`, like the built-in
     /// page checks that name their own target.

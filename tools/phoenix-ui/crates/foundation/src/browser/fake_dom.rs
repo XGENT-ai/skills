@@ -5,7 +5,7 @@
 //! tag name, comma lists of those). Its job is to pin thresholds and snippet
 //! formats; byte parity is proven by the A/B differential against Chrome.
 
-use super::dom::{Dom, ElId, KeyframeFrame, Rect, SelectorError};
+use super::dom::{Dom, ElId, HanFontFacts, KeyframeFrame, Rect, SelectorError};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -38,6 +38,8 @@ pub struct FakeEl {
     /// The rects of the element's rendered text. `None` is a DOM that cannot
     /// say where the lines are, the way a snapshot without them cannot.
     pub text_line_rects: Option<Vec<Rect>>,
+    pub text_line_texts: Option<Vec<String>>,
+    pub han_fonts: Option<HanFontFacts>,
     /// Selectors (exact strings) this element matches beyond `*` and its tag.
     pub selectors: Vec<String>,
     /// `id` IDL property override (`None` = "not a string", falls back to attr).
@@ -184,6 +186,16 @@ impl FakeDom {
             self.el_mut(id).direct_text_rect = Some(Rect::from_xywh(left, top, right - left, bottom - top));
         }
         self.el_mut(id).text_line_rects = Some(rects);
+        self
+    }
+    /// The text on each of `id`'s rendered lines, top to bottom.
+    pub fn set_text_line_texts(&mut self, id: ElId, lines: &[&str]) -> &mut Self {
+        self.el_mut(id).text_line_texts = Some(lines.iter().map(|l| l.to_string()).collect());
+        self
+    }
+    /// The fonts that rendered `id`'s Han characters.
+    pub fn set_han_fonts(&mut self, id: ElId, facts: HanFontFacts) -> &mut Self {
+        self.el_mut(id).han_fonts = Some(facts);
         self
     }
     pub fn add_text(&mut self, id: ElId, text: &str) -> &mut Self {
@@ -530,5 +542,11 @@ impl Dom for FakeDom {
     fn text_line_rects(&self, el: ElId) -> Option<Vec<Rect>> {
         let rects = self.els[el as usize].text_line_rects.clone()?;
         Some(super::dom::merge_text_rects_into_lines(rects))
+    }
+    fn text_line_texts(&self, el: ElId) -> Option<Vec<String>> {
+        self.els[el as usize].text_line_texts.clone()
+    }
+    fn han_font_facts(&self, el: ElId) -> Option<HanFontFacts> {
+        self.els[el as usize].han_fonts.clone()
     }
 }

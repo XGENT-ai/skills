@@ -71,6 +71,70 @@ pub struct KeyframeFrame {
     pub decls: Vec<(String, String)>,
 }
 
+/// Family names in a `font-family` list that name no font of their own: the
+/// browser resolves them to whatever the platform and language settings say.
+pub const GENERIC_FONT_FAMILIES: &[&str] = &[
+    "serif",
+    "sans-serif",
+    "monospace",
+    "cursive",
+    "fantasy",
+    "system-ui",
+    "-apple-system",
+    "blinkmacsystemfont",
+    "ui-sans-serif",
+    "ui-serif",
+    "ui-monospace",
+    "ui-rounded",
+    "math",
+    "emoji",
+    "fangsong",
+];
+
+/// One font that rendered text, as the browser reports it after layout.
+#[derive(Debug, Clone, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+pub struct RenderedFont {
+    pub family: String,
+    /// Loaded through `@font-face`; the platform name can differ from the CSS
+    /// family the page declared.
+    pub custom: bool,
+    pub glyphs: u32,
+}
+
+/// A web font face that matched a text run, covers Han the run shows, failed
+/// to load, and left that Han without a face from its family.
+#[derive(Debug, Clone, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+pub struct FailedWebFont {
+    pub family: String,
+    pub weight: String,
+    pub style: String,
+    pub stretch: String,
+    pub unicode_range: String,
+    /// Position of the family in the run's declared list.
+    pub declaration_index: usize,
+    /// Whether earlier declared families rendered the Han covered by this face.
+    pub earlier_declared_rendered: bool,
+}
+
+/// The Han characters of one element that share one font request.
+#[derive(Debug, Clone, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+pub struct HanFontRun {
+    /// The computed `font-family` list in order, unquoted, as the page spelled it.
+    pub declared_families: Vec<String>,
+    pub weight: String,
+    pub style: String,
+    pub stretch: String,
+    pub lang: String,
+    /// Never empty: a run whose fonts could not be read is not a fact.
+    pub rendered: Vec<RenderedFont>,
+    pub failed_web_fonts: Vec<FailedWebFont>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+pub struct HanFontFacts {
+    pub runs: Vec<HanFontRun>,
+}
+
 /// The DOM measurement surface. Element handles are opaque `u32`s.
 pub trait Dom {
     // ── document / window ─────────────────────────────────────────────
@@ -188,6 +252,15 @@ pub trait Dom {
     /// and calls the pieces lines, because the union of a long first line and
     /// a short tail says nothing about either.
     fn text_line_rects(&self, _el: ElId) -> Option<Vec<Rect>> {
+        None
+    }
+    /// The text on each rendered line of the element (inline descendants
+    /// included), top to bottom. `None` when this DOM did not record it.
+    fn text_line_texts(&self, _el: ElId) -> Option<Vec<String>> {
+        None
+    }
+    /// Which fonts rendered the element's Han characters. `None` when unverified.
+    fn han_font_facts(&self, _el: ElId) -> Option<HanFontFacts> {
         None
     }
 }

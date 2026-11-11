@@ -1400,6 +1400,10 @@ pub fn collect_browser_findings(dom: &dyn Dom, config: &BrowserConfig) -> Collec
         // Rule-pack element rules run last, so the built-in findings for this
         // element keep their order and their position in the group.
         if let Some(pack) = config.rule_pack {
+            let replaced = pack.replaces_builtin(dom, el);
+            if !replaced.is_empty() {
+                findings.retain(|f| !replaced.contains(&f.type_.as_str()));
+            }
             findings.extend(pack.check_element_dom(dom, el));
         }
         let findings: Vec<BrowserFinding> =

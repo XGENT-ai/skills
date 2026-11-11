@@ -23,6 +23,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
+use impeccable_core::browser::dom::RenderedFont;
 use serde_json::{Map, Value, json};
 use tungstenite::client::IntoClientRequest;
 use tungstenite::protocol::WebSocketConfig;
@@ -1903,6 +1904,37 @@ impl<'a> Page<'a> {
             json!({"styleSheetId":sheet,"text":text}),
         )?;
         Ok(())
+    }
+
+    /// The fonts that rendered each node matching `selector`, in document
+    /// order. Reads layout results, so a node must generate boxes
+    /// (`visibility: hidden` does, `display: none` does not).
+    pub fn platform_fonts(&mut self, selector: &str) -> CdpResult<Vec<Vec<RenderedFont>>> {
+        self.send("DOM.enable", json!({}))?;
+        self.send("CSS.enable", json!({}))?;
+        let document = self.send("DOM.getDocument", json!({"depth":0}))?;
+        let root = document["root"]["nodeId"].clone();
+        let found = self.send(
+            "DOM.querySelectorAll",
+            json!({"nodeId":root,"selector":selector}),
+        )?;
+        let mut out = Vec::new();
+        for node in found["nodeIds"].as_array().into_iter().flatten() {
+            let value = self.send("CSS.getPlatformFontsForNode", json!({"nodeId":node}))?;
+            out.push(
+                value["fonts"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .map(|font| RenderedFont {
+                        family: font["familyName"].as_str().unwrap_or("").to_string(),
+                        custom: font["isCustomFont"].as_bool().unwrap_or(false),
+                        glyphs: font["glyphCount"].as_f64().unwrap_or(0.0) as u32,
+                    })
+                    .collect(),
+            );
+        }
+        Ok(out)
     }
 
     /// Main-document generated boxes from native layout, indexed in querySelectorAll order.

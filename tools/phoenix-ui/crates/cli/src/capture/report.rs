@@ -147,6 +147,15 @@ pub fn lines(run: &Run, report_path: &str) -> Vec<String> {
                 file(shot)
             ));
         }
+        for note in shot
+            .get("findingsNotes")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+        {
+            out.push(format!("NOTE {state} {viewport} {}: {note}", file(shot)));
+        }
         for problem in shot
             .pointer("/derived/problems")
             .and_then(Value::as_array)

@@ -21,6 +21,7 @@ pub mod network_log;
 pub mod response_capture;
 pub mod screenshot_contrast;
 pub mod snapshot_engine;
+pub mod typography;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -370,6 +371,16 @@ pub fn scan_loaded_page(
     // and order the in-page bundle's `impeccableDetect({ serialize: true })`
     // produced; the group selectors feed the visual pass below.
     let dom = snapshot_engine::capture_snapshot(page).map_err(cdp_err)?;
+    // Only a rule pack reads line texts and rendered fonts; the built-in
+    // rules run without them, so a scan with no pack leaves the page alone.
+    if options.rule_pack.is_some() {
+        let mut notes = Vec::new();
+        let facts = typography::collect(page, url, &mut notes).map_err(cdp_err)?;
+        dom.set_typography(facts.line_texts, facts.han_fonts);
+        if let Some(sink) = &options.notes {
+            sink.borrow_mut().extend(notes);
+        }
+    }
     let collected =
         snapshot_engine::resolve_needs(&dom, page, |d| collect_browser_findings(d, &config))
             .map_err(cdp_err)?;
