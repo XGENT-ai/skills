@@ -83,8 +83,25 @@ Phoenix UI 在 61 条内置规则之外，另带一组 XGENT 自有规则（ID �
 | `xgent/redrawn-window-chrome` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
 | `xgent/emoji-icon` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
 | `xgent/font-family-count` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
+| `xgent/cjk-tight-leading` | 页面（`detect <url>`，浏览器渲染） | warning | `detector.ignoreRules`、`hooks ignore-rule` |
+| `xgent/cjk-line-length` | 页面（`detect <url>`，浏览器渲染） | warning | `detector.ignoreRules`、`hooks ignore-rule` |
+| `xgent/cjk-orphan` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
+| `xgent/cjk-split-unit` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
+| `xgent/cjk-font-fallback` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
 
 「源码文件」指文本扫描，覆盖 CSS、HTML、Vue、JSX、TSX 等前端源文件；「页面」指把 http(s):// 或 file:// URL 交给 `detect`，由真实浏览器渲染后检查，可用 `--viewport <W>x<H>` 指定视口（默认 1280x800）。warning 级发现计入失败数，可能让退出码为 2；advisory 单独列出、不改变退出码，`--no-advisory` 只能隐藏 advisory 级发现。两条文本规则也随设计 hook 在编辑后运行：`xgent/focus-outline-removed` 会在 Stop 深检提醒中给出，并在 Cursor before-edit 中拒绝写入；`xgent/transition-all` 是 advisory，hook 默认不输出 advisory 发现。页面规则依赖浏览器渲染，hook 不会产生它们，需要时单独运行 `detect <url>`。
+
+五条 `xgent/cjk-*` 规则只作用于以汉字为主的文本：去掉空白与标点后，汉字超过可见字符的一半。其中正文指 `p`、`li`、`td`、`th`、`dd`、`blockquote`、`figcaption` 里超过 10 个字符的直接文本，标题指 `h1`–`h6`；日文、韩文和夹少量中文的拉丁文本不在其内，标识符或路径密集、汉字不过半的中文技术段落也不在其内，仍按内置规则判定。
+
+- `xgent/cjk-tight-leading`：多行中文正文行高低于字号的 1.5 倍（`line-height: normal` 不判定）。
+- `xgent/cjk-line-length`：中文正文至少两行超过 40 个汉字宽（每行渲染宽度除以字号与字距之和）。
+- `xgent/cjk-orphan`：正文或标题的最后一行只剩一两个汉字。
+- `xgent/cjk-split-unit`：数字和紧跟的单位（如“38 秒”“3 个工作日”“99.5%”）被拆到两行。
+- `xgent/cjk-font-fallback`：汉字被意外的字体渲染，只报三种情况：声明的 Web 字体加载失败、汉字因此改由后面的字体渲染；同一段汉字由两个以上字体渲染，且其中有声明的具名字体；声明的字体都没有渲染汉字，列表里也没有通用字体族。只声明通用字体族、具名字体渲染了全部汉字、拉丁字体在前而汉字落到后面的字体，都是正常结果。同一字体栈的同一种情况只报在第一处，并写出其余处数。手工 `<br>` 造成的孤字与数字单位分行同样会报。
+
+在这些中文正文上，内置的 `line-length`、`tight-leading` 由对应的中文规则接替，不再出现；关闭某条中文规则不会让内置规则回来。标题与其他标签上的文本仍由内置规则判定。升级后中文页面的 `detect <url>` 可能因此新增两类 warning 并使退出码变为 2，不接受时用 `hooks ignore-rule` 逐条关闭。hook 不产生这五条规则；live 叠层与浏览器扩展不运行它们，中文正文在那两处仍只有内置规则的结果。
+
+字体来源无法核实时（字体仍在加载、浏览器没有给出实际字体，或分不清是失败的 Web 字体还是排在它前面的通用字体族在起作用），不报 `xgent/cjk-font-fallback`，`detect` 在发现之后向 stderr 输出 `note:` 行，写明 URL、元素序号、该段文字的开头和原因。备注不是发现，不进 JSON 发现数组，不影响退出码；没有字体回退发现不等于字体已经核实。
 
 关闭方式（按影响范围选择）：
 
@@ -108,7 +125,7 @@ phoenix-ui capture stitch before.png after.png --match 320,320 --label 修改前
 
 - 目标：http(s):// 与 file:// 原样打开；本地 `.html` 文件或目录由内置静态服务器经 `http://127.0.0.1:<随机端口>` 提供（目录入口 `index.html`）。视口 `desktop`（1440x900）、`mobile`（390x844）、`<宽>x<高>` 或 `<标签>=<宽>x<高>`；`--dpr`、`--color-scheme light|dark`、`--reduced-motion`。
 - 状态文件（`--states`）：`initial` 描述初始状态的截图方式，`states` 逐个列出 `name` 与 `steps`；每个状态在不共享 cookie 与存储的新页面里从头执行自己的步骤。定位用 `{"role":…, "name":…}`、`{"text":…}` 或 `{"css":…}`（可加 `nth`），只查主文档，不进 iframe 与 Shadow DOM；动作有 click、dblclick、hover、fill、type、select、press、drag、scroll、wait、waitFor；原生日期、时间、颜色、范围输入用 fill 按其值格式设值（如 `2026-11-20`），type 落在这类控件上会失败。截图类型 `viewport`、`full` 或 `{"element": <定位>}`；`frames` 出序列帧，`mark` 出编号标注图。完整格式见 `phoenix-ui capture --help`。
-- 输出与命名：默认 `.phoenix-ui/capture/`，文件名模板默认 `{viewport}{-state}.png`（初始状态为 `desktop.png`，其他为 `desktop-<状态>.png`），`--name` 可改；报告 `capture-report.json`（schema `phoenix-ui-capture-v1`）逐张记录目标、地址、视口、像素比、配色、截图类型、拍摄时间、浏览器与命令版本、步骤与观察、控制台错误、失败请求与图片、横向溢出、被拦截的写请求和该状态的页面规则发现（与 `detect` 同一套规则与项目配置）；已存在的报告按文件名合并，只重取部分状态时其余条目保留。派生图：`--mask` 遮字版、`--thumbs` 扫视缩略图（480/180 宽）、`--sheet` 状态并排图、`frames` 序列帧、`mark` 标注图、`capture stitch` 修改前后拼图，都不替代状态截图。
+- 输出与命名：默认 `.phoenix-ui/capture/`，文件名模板默认 `{viewport}{-state}.png`（初始状态为 `desktop.png`，其他为 `desktop-<状态>.png`），`--name` 可改；报告 `capture-report.json`（schema `phoenix-ui-capture-v1`）逐张记录目标、地址、视口、像素比、配色、截图类型、拍摄时间、浏览器与命令版本、步骤与观察、控制台错误、失败请求与图片、横向溢出、被拦截的写请求和该状态的页面规则发现（`findings`，与 `detect` 同一套规则与项目配置）；页面扫描无法核实某段文字的字体来源时，该图条目另有 `findingsNotes` 数组，文本与 `detect` 的 `note:` 行相同，终端相应输出 `NOTE <状态> <视口> <文件>: …`。`findingsNotes` 表示所写 URL 与段落的字体来源尚未核实，不是发现，没有字体回退发现也不等于已核实：等字体加载稳定后在现有轮次内重取该状态，或人工核对该段的实际字体并记下依据；仍未解除的在最终交付的未验证项里写明 URL、段落与原因，不为它另加阻塞门或检测轮次；已存在的报告按文件名合并，只重取部分状态时其余条目保留。派生图：`--mask` 遮字版、`--thumbs` 扫视缩略图（480/180 宽）、`--sheet` 状态并排图、`frames` 序列帧、`mark` 标注图、`capture stitch` 修改前后拼图，都不替代状态截图。
 - 有效性：每张主截图自检步骤是否全部执行、有限动画是否结束、文字是否大面积透明、是否整张单色或有异常全黑带、画布是否绘出、尺寸是否符合截图类型。无效图写成 `<名>.invalid.png`，同名旧图（含失败状态的旧图）删除。退出码：0 全部有效；1 无法运行（参数或状态文件错误、浏览器不可用、目标打不开），不写报告；2 已运行但有失败状态、无效图、派生图未产出或扫描出错。
 - 浏览器与隐私：使用本机 Chrome、Chromium、Edge 或 Brave（`PHOENIX_UI_BROWSER` 可指定），无浏览器时退出 1 并说明，其他命令照常；资料目录是临时的，结束后删除；只访问目标页面及其自身加载的资源。`--block-writes` 中止页面、iframe 与 worker 发出的非 GET 请求并逐条记录，`--allow-write <路径>` 放行必要写入；凭据用步骤里的 `env` 引用环境变量，它的值与 URL 中的密码在报告、终端与错误信息中替换为 `***`（页面自己显示在截图里的内容不在此列）。
 - 走查子代理：Phoenix 随包安装 `phoenix-ui-ux-walker`，以不知道任务的首次使用者身份，通过 capture 重放步骤走一条主要路径，报告卡住、走错与犹豫；Web 完工轮在有主要操作流程时与完工评审同轮派出。
