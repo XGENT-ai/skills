@@ -213,7 +213,7 @@ REVIEW @progress_consistency:
 - 最近完成：M4 · skill 与文档
 - 下一步：M5声明与清单、开发候选、V-8/V-9/V-10；候选就绪后申请推送授权跑V-11
 - 当前阻塞：无（V-11 推送授权在候选就绪后申请）
-- 代码基线：`ea0e5a3`（main）；M1–M3已提交；M4提交后回填
+- 代码基线：`0398407`（main）；M1–M4已提交
 
 ### 完成记录
 
@@ -222,7 +222,7 @@ REVIEW @progress_consistency:
 | M1 | 已完成 | 2026-11-12 01:35 +08:00 | 11源检索、稳定编号、联系表与真实V-1/V-2通过 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M1.md) | `2d5deab` |
 | M3 | 已完成 | 2026-11-12 01:35 +08:00 | 批量图片导出与来源保留，V-4目视及V-5、lint通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M3.md) | `ea0e5a3` |
 | M2 | 已完成 | 2026-11-12 01:40 +08:00 | V-1/V-2/V-3及最终lint通过；Chrome后台请求清零 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M2.md) | `49be9b9` |
-| M4 | 已完成 | 2026-11-12 01:53 +08:00 | V-6 fresh与V-7真实宿主通过；入口说明与产品路径audit已复验 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M4.md) | 待提交 |
+| M4 | 已完成 | 2026-11-12 01:53 +08:00 | V-6 fresh与V-7真实宿主通过；入口说明与产品路径audit已复验 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M4.md) | `0398407` |
 
 ## 0. 需求、范围与决策
 
