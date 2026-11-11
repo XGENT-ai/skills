@@ -8,7 +8,7 @@ mod derived;
 mod page_js;
 pub mod plan;
 mod report;
-mod serve;
+pub(crate) mod serve;
 mod steps;
 mod validity;
 

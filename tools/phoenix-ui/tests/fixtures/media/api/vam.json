@@ -1,0 +1,43 @@
+{
+  "records": [
+    {
+      "systemNumber": "O72610",
+      "accessionNumber": "W.2-1995",
+      "objectType": "Chair",
+      "availableToBook": true,
+      "_currentLocation": {
+        "id": "THES343731",
+        "displayName": "In Store",
+        "type": "storage",
+        "site": "ES",
+        "onDisplay": false,
+        "detail": {
+          "free": "",
+          "case": "",
+          "shelf": "",
+          "box": ""
+        }
+      },
+      "_primaryTitle": "Ply Chair",
+      "_primaryMaker": {
+        "name": "Morrison, Jasper",
+        "association": "designer"
+      },
+      "_primaryImageId": "2006AU1797",
+      "_primaryDate": "1990",
+      "_primaryPlace": "Great Britain",
+      "_warningTypes": [],
+      "_images": {
+        "_primary_thumbnail": "https://framemark.vam.ac.uk/collections/2006AU1797/full/!100,100/0/default.jpg",
+        "_iiif_image_base_url": "https://framemark.vam.ac.uk/collections/2006AU1797/",
+        "_iiif_presentation_url": null,
+        "imageResolution": "low"
+      }
+    }
+  ],
+  "_recording": {
+    "url": "https://api.vam.ac.uk/v2/objects/search?q=chair&images_exist=1&page_size=1",
+    "date": "2026-11-12",
+    "note": "Real response; unrelated fields omitted."
+  }
+}

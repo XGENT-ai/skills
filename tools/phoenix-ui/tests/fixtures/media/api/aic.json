@@ -1,0 +1,41 @@
+{
+  "data": [
+    {
+      "_score": 54.95178,
+      "id": 28560,
+      "title": "The Bedroom",
+      "thumbnail": {
+        "width": 12614,
+        "height": 9875,
+        "alt_text": "Painting of bedroom, blue walls, green window, tan bed, red bedding."
+      },
+      "date_display": "1889",
+      "artist_display": "Vincent van Gogh (Dutch, 1853–1890)",
+      "is_public_domain": true,
+      "image_id": "6644829f-f292-c5c4-a73c-0356a6fdbf0d"
+    },
+    {
+      "_score": 51.98877,
+      "id": 33053,
+      "title": "Rocking Chair",
+      "thumbnail": {
+        "width": 2101,
+        "height": 2250,
+        "alt_text": "A work made of beech and caning."
+      },
+      "date_display": "c. 1881",
+      "artist_display": "Made by Jacob And Josef Kohn\nAustria, Vienna",
+      "is_public_domain": true,
+      "image_id": "2a491673-72e1-34a9-8e2a-b45a6e0da51f"
+    }
+  ],
+  "config": {
+    "iiif_url": "https://www.artic.edu/iiif/2",
+    "website_url": "https://www.artic.edu"
+  },
+  "_recording": {
+    "url": "https://api.artic.edu/api/v1/artworks/search?q=chair&limit=2&fields=id%2Ctitle%2Cartist_display%2Cdate_display%2Cimage_id%2Cis_public_domain%2Cthumbnail&query%5Bterm%5D%5Bis_public_domain%5D=true",
+    "date": "2026-11-12",
+    "note": "Real response; unrelated fields omitted."
+  }
+}

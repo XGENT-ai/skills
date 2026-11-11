@@ -1,0 +1,27 @@
+{
+  "_recording": {
+    "note": "Synthetic response based on local/oil-ui-main/tests/test_curate_media.py:94-98; not verified against a real LoC response (403)."
+  },
+  "results": [
+    {
+      "id": "http://www.loc.gov/item/1/",
+      "title": "Wood photograph",
+      "image_url": [
+        "https://www.loc.gov/example/a.jpg"
+      ],
+      "item": {
+        "rights_advisory": "Item-specific rights"
+      }
+    },
+    {
+      "id": "http://www.loc.gov/item/3/",
+      "title": "Wood bridge drawing",
+      "resources": [
+        {
+          "url": "https://www.loc.gov/resource/hhh.3.sheet",
+          "image": "https://www.loc.gov/example/sheet/00001_150px.jpg"
+        }
+      ]
+    }
+  ]
+}

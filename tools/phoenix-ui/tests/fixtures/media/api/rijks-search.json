@@ -1,0 +1,33 @@
+{
+  "@context": "https://linked.art/ns/v1/search.json",
+  "id": "https://data.rijksmuseum.nl/search/collection?description=chair&imageAvailable=true",
+  "type": "OrderedCollectionPage",
+  "partOf": {
+    "id": "https://data.rijksmuseum.nl/search/collection?description=chair&imageAvailable=true",
+    "type": "OrderedCollection",
+    "totalItems": 115,
+    "first": {
+      "id": "https://data.rijksmuseum.nl/search/collection?description=chair&imageAvailable=true",
+      "type": "OrderedCollectionPage"
+    },
+    "last": {
+      "id": "https://data.rijksmuseum.nl/search/collection?description=chair&imageAvailable=true&pageToken=eyJ0b2tlbiI6ICJodHRwczovL2lkLnJpamtzbXVzZXVtLm5sLzIwMDYzOTk3In0",
+      "type": "OrderedCollectionPage"
+    }
+  },
+  "next": {
+    "id": "https://data.rijksmuseum.nl/search/collection?description=chair&imageAvailable=true&pageToken=eyJ0b2tlbiI6ICJodHRwczovL2lkLnJpamtzbXVzZXVtLm5sLzIwMDYzOTk3In0",
+    "type": "OrderedCollectionPage"
+  },
+  "orderedItems": [
+    {
+      "id": "https://id.rijksmuseum.nl/200107779",
+      "type": "HumanMadeObject"
+    }
+  ],
+  "_recording": {
+    "url": "https://data.rijksmuseum.nl/search/collection?description=chair&imageAvailable=true",
+    "date": "2026-11-12",
+    "note": "Real response, cropped to one result."
+  }
+}

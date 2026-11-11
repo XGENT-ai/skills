@@ -1,0 +1,54 @@
+{
+  "aerial_asphalt_01": {
+    "type": 1,
+    "tags": [
+      "road",
+      "flat",
+      "cracked"
+    ],
+    "date_published": 1597061145,
+    "name": "Aerial Asphalt 01",
+    "categories": [
+      "asphalt",
+      "outdoor",
+      "floor",
+      "road",
+      "man made",
+      "aerial"
+    ],
+    "dimensions": [
+      30000,
+      30000
+    ],
+    "authors": {
+      "Rob Tuytel": "All"
+    },
+    "max_resolution": [
+      8192,
+      8192
+    ],
+    "files_hash": "cdf3c8f091b3589407bdf0697a2deb2c6b40650d",
+    "description": "Free 8K asphalt texture of a flat, worn road with subtle cracks, faint tire marks and gritty surface - ideal for aerial, outdoor, road and floor scenes.",
+    "category_id": "8871debe-40cf-5e4d-a5e5-1ddfe979f14f",
+    "category": "Asphalt & Bitumen/Asphalt/Worn Road Surface",
+    "attributes": {
+      "surface_use": "floor",
+      "condition": [
+        "weathered",
+        "cracked",
+        "worn"
+      ],
+      "origin": "man_made",
+      "setting": "outdoor",
+      "aerial": true
+    },
+    "img_version": "151f24f1",
+    "download_count": 148981,
+    "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/aerial_asphalt_01.png?width=256&height=256&format=webp&v=151f24f1"
+  },
+  "_recording": {
+    "url": "https://api.polyhaven.com/assets?t=textures",
+    "date": "2026-11-12",
+    "note": "Real response, cropped to one result."
+  }
+}

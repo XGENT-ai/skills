@@ -55,6 +55,7 @@ pub const ROOT_USAGE: &str = "Usage: phoenix-ui <command> [options]
 Commands:
   detect [file-or-dir-or-url...]   Scan for UI anti-patterns and design quality issues
   capture <page> [options]         Screenshot named page states with a provenance report
+  media <search|preview|fetch|audit>   Find open-license reference media for comps and previews
   ignores                          Manage detector ignore rules, files, and values
   help                             List all available skills and commands
   install --bundle-root DIR        Install skills from an explicit local Phoenix bundle

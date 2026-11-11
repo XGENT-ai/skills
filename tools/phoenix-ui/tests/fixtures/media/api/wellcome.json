@@ -1,0 +1,90 @@
+{
+  "type": "ResultList",
+  "pageSize": 1,
+  "totalPages": 4425,
+  "totalResults": 4425,
+  "results": [
+    {
+      "locations": [
+        {
+          "url": "https://iiif.wellcomecollection.org/image/L0011861/info.json",
+          "credit": "Wellcome Collection",
+          "license": {
+            "id": "pdm",
+            "type": "License",
+            "label": "Public Domain Mark",
+            "url": "https://creativecommons.org/share-your-work/public-domain/pdm/"
+          },
+          "accessConditions": [
+            {
+              "method": {
+                "id": "view-online",
+                "type": "AccessMethod",
+                "label": "View online"
+              },
+              "status": {
+                "id": "open",
+                "type": "AccessStatus",
+                "label": "Open"
+              },
+              "type": "AccessCondition"
+            }
+          ],
+          "locationType": {
+            "id": "iiif-image",
+            "type": "LocationType",
+            "label": "IIIF Image API"
+          },
+          "type": "DigitalLocation"
+        }
+      ],
+      "source": {
+        "id": "dze9tnju",
+        "title": "Sketches of anatomy",
+        "type": "Work",
+        "contributors": []
+      },
+      "aspectRatio": 0.705,
+      "thumbnail": {
+        "url": "https://iiif.wellcomecollection.org/image/L0011861/info.json",
+        "credit": "Wellcome Collection",
+        "license": {
+          "id": "pdm",
+          "type": "License",
+          "label": "Public Domain Mark",
+          "url": "https://creativecommons.org/share-your-work/public-domain/pdm/"
+        },
+        "accessConditions": [
+          {
+            "method": {
+              "id": "view-online",
+              "type": "AccessMethod",
+              "label": "View online"
+            },
+            "status": {
+              "id": "open",
+              "type": "AccessStatus",
+              "label": "Open"
+            },
+            "type": "AccessCondition"
+          }
+        ],
+        "locationType": {
+          "id": "iiif-image",
+          "type": "LocationType",
+          "label": "IIIF Image API"
+        },
+        "type": "DigitalLocation"
+      },
+      "averageColor": "#cacaca",
+      "id": "avd5pgjb",
+      "type": "Image"
+    }
+  ],
+  "nextPage": "https://api.wellcomecollection.org/catalogue/v2/images?include=source.contributors&pageSize=1&query=anatomy&page=2",
+  "_recording": {
+    "url": "https://api.wellcomecollection.org/catalogue/v2/images?query=anatomy&pageSize=1&include=source.contributors",
+    "date": "2026-11-12",
+    "note": "Real response, cropped to one result."
+  }
+}

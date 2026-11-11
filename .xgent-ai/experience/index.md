@@ -109,3 +109,4 @@
 - 8fb83407-3e81-4b0c-b90c-8e87333cde66 — [PHOENIX-UI-EVIDENCE-CRAFT-P1 实施（M6 收口）](8fb83407-3e81-4b0c-b90c-8e87333cde66.md)
 - 153d7ac1-816e-4088-8ae9-41a14d2517d2 — [PHOENIX-UI-EVIDENCE-CRAFT-P1-gaps 实施（M1）](153d7ac1-816e-4088-8ae9-41a14d2517d2.md)
 - ddfc2db0-1081-4c9e-8cee-8aecf3179c7e — [Phoenix UI 中文排版检测与口径 P2 实施](ddfc2db0-1081-4c9e-8cee-8aecf3179c7e.md)
+- 3fafbda8-0f05-482b-8320-18ca474ee753 · [Phoenix UI 素材与交付图片 P3 实施](3fafbda8-0f05-482b-8320-18ca474ee753.md)

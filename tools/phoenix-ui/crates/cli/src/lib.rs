@@ -12,3 +12,5 @@ pub mod entry_capture;
 pub mod capture_service;
 
 pub mod reviewed_entry;
+
+pub mod media;
