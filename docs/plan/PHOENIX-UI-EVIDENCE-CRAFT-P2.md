@@ -211,14 +211,14 @@ REVIEW @progress_consistency:
 - 最近完成：M3
 - 下一步：由用户发起 `review-code docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.md` 复审；恢复 Claude 环境后补 V-7 取证场景，经授权推送本次候选后核对 V-9
 - 当前阻塞：Claude 请求被 API 前置网络来源限制以 HTTP 403 拒绝；本次新修复候选尚未获推送授权、V-9 未运行
-- 代码基线：dirty@`2518626`（main；此前该候选四平台 CI 已通过，本轮修复提交待登记）
+- 代码基线：`080c3be`（main；R3 修复已提交、未推送；上一候选 `2518626` 的四平台 CI 已通过）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-11T17:56+08:00 | 排版事实、让位与备注通道已交付；R3 F-02/F-04 已修复并验证：栅格随缩放和 RTL 推进，零栏距以真实文字分片防止同行误拆。 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M1.md) | 70fa92e 修复 532f8d8 修复 aa1d065 修复 f273d66 |
-| M2 | 已完成 | 2026-11-11T17:56+08:00 | 五条中文规则与夹具已交付；R3 扩充两视口回归通过（breaks 11 条、clean 0 条），保留普通分栏和跨栏数字单位；探针 7 项通过。 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M2.md) | e69c600 修复 3d764e1 修复 aa1d065 修复 f273d66 |
+| M1 | 已完成 | 2026-11-11T17:56+08:00 | 排版事实、让位与备注通道已交付；R3 F-02/F-04 已修复并验证：栅格随缩放和 RTL 推进，零栏距以真实文字分片防止同行误拆。 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M1.md) | 70fa92e 修复 532f8d8 修复 aa1d065 修复 f273d66 修复 080c3be |
+| M2 | 已完成 | 2026-11-11T17:56+08:00 | 五条中文规则与夹具已交付；R3 扩充两视口回归通过（breaks 11 条、clean 0 条），保留普通分栏和跨栏数字单位；探针 7 项通过。 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M2.md) | e69c600 修复 3d764e1 修复 aa1d065 修复 f273d66 修复 080c3be |
 | M3 | 已完成 | 2026-11-11T11:31+08:00 | typeset 中文口径、伪汉字条款、`findingsNotes` 的消费与披露、规则文档与渲染生成物；V-4 通过，V-5 演练会话按中文口径整理页面并跑了页面扫描，复查无发现。 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M3.md) | 76814c1 |
 | M4 | 阻塞 | 2026-11-11T17:56+08:00 | 旧候选 2518626 的四平台与 Node 18 CI 已通过；R3 开发构建、冒烟、离线安装及直接 CLI 验证通过。宿主取证遇 HTTP 403，本次修复候选 V-9 尚未运行，阶段收口重新打开。 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M4.md) | f6cc578 |
 
