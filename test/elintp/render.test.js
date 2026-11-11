@@ -83,3 +83,27 @@ test('all components render safely and reproducibly with embedded local assets',
   assert.equal(w.run(input).status, 0);
   assert.equal(fs.readFileSync(w.output, 'utf8'), html);
 });
+
+test('figures that reuse SVG ids keep their own definitions', t => {
+  const w = workspace(t);
+  const figure = shape => `<svg viewBox="0 0 40 40" xmlns:xlink="http://www.w3.org/1999/xlink" aria-labelledby="s1"><title id="s1">Shape</title><defs>${shape}<linearGradient id="paint"><stop offset="0"/></linearGradient><marker id="tip"><path d="M0 0 L4 2 L0 4"/></marker><clipPath id="clip"><rect width="40" height="40"/></clipPath></defs><g clip-path="url(#clip)"><use href="#shape" fill="url(#paint)"/><use xlink:href="#shape"/><path d="M0 20 H40" marker-end="url(#tip)"/></g></svg>`;
+  fs.writeFileSync(path.join(w.dir, 'square.svg'), figure('<rect id="shape" width="20" height="20"/>'));
+  fs.writeFileSync(path.join(w.dir, 'triangle.svg'), figure('<polygon id="shape" points="10,0 20,20 0,20"/>'));
+  const input = draft(':::figure Square\nsvg: square.svg\n:::\n\n:::figure Triangle\nsvg: triangle.svg\n:::');
+  const result = w.run(input);
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(w.output, 'utf8');
+  const idsIn = text => [...text.matchAll(/ id="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(new Set(idsIn(html)).size, idsIn(html).length, idsIn(html).join(' '));
+  const figures = html.match(/<svg[\s\S]*?<\/svg>/g);
+  assert.match(figures[0], /<rect id=/);
+  assert.match(figures[1], /<polygon id=/);
+  for (const svg of figures) {
+    const own = new Set(idsIn(svg));
+    const references = [...svg.matchAll(/href="#([^"]+)"|url\(#([^)]+)\)|aria-labelledby="([^"]+)"/g)].map(match => match[1] || match[2] || match[3]);
+    assert.equal(references.length, 6);
+    for (const reference of references) assert.ok(own.has(reference), reference);
+  }
+  assert.equal(w.run(input).status, 0);
+  assert.equal(fs.readFileSync(w.output, 'utf8'), html);
+});

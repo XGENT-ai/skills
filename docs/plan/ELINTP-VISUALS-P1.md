@@ -205,11 +205,11 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-11T11:57:53+08:00
+- 最近更新：2026-11-11T12:37:09+08:00
 - 当前进度：6/6 个里程碑完成
-- 当前状态：已完成；实现、验收与最终提交均已完成
+- 当前状态：已完成；R1 代码评审 F-01（多张 SVG 同名 ID 串图）已修复并验证，待复审
 - 最近完成：M6 · 阶段收口
-- 下一步：由用户发起 `/review-code docs/plan/ELINTP-VISUALS-P1.md`
+- 下一步：由用户发起 `/review-code docs/plan/ELINTP-VISUALS-P1.md` 复审 F-01 的修复
 - 当前阻塞：无
 - 代码基线：`23c6748b`（全部实现；后续仅验收记录与进度回填）
 
@@ -218,7 +218,7 @@ REVIEW @progress_consistency:
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-11-11T10:09:34+08:00 | 通用模板生成、两处错误一次报告且不覆盖旧页，Chrome 首屏结论可读 | [M1 记录](ELINTP-VISUALS-P1.records/M1.md) | 23c6748b |
-| M2 | 已完成 | 2026-11-11T11:49:32+08:00 | 四模板和全部组件；V-2、V-3 通过 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b |
+| M2 | 已完成 | 2026-11-11T12:37:09+08:00 | 四模板和全部组件；V-2、V-3 通过。R1 F-01 修复后各 SVG 图的 ID 互相隔离，V-3 与浏览器复验通过 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b；修复待提交 |
 | M3 | 已完成 | 2026-11-11T11:49:32+08:00 | 主题、大纲、键盘、无脚本及打印行为通过 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b |
 | M4 | 已完成 | 2026-11-11T11:49:32+08:00 | 360/1440 亮暗阅读与真实阅读器交互通过 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b |
 | M5 | 已完成 | 2026-11-11T11:57:53+08:00 | 六项全新上下文作者演练与文案整合核对通过 | [M5 记录](ELINTP-VISUALS-P1.records/M5.md) | 55fe9a26 |
@@ -449,7 +449,7 @@ frontmatter 之后、第一个 `##` 之前是引言，只能是段落，至少�
 - **图片**：路径是本地文件，扩展名限 `png`、`jpg`、`jpeg`、`gif`、`webp`、`avif`、`svg`，读入后以 data URI 放进 `<img>`。`http://`、`https://` 开头的路径是格式错误（改法：先存成本地文件）。文件不存在或读不了不算格式错误：页面在该位置显示「图片缺失：」加内容稿里写的路径，并保留图注，stderr 输出一行 `WARN`，退出码仍为 0。
 - **`:::figure` 的内容**：恰好一行来源，后面可跟若干行图注文字。
   - `reader: <路径.html>`：phoenix-diagram 交付的阅读器 HTML。读入全文，转义 `&` 与 `"` 后写进带 `srcdoc`、`loading="lazy"` 的 `iframe`，`title` 取图的标题。文件不存在或读不了是格式错误。
-  - `svg: <路径.svg>`：Agent 自绘的 SVG 文件。通过白名单校验后去掉 XML 声明与注释，根元素加 `role="img"`，`aria-label` 取图的标题，内联进页面。
+  - `svg: <路径.svg>`：Agent 自绘的 SVG 文件。通过白名单校验后去掉 XML 声明与注释，根元素加 `role="img"`，`aria-label` 取图的标题，内联进页面。每张图的 `id` 及指向它的本地引用（`href`、`xlink:href`、`url(#…)`、`aria-labelledby`、`aria-describedby`）按图在文中的顺序加固定前缀，不同图的同名 `id` 互不影响，也不与页面锚点相撞。
 - **SVG 白名单**：逐个标签检查，任何一处不符就是格式错误，报出 SVG 文件里的行号与标签，不做静默清洗。
   - 允许的元素：`svg`、`g`、`defs`、`title`、`desc`、`path`、`rect`、`circle`、`ellipse`、`line`、`polyline`、`polygon`、`text`、`tspan`、`marker`、`linearGradient`、`radialGradient`、`stop`、`clipPath`、`use`。
   - 禁止的属性：以 `on` 开头的属性、`style`。

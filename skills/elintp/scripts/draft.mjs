@@ -7,7 +7,7 @@ export const escapeHTML = text => String(text).replace(/[&<>"']/g, char => ({ '&
 const SVG_ELEMENTS = new Set('svg g defs title desc path rect circle ellipse line polyline polygon text tspan marker linearGradient radialGradient stop clipPath use'.split(' '));
 const SVG_ATTRIBUTES = new Set(('id class role aria-label aria-labelledby aria-describedby xmlns xmlns:xlink viewBox width height x y x1 x2 y1 y2 cx cy r rx ry d points transform fill fill-opacity fill-rule stroke stroke-width stroke-opacity stroke-linecap stroke-linejoin stroke-dasharray stroke-dashoffset stroke-miterlimit opacity color font-family font-size font-weight font-style text-anchor dominant-baseline alignment-baseline dx dy textLength lengthAdjust letter-spacing word-spacing marker-start marker-mid marker-end markerWidth markerHeight refX refY orient markerUnits gradientUnits gradientTransform offset stop-color stop-opacity fx fy fr spreadMethod clip-path clip-rule clipPathUnits mask filter href xlink:href preserveAspectRatio vector-effect').split(' '));
 
-function inlineSVG(source, title, report) {
+function inlineSVG(source, title, prefix, report) {
   let failed = false;
   const bad = (at, tag, problem) => {
     failed = true;
@@ -63,7 +63,11 @@ function inlineSVG(source, title, report) {
         if (rest.trim()) bad(at, name, 'url() 只允许本文件 #片段');
       }
       if (/[\\<>]/.test(value)) bad(at, name, '属性含不支持的转义或标记');
-      attrs.set(key, value);
+      // Inlined figures share the page's ID space; unprefixed, a #reference resolves to another figure or a page anchor.
+      attrs.set(key, key === 'id' ? prefix + value
+        : ['href', 'xlink:href'].includes(key) ? value.replace(/^#/, `#${prefix}`)
+        : ['aria-labelledby', 'aria-describedby'].includes(key) ? value.replace(/\S+/g, id => prefix + id)
+        : value.replace(/url\(\s*(['"]?)#([\w:.-]+)\1\s*\)/gi, (whole, quote, id) => `url(#${prefix}${id})`));
     }
     if (raw.slice(consumed).trim()) bad(at, name, '属性须为带引号的键值');
     if (!stack.length) {
@@ -130,7 +134,7 @@ export function parseDraft(text, { cwd }) {
   const special = value => /^(?:#{1,6}\s|\s*-\s|\d+\.\s|\||```|:::|>|!\[)/.test(value);
   const cells = value => value.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim());
 
-  let tableNumber = 0;
+  let tableNumber = 0, svgNumber = 0;
   function blocks(rows, onlyParagraphs = false, simple = false) {
     const result = [];
     for (let i = 0; i < rows.length;) {
@@ -254,7 +258,7 @@ export function parseDraft(text, { cwd }) {
           catch { error(content[0].line, `无法读取图文件 ${file}`, '确认本地路径存在且可读'); continue; }
           const graphic = type === 'reader'
             ? `<iframe srcdoc="${escapeHTML(data)}" title="${escapeHTML(title)}" loading="lazy"></iframe>`
-            : inlineSVG(data, title, problem => error(content[0].line, problem, '按 SVG 元素、属性与本地片段白名单修正源文件'));
+            : inlineSVG(data, title, `fig${++svgNumber}-`, problem => error(content[0].line, problem, '按 SVG 元素、属性与本地片段白名单修正源文件'));
           result.push(`<figure class="diagram">${graphic}<figcaption><strong>${escapeHTML(title)}</strong>${content.slice(1).map(row => `<p>${inline(row.value, row.line)}</p>`).join('')}</figcaption></figure>`);
         } else {
           const body = blocks(rows.slice(start + 1, i - 1), false, true);
