@@ -211,9 +211,9 @@ REVIEW @progress_consistency:
 - 当前进度：3/5 个里程碑完成
 - 当前状态：M1–M3 实现与批末检查完成；M4 已渲染且静态检查通过，宿主演练进行中
 - 最近完成：M2 · 素材取用与联网边界
-- 下一步：保存 M2、M3 提交；继续 M4 V-7 与 M5 阶段收口
+- 下一步：继续 M4 V-7，完成后保存 skill 与生成物提交；继续 M5 阶段收口
 - 当前阻塞：无（V-11 推送授权在候选就绪后申请）
-- 代码基线：`2d5deab`（main）起的工作树增量；已提交media，余项按里程碑保存
+- 代码基线：`ea0e5a3`（main）；M1–M3已提交，M4文本与生成物尚未提交
 
 ### 完成记录
 
@@ -221,7 +221,7 @@ REVIEW @progress_consistency:
 | --- | --- | --- | --- | --- | --- |
 | M4 | 进行中 | 2026-11-12 01:35 +08:00 | skill六文件与公开命令文档已写；待渲染、V-6/V-7 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M4.md) | 待提交 |
 | M1 | 已完成 | 2026-11-12 01:35 +08:00 | 11源检索、稳定编号、联系表与真实V-1/V-2通过 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M1.md) | `2d5deab` |
-| M3 | 已完成 | 2026-11-12 01:35 +08:00 | 批量图片导出与来源保留，V-4目视及V-5、lint通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M3.md) | 待提交 |
+| M3 | 已完成 | 2026-11-12 01:35 +08:00 | 批量图片导出与来源保留，V-4目视及V-5、lint通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M3.md) | `ea0e5a3` |
 | M2 | 已完成 | 2026-11-12 01:40 +08:00 | V-1/V-2/V-3及最终lint通过；Chrome后台请求清零 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M2.md) | `49be9b9` |
 
 ## 0. 需求、范围与决策
