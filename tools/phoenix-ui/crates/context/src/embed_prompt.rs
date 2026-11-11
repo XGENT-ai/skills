@@ -139,7 +139,8 @@ fn sidecar_prompt(image_path: &str) -> Option<String> {
     }
 }
 
-fn prompt_of(image_path: &str) -> Option<String> {
+/// Reads embedded provenance, then the `<path>.json` sidecar used by `embed-prompt`.
+pub fn read_provenance(image_path: &str) -> Option<String> {
     let b = std::fs::read(image_path).ok()?;
     read_prompt(image_path, &b)
 }
@@ -165,6 +166,121 @@ fn walk(p: &str, is_root: bool, rasters: &mut Vec<String>) -> Result<(), String>
 fn is_raster(p: &str) -> bool {
     let lower = p.to_ascii_lowercase();
     lower.ends_with(".png") || lower.ends_with(".jpg") || lower.ends_with(".jpeg") || lower.ends_with(".webp")
+}
+
+/// How provenance is carried by an image.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Carried {
+    PngText,
+    JpegCom,
+    Sidecar,
+}
+
+/// Writes provenance using the same carriers as `embed-prompt`.
+/// JPEG text exceeding one COM segment is stored in a sidecar instead.
+/// Returns an error if the image cannot be read or its provenance cannot be written.
+pub fn write_provenance(path: &str, text: &str) -> Result<Carried, String> {
+    let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
+    write_text(path, &bytes, text, true)
+}
+
+fn write_text(
+    path: &str,
+    buf: &[u8],
+    prompt: &str,
+    long_jpeg_sidecar: bool,
+) -> Result<Carried, String> {
+    match image_type(buf) {
+        Some(ImageType::Png) => {
+            // JS-PARITY: embed-prompt.mjs#641 finds IEND by walking the PNG
+            // chunks (not buf.indexOf('IEND')) and reuses parsePng's chunk list
+            // and prompt to rebuild the body idempotently.
+            let (chunks, existing) = parse_png(buf);
+            let iend: i64 = chunks
+                .iter()
+                .find(|c| &c.ty == b"IEND")
+                .map(|c| c.offset as i64)
+                .unwrap_or(-1);
+            if iend < 8 {
+                return Err("embed-prompt: malformed PNG".into());
+            }
+            let iend = iend as usize;
+            let mut text_data = KEYWORD.to_vec();
+            text_data.push(0);
+            text_data.extend_from_slice(prompt.as_bytes());
+            let text_chunk = png_chunk(b"tEXt", &text_data);
+            let out: Vec<u8> = if existing.is_some() {
+                let mut body: Vec<u8> = Vec::new();
+                for c in &chunks {
+                    if c.offset < iend && !c.prompt_chunk {
+                        body.extend_from_slice(&buf[c.offset..c.end]);
+                    }
+                }
+                let mut o = buf[..8].to_vec();
+                o.extend_from_slice(&body);
+                o.extend_from_slice(&text_chunk);
+                o.extend_from_slice(&png_chunk(b"IEND", &[]));
+                o
+            } else {
+                let mut o = buf[..iend].to_vec();
+                o.extend_from_slice(&text_chunk);
+                o.extend_from_slice(&buf[iend..]);
+                o
+            };
+            std::fs::write(path, out).map_err(|e| e.to_string())?;
+            Ok(Carried::PngText)
+        }
+        Some(ImageType::Jpeg) => {
+            let mut seg = KEYWORD.to_vec();
+            seg.push(0);
+            seg.extend_from_slice(prompt.as_bytes());
+            if seg.len() + 2 > 0xffff {
+                if long_jpeg_sidecar {
+                    // Embedded text wins during reads, so remove an older COM provenance.
+                    let mut output = buf[..2].to_vec();
+                    let mut offset = 2;
+                    while offset + 4 <= buf.len() && buf[offset] == 0xff && buf[offset + 1] != 0xda
+                    {
+                        let length =
+                            u16::from_be_bytes([buf[offset + 2], buf[offset + 3]]) as usize;
+                        let end = offset + 2 + length;
+                        if length < 2 || end > buf.len() {
+                            break;
+                        }
+                        if !(buf[offset + 1] == 0xfe
+                            && buf[offset + 4..end].starts_with(&[KEYWORD, &[0]].concat()))
+                        {
+                            output.extend_from_slice(&buf[offset..end]);
+                        }
+                        offset = end;
+                    }
+                    output.extend_from_slice(&buf[offset..]);
+                    write_sidecar(path, prompt)?;
+                    std::fs::write(path, output).map_err(|e| e.to_string())?;
+                    return Ok(Carried::Sidecar);
+                }
+                return Err("embed-prompt: prompt too long for a JPEG segment".into());
+            }
+            let mut com = vec![0xff, 0xfe];
+            com.extend_from_slice(&((seg.len() + 2) as u16).to_be_bytes());
+            com.extend_from_slice(&seg);
+            let mut out = buf[..2].to_vec();
+            out.extend_from_slice(&com);
+            out.extend_from_slice(&buf[2..]);
+            std::fs::write(path, out).map_err(|e| e.to_string())?;
+            Ok(Carried::JpegCom)
+        }
+        None => write_sidecar(path, prompt),
+    }
+}
+
+fn write_sidecar(path: &str, prompt: &str) -> Result<Carried, String> {
+    let mut m = Map::new();
+    m.insert("prompt".into(), Value::String(prompt.into()));
+    m.insert("createdAt".into(), Value::String(iso_now()));
+    std::fs::write(format!("{path}.json"), json_pretty(&Value::Object(m)))
+        .map_err(|e| e.to_string())?;
+    Ok(Carried::Sidecar)
 }
 
 pub fn run(args: &[String], io: &mut Io) -> i32 {
@@ -204,7 +320,7 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
         }
         let mut missing = 0;
         for r in &rasters {
-            if prompt_of(&abs(r)).is_none() {
+            if read_provenance(&abs(r)).is_none() {
                 io.out(&format!("MISSING: {}\n", r));
                 missing += 1;
             }
@@ -224,11 +340,7 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
     };
     let file_abs = abs(&file);
     let buf = std::fs::read(&file_abs).unwrap_or_default();
-    let ty = image_type(&buf);
-    let png = ty == Some(ImageType::Png);
-    let jpeg = ty == Some(ImageType::Jpeg);
     let sidecar = format!("{}.json", file);
-    let sidecar_abs = format!("{}.json", file_abs);
 
     if read_mode {
         let prompt = read_prompt(&file_abs, &buf);
@@ -261,66 +373,59 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
             return 1;
         };
         let plen = utf16_len(&prompt);
-        if png {
-            // JS-PARITY: embed-prompt.mjs#641 finds IEND by walking the PNG
-            // chunks (not buf.indexOf('IEND')) and reuses parsePng's chunk list
-            // and prompt to rebuild the body idempotently.
-            let (chunks, existing) = parse_png(&buf);
-            let iend: i64 = chunks.iter().find(|c| &c.ty == b"IEND").map(|c| c.offset as i64).unwrap_or(-1);
-            if iend < 8 {
-                io.err("embed-prompt: malformed PNG\n");
-                return 1;
+        match write_text(&file_abs, &buf, &prompt, false) {
+            Ok(Carried::PngText) => {
+                io.out(&format!("EMBEDDED: {} (png tEXt, {} chars)\n", file, plen));
+                0
             }
-            let iend = iend as usize;
-            let mut text_data = KEYWORD.to_vec();
-            text_data.push(0);
-            text_data.extend_from_slice(prompt.as_bytes());
-            let text_chunk = png_chunk(b"tEXt", &text_data);
-            let out: Vec<u8> = if existing.is_some() {
-                let mut body: Vec<u8> = Vec::new();
-                for c in &chunks {
-                    if c.offset < iend && !c.prompt_chunk {
-                        body.extend_from_slice(&buf[c.offset..c.end]);
-                    }
-                }
-                let mut o = buf[..8].to_vec();
-                o.extend_from_slice(&body);
-                o.extend_from_slice(&text_chunk);
-                o.extend_from_slice(&png_chunk(b"IEND", &[]));
-                o
-            } else {
-                let mut o = buf[..iend].to_vec();
-                o.extend_from_slice(&text_chunk);
-                o.extend_from_slice(&buf[iend..]);
-                o
-            };
-            let _ = std::fs::write(&file_abs, out);
-            io.out(&format!("EMBEDDED: {} (png tEXt, {} chars)\n", file, plen));
-            0
-        } else if jpeg {
-            let mut seg = KEYWORD.to_vec();
-            seg.push(0);
-            seg.extend_from_slice(prompt.as_bytes());
-            if seg.len() + 2 > 0xffff {
-                io.err("embed-prompt: prompt too long for a JPEG segment\n");
-                return 1;
+            Ok(Carried::JpegCom) => {
+                io.out(&format!("EMBEDDED: {} (jpeg COM, {} chars)\n", file, plen));
+                0
             }
-            let mut com = vec![0xff, 0xfe];
-            com.extend_from_slice(&((seg.len() + 2) as u16).to_be_bytes());
-            com.extend_from_slice(&seg);
-            let mut out = buf[..2].to_vec();
-            out.extend_from_slice(&com);
-            out.extend_from_slice(&buf[2..]);
-            let _ = std::fs::write(&file_abs, out);
-            io.out(&format!("EMBEDDED: {} (jpeg COM, {} chars)\n", file, plen));
-            0
-        } else {
-            let mut m = Map::new();
-            m.insert("prompt".into(), Value::String(prompt));
-            m.insert("createdAt".into(), Value::String(iso_now()));
-            let _ = std::fs::write(&sidecar_abs, json_pretty(&Value::Object(m)));
-            io.out(&format!("EMBEDDED: {} (sidecar fallback for this format)\n", sidecar));
-            0
+            Ok(Carried::Sidecar) => {
+                io.out(&format!(
+                    "EMBEDDED: {} (sidecar fallback for this format)\n",
+                    sidecar
+                ));
+                0
+            }
+            Err(error) => {
+                io.err(&format!("{error}\n"));
+                1
+            }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn provenance_roundtrips_and_long_jpeg_uses_sidecar() {
+        let dir = std::env::temp_dir().join(format!("phoenix-provenance-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let mut png = b"\x89PNG\r\n\x1a\n".to_vec();
+        png.extend(png_chunk(b"IEND", &[]));
+        for (name, bytes, expected) in [
+            ("image.png", png, Carried::PngText),
+            ("image.jpg", vec![0xff, 0xd8, 0xff, 0xd9], Carried::JpegCom),
+            ("image.webp", b"RIFF0000WEBP".to_vec(), Carried::Sidecar),
+        ] {
+            let path = dir.join(name).to_string_lossy().into_owned();
+            std::fs::write(&path, bytes).unwrap();
+            assert_eq!(
+                write_provenance(&path, "source: 项目图片").unwrap(),
+                expected
+            );
+            assert_eq!(read_provenance(&path).as_deref(), Some("source: 项目图片"));
+        }
+        let path = dir.join("long.jpg").to_string_lossy().into_owned();
+        std::fs::write(&path, [0xff, 0xd8, 0xff, 0xd9]).unwrap();
+        write_provenance(&path, "old embedded text").unwrap();
+        let text = "源".repeat(30_000);
+        assert_eq!(write_provenance(&path, &text).unwrap(), Carried::Sidecar);
+        assert_eq!(read_provenance(&path), Some(text));
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }
