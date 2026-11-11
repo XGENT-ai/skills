@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const { spawnSync } = require('node:child_process');
 const script = path.resolve(__dirname, '../../skills/elintp/scripts/render.mjs');
 const draft = (body, meta = '') => `---\ntemplate: general\ntitle: Queue\nlang: en\n${meta}---\nOrders wait in a queue.\n\n## why | Work continues after submission\n${body}\n`;
@@ -109,6 +110,38 @@ test('figures that reuse SVG ids keep their own definitions', t => {
 });
 
 const embedded = (html, id) => JSON.parse(html.match(new RegExp(`<script type="application/json" id="${id}">([\\s\\S]*?)</script>`))[1]);
+
+test('render imports from standard input without running the CLI', t => {
+  const w = workspace(t);
+  const result = spawnSync(process.execPath, ['--input-type=module', '-'], {
+    cwd: w.dir, encoding: 'utf8',
+    input: `import { renderPage } from ${JSON.stringify(pathToFileURL(script).href)}; console.log(typeof renderPage);`,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, 'function\n');
+});
+
+for (const snapshot of [false, true]) {
+  test(`CLI renders through a symlink with ${snapshot ? '--assets-from' : 'two arguments'}`, t => {
+    const w = workspace(t), text = draft('![Pixel](pixel.png)');
+    fs.writeFileSync(path.join(w.dir, 'pixel.png'), Buffer.from([0, 1, 2, 255]));
+    const direct = w.run(text);
+    assert.equal(direct.status, 0, direct.stderr);
+    const expected = fs.readFileSync(w.output, 'utf8');
+    fs.renameSync(w.output, path.join(w.dir, 'snapshot.html'));
+    if (snapshot) fs.unlinkSync(path.join(w.dir, 'pixel.png'));
+    fs.symlinkSync(path.dirname(script), path.join(w.dir, 'scripts'), 'dir');
+    const args = [path.join(w.dir, 'scripts/render.mjs'), 'draft.md', w.output];
+    if (snapshot) args.push('--assets-from', 'snapshot.html');
+    const result = spawnSync(process.execPath, args, { cwd: w.dir, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, `PAGE: ${w.output}\n`);
+    const html = fs.readFileSync(w.output, 'utf8');
+    assert.equal(html, expected);
+    assert.equal(embedded(html, 'elintp-draft'), text);
+    assert.match(html, /data:image\/png;base64,AAEC\/w==/);
+  });
+}
 
 test('p2 final content and resource snapshots round-trip safely without original files', async t => {
   const w = workspace(t), text = draft('</script><script>literal</script> \u2028\u2029\n\n![Pixel](pixel.png)\n\n![Missing](absent.png)\n\n:::figure Reader\nreader: reader.html\n:::');
