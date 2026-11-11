@@ -211,7 +211,7 @@ REVIEW @progress_consistency:
 - 最近完成：M6 · 阶段收口
 - 下一步：由用户发起 `/review-code docs/plan/ELINTP-VISUALS-P1.md` 复审 UI 修复；由用户发起 `/review-ui docs/plan/ELINTP-VISUALS-P1.md` 独立复审 UI-03、UI-05
 - 当前阻塞：无
-- 代码基线：`dirty@c1271161`（R3 UI 修复待提交；实现 `23c6748b`，R1 评审修复 `b9d0807d`，R1 UI 验收修复 `873ecb3b`，R2 UI 验收修复 `256c43a3`；其余提交仅验收记录与进度回填）
+- 代码基线：`b25842ce`（实现 `23c6748b`，R1 评审修复 `b9d0807d`，R1 UI 验收修复 `873ecb3b`，R2 UI 验收修复 `256c43a3`，R3 UI 验收修复 `b25842ce`；其余提交仅验收记录与进度回填）
 
 ### 完成记录
 
@@ -220,7 +220,7 @@ REVIEW @progress_consistency:
 | M1 | 已完成 | 2026-11-11T10:09:34+08:00 | 通用模板生成、两处错误一次报告且不覆盖旧页，Chrome 首屏结论可读 | [M1 记录](ELINTP-VISUALS-P1.records/M1.md) | 23c6748b |
 | M2 | 已完成 | 2026-11-11T12:37:09+08:00 | 四模板和全部组件；V-2、V-3 通过。R1 F-01 修复后各 SVG 图的 ID 互相隔离，V-3 与浏览器复验通过 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b；修复 b9d0807d |
 | M3 | 已完成 | 2026-11-11T11:49:32+08:00 | 主题、大纲、键盘、无脚本及打印行为通过 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b |
-| M4 | 已完成 | 2026-11-11T15:24:39+08:00 | R3 剩余大纲、无脚本主题按钮已修复，360/1440 浏览器复验通过；源阅读器不变，打印前后逐页一致，待独立复审 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b；UI修复 873ecb3b；UI修复 256c43a3；UI修复 待提交 |
+| M4 | 已完成 | 2026-11-11T15:24:39+08:00 | R3 剩余大纲、无脚本主题按钮已修复，360/1440 浏览器复验通过；源阅读器不变，打印前后逐页一致，待独立复审 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b；UI修复 873ecb3b；UI修复 256c43a3；UI修复 b25842ce |
 | M5 | 已完成 | 2026-11-11T11:57:53+08:00 | 六项全新上下文作者演练与文案整合核对通过 | [M5 记录](ELINTP-VISUALS-P1.records/M5.md) | 55fe9a26 |
 | M6 | 已完成 | 2026-11-11T11:57:53+08:00 | 干净副本两任务与第二节重讲通过；Chrome 通读、主题、大纲、旧页与静态收口通过 | [M6 记录](ELINTP-VISUALS-P1.records/M6.md) | 55fe9a26 |
 
