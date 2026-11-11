@@ -68,6 +68,13 @@ pub fn default_chrome_args(user_args: &[String], dangerous_no_sandbox: bool) -> 
         "--disable-breakpad",
         "--disable-client-side-phishing-detection",
         "--disable-component-extensions-with-background-pages",
+        "--disable-component-update",
+        "--disable-domain-reliability",
+        "--no-pings",
+        "--no-default-browser-check",
+        "--gaia-url=http://127.0.0.1:9",
+        "--google-apis-url=http://127.0.0.1:9",
+        "--lso-url=http://127.0.0.1:9",
         "--disable-crash-reporter",
         "--disable-default-apps",
         "--disable-dev-shm-usage",
@@ -87,7 +94,7 @@ pub fn default_chrome_args(user_args: &[String], dangerous_no_sandbox: bool) -> 
         "--no-first-run",
         "--password-store=basic",
         "--use-mock-keychain",
-        "--disable-features=Translate,AcceptCHFrame,MediaRouter,OptimizationHints,WebUIReloadButton,ProcessPerSiteUpToMainFrameThreshold,IsolateSandboxedIframes",
+        "--disable-features=Translate,AcceptCHFrame,MediaRouter,OptimizationHints,WebUIReloadButton,ProcessPerSiteUpToMainFrameThreshold,IsolateSandboxedIframes,NetworkTimeServiceQuerying,PreconnectToSearch,AimEnabled,AiModeOmniboxEntryPoint,AimServerEligibilityEnabled,AimEntrypointEligibility,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,CertificateTransparencyComponentUpdater,AutofillServerCommunication,InterestFeedContentSuggestions,HashPrefixRealTimeLookups,SafeBrowsingHashPrefixRealTimeLookups,SafeBrowsingHashRealTimeOverOhttp",
         "--enable-features=PdfOopif",
     ]
     .iter()
@@ -2287,6 +2294,15 @@ mod tests {
         assert_eq!(args[0], "--allow-pre-commit-input");
         assert!(args.contains(&"--headless=new".to_string()));
         assert!(args.contains(&"--hide-scrollbars".to_string()));
+        assert!(args.contains(&"--disable-component-update".to_string()));
+        assert!(args.contains(&"--gaia-url=http://127.0.0.1:9".to_string()));
+        let disabled = args
+            .iter()
+            .find_map(|arg| arg.strip_prefix("--disable-features="))
+            .unwrap();
+        assert!(disabled
+            .split(',')
+            .any(|feature| feature == "SafeBrowsingHashPrefixRealTimeLookups"));
         assert_eq!(args.last().unwrap(), "about:blank");
         let with = default_chrome_args(&["--no-sandbox".to_string()], false);
         assert_eq!(with.last().unwrap(), "--no-sandbox");

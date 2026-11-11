@@ -127,8 +127,42 @@ phoenix-ui capture stitch before.png after.png --match 320,320 --label 修改前
 - 状态文件（`--states`）：`initial` 描述初始状态的截图方式，`states` 逐个列出 `name` 与 `steps`；每个状态在不共享 cookie 与存储的新页面里从头执行自己的步骤。定位用 `{"role":…, "name":…}`、`{"text":…}` 或 `{"css":…}`（可加 `nth`），只查主文档，不进 iframe 与 Shadow DOM；动作有 click、dblclick、hover、fill、type、select、press、drag、scroll、wait、waitFor；原生日期、时间、颜色、范围输入用 fill 按其值格式设值（如 `2026-11-20`），type 落在这类控件上会失败。截图类型 `viewport`、`full` 或 `{"element": <定位>}`；`frames` 出序列帧，`mark` 出编号标注图。完整格式见 `phoenix-ui capture --help`。
 - 输出与命名：默认 `.phoenix-ui/capture/`，文件名模板默认 `{viewport}{-state}.png`（初始状态为 `desktop.png`，其他为 `desktop-<状态>.png`），`--name` 可改；报告 `capture-report.json`（schema `phoenix-ui-capture-v1`）逐张记录目标、地址、视口、像素比、配色、截图类型、拍摄时间、浏览器与命令版本、步骤与观察、控制台错误、失败请求与图片、横向溢出、被拦截的写请求和该状态的页面规则发现（`findings`，与 `detect` 同一套规则与项目配置）；页面扫描无法核实某段文字的字体来源时，该图条目另有 `findingsNotes` 数组，文本与 `detect` 的 `note:` 行相同，终端相应输出 `NOTE <状态> <视口> <文件>: …`。`findingsNotes` 表示所写 URL 与段落的字体来源尚未核实，不是发现，没有字体回退发现也不等于已核实：等字体加载稳定后在现有轮次内重取该状态，或人工核对该段的实际字体并记下依据；仍未解除的在最终交付的未验证项里写明 URL、段落与原因，不为它另加阻塞门或检测轮次；已存在的报告按文件名合并，只重取部分状态时其余条目保留。派生图：`--mask` 遮字版、`--thumbs` 扫视缩略图（480/180 宽）、`--sheet` 状态并排图、`frames` 序列帧、`mark` 标注图、`capture stitch` 修改前后拼图，都不替代状态截图。
 - 有效性：每张主截图自检步骤是否全部执行、有限动画是否结束、文字是否大面积透明、是否整张单色或有异常全黑带、画布是否绘出、尺寸是否符合截图类型。无效图写成 `<名>.invalid.png`，同名旧图（含失败状态的旧图）删除。退出码：0 全部有效；1 无法运行（参数或状态文件错误、浏览器不可用、目标打不开），不写报告；2 已运行但有失败状态、无效图、派生图未产出或扫描出错。
-- 浏览器与隐私：使用本机 Chrome、Chromium、Edge 或 Brave（`PHOENIX_UI_BROWSER` 可指定），无浏览器时退出 1 并说明，其他命令照常；资料目录是临时的，结束后删除；只访问目标页面及其自身加载的资源。`--block-writes` 中止页面、iframe 与 worker 发出的非 GET 请求并逐条记录，`--allow-write <路径>` 放行必要写入；凭据用步骤里的 `env` 引用环境变量，它的值与 URL 中的密码在报告、终端与错误信息中替换为 `***`（页面自己显示在截图里的内容不在此列）。
+- 浏览器与隐私：使用本机 Chrome、Chromium、Edge 或 Brave（`PHOENIX_UI_BROWSER` 可指定），无浏览器时退出 1 并说明，其他命令照常；资料目录是临时的，结束后删除。引擎自身不发请求；浏览器通过启动参数关闭组件更新、账号、时间、搜索和 Safe Browsing 密钥等后台联网，目标页面自己的资源照常加载。在本机 Google Chrome 157.0.8103.40 上未观察到目标页面及其资源之外的请求；Edge、Brave、Chromium 的后台联网尚未逐一验证。`--block-writes` 中止页面、iframe 与 worker 发出的非 GET 请求并逐条记录，`--allow-write <路径>` 放行必要写入；凭据用步骤里的 `env` 引用环境变量，它的值与 URL 中的密码在报告、终端与错误信息中替换为 `***`（页面自己显示在截图里的内容不在此列）。
 - 走查子代理：Phoenix 随包安装 `phoenix-ui-ux-walker`，以不知道任务的首次使用者身份，通过 capture 重放步骤走一条主要路径，报告卡住、走错与犹豫；Web 完工轮在有主要操作流程时与完工评审同轮派出。
+
+## 素材命令（media）
+
+`phoenix-ui media` 为设计稿与方案预览检索开放授权素材。素材只取到当前项目的 `.phoenix-ui/media/`，不复制进产品资产目录、不从产品代码引用，也不把许可清单或署名写进产品。分级描述条目自身的许可；“可上线”并不授权把素材放进当前产品。
+
+```bash
+phoenix-ui media search "old world map|nautical chart" --kind map --sheet
+phoenix-ui media preview C1 C2
+phoenix-ui media search paper --kind texture --use page
+phoenix-ui media fetch C1 T1 --maps all --resolution 1k
+phoenix-ui media search "rocket launch" --kind video
+phoenix-ui media fetch N1 --video-size medium
+phoenix-ui media audit
+```
+
+- `search`：词组以 `|` 分隔；`--kind all|texture|design|photo|blueprint|map|plate|science|video` 分别为全部、材质贴图、设计器物、摄影、测绘图纸、地图、版画、科学和视频；`--limit` 为 1–30，全部默认 12，其余默认 6。`--use page` 只保留“可上线”条目。`--sheet` 下载预览并生成联系表。
+- `preview <编号>…`：为索引里的候选重新生成联系表。
+- `fetch <编号>…`：只认当前素材区的编号。贴图的 `--maps color,roughness,normal` 或 `all` 取颜色、粗糙度与 OpenGL 法线，默认 color；`--resolution 1k|2k|4k|8k` 默认 1k。视频的 `--video-size medium|small|preview|orig` 默认 medium。`--max-mb` 限制单个文件，默认 256（1–2048）。下载超时 `--download-timeout-ms` 默认 180000。
+- `audit [路径…]`：默认核对整个当前项目，只读且不联网。跳过 `.git`、`node_modules` 与当前项目的 `.phoenix-ui/`，不跟随符号链接。
+- 公共选项：`--dir` 可改素材区，但必须仍在当前项目的 `.phoenix-ui/` 内，符号链接不能绕过边界；`--json` 输出结构化报告。联网子命令的 `--timeout-ms` 默认 12000，范围 1000–120000。选项支持 `--key value` 与 `--key=value`。
+
+11 个信源为 Poly Haven、V&A、Wellcome、美国国会图书馆、NASA、Wikimedia Commons、芝加哥艺术博物馆、克利夫兰艺术博物馆、大都会博物馆、Japan Search、荷兰国立博物馆。材质取 Poly Haven；设计器物查各博物馆、Japan Search 与 Poly Haven 模型预览；摄影查 Commons、国会图书馆与 NASA；图纸和地图查国会图书馆及 Commons；版画查 Wellcome、Japan Search 与 Commons；科学查 NASA 与 Wellcome；视频查 NASA。`all` 并发查询全部入口，单个信源失败不影响其余结果。
+
+许可分为 `page`（可上线：许可允许相应用途，仍须核对条目条件）、`check`（需核对：不明确或提及第三方权利）、`reference`（仅参考：非商业、禁止演绎或另需授权）。Poly Haven 为 CC0；美术馆的公有领域或 CC0 项按其声明分级；Japan Search 只取 CC0、公有领域、CC BY、CC BY-SA，ColBase 条目保留“出典：ColBase”署名要求。Commons 按单个文件许可，BY-SA 改色或合成后须同许可共享；V&A 为仅参考。国会图书馆不推定无版权限制，Wellcome 保留条目许可，NASA 保留第三方署名与限制。命令不判断肖像权、商标或具体商业用途。
+
+素材区保存 `index.json`（跨次检索沿用编号）、`sources.json`（逐文件的来源、许可、署名、取用日期、真实尺寸、SHA-256 与完整性）与 `.gitignore`（首次写入 `*`，已有文件不改）。这些文件留在本机；换机器后须重新检索取用。索引不是结果缓存，离线时不会返回旧候选。
+
+`candidates.png` 每格标编号、分级色带与原图尺寸，中文标题看终端或 JSON。`look` 记录整图明暗 `tone`、低饱和度 `mono`、四边色 `edges` 与平均边色 `edge`、边缘是否平坦 `edgeFlat`、浅色纸底 `paper`、可压字区域 `calm` 和宽高比 `ratio`。预览失败的格子显示 `NO PREVIEW`，`look` 为 null。
+
+取用会检查体积、内容类型、文件签名与完整解码：图片必须整张解码成功，坏图不落位、不登记；贴图还核对信源给出的字节数。视频以首帧解码为成功条件，同时生成 `-poster.png`，需要本机浏览器支持该视频编码；浏览器不可用、编码不支持或超时均使该视频取用失败，视频与首帧都不落位。首帧就是第 0 帧，开头是黑场时保留黑图。
+
+交付前运行 `media audit`：`reference` 表示产品引用素材区路径，`copy` 表示存在字节完全相同的副本，`credit` 表示出现来源/下载/许可链接、许可原文或署名。清掉发现后再交付；`credit` 可能碰巧匹配产品文案，主代理判断保留时在交付报告写明依据。
+
+退出码：0 完成且没有错误（搜索零条也为 0）；1 参数/素材区/索引错误、全部编号不存在或全部信源不可用；2 部分信源、预览或取用失败，或 audit 有发现。全部连接失败时明确输出“网络不可用”，不改索引；其他全部失败列出原因。国会图书馆在部分网络下会对非浏览器客户端返回 403，按不可用报告，不绕过限制。
 
 ## 融合用法与 UI 验收
 
