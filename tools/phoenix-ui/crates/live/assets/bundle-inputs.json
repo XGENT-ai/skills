@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "inputSha256": "50e3fb1589e27d4829b3e51cad807dc529bcd6cf678963d4122c4fb59b6e6e20",
+  "inputSha256": "fd085a4094f216c0c08f6e8dba9b0e0a6ecf461ea28f5649eba4074ca2a009f5",
   "inputs": {
     ".cargo/config.toml": {
       "sha256": "716b49c90c25aeeebc4b0359b111a62927d166a1d7f02c4fe83b89d55fb74887",
@@ -63,8 +63,8 @@
       "size": 11996
     },
     "crates/core/src/browser/driver.rs": {
-      "sha256": "5aa292a6598637c483b42cb1d879ae08032d47a05a03d65aca785b591c355f33",
-      "size": 84249
+      "sha256": "1e1004e653067225cc721f3cfb77146750bc9b6b12e2f654458a3aeb48f11599",
+      "size": 84545
     },
     "crates/core/src/browser/element_checks.rs": {
       "sha256": "b7534a5927193b9aaa4c972907960f27479c0b1fcdc2efb2bb1f07e41e90f0b2",
@@ -127,8 +127,8 @@
       "size": 589
     },
     "crates/foundation/src/browser/dom.rs": {
-      "sha256": "69293866b797755aacc5938e7a6f621e4168dea919ea5abb5dce34e81706ede1",
-      "size": 18501
+      "sha256": "b8bb7d0087359f32acccf5dcd759bd742976d6f8b4707f4693628f3c19729ed9",
+      "size": 18504
     },
     "crates/foundation/src/browser/fake_dom.rs": {
       "sha256": "574e7fc94d7cb106fc8e99b0a8514b5789f5cd7b8d9262c729df240a4f70953f",
@@ -303,8 +303,8 @@
   },
   "outputs": {
     "crates/live/assets/detect-antipatterns-browser.js": {
-      "sha256": "6dd1d1bb8fd77491111f8943113848d50534da661b173fedeb345c1c67010c86",
-      "size": 2011257
+      "sha256": "706722fbff65c08623452582197dd7ab9940f4050fc13e1508eb2895c62ae60c",
+      "size": 2011277
     }
   }
 }

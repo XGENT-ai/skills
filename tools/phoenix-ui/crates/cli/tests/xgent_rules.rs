@@ -301,13 +301,21 @@ const URL_EXPECTATIONS: &[(&str, &[&str])] = &[
     // cannot load.
     ("cjk/tight.html", &["xgent/cjk-tight-leading"]),
     ("cjk/long.html", &["xgent/cjk-line-length"]),
-    // Good leading and measure, text under display:none, a nested list.
+    // Good leading and measure, text hidden three ways (display, visibility,
+    // opacity), a nested list.
     ("cjk/clean.html", &[]),
-    // Two paragraphs that wrap, then a heading and a paragraph broken by hand.
+    // Two paragraphs that wrap, a heading and a paragraph broken by hand, a
+    // number made visible inside a hidden inline, then three paragraphs in
+    // two columns: a last line alone in the second column, a number and its
+    // unit either side of the column break, and a number that only sits
+    // beside a unit in the next column.
     (
         "cjk/breaks.html",
         &[
             "xgent/cjk-orphan",
+            "xgent/cjk-split-unit",
+            "xgent/cjk-orphan",
+            "xgent/cjk-split-unit",
             "xgent/cjk-split-unit",
             "xgent/cjk-orphan",
             "xgent/cjk-split-unit",

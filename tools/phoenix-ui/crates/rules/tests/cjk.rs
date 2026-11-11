@@ -442,6 +442,45 @@ fn font_fallback_judges_each_passage_and_reports_a_shared_outcome_once() {
     );
 }
 
+#[test]
+fn font_fallback_leaves_out_nodes_that_are_not_page_content() {
+    let broken = || {
+        let mut facts = run(
+            &["Fixture Han", "sans-serif"],
+            vec![font("PingFang SC", 15)],
+        );
+        facts.failed_web_fonts.push(failed("Fixture Han", 0, false));
+        facts
+    };
+    // An injected panel, the detector's overlay and the live subtree use the
+    // page's broken font too. They come first and last in the document.
+    let reserved = |dom: &mut FakeDom, body: ElId| {
+        let injected = with_fonts(dom, body, vec![broken()]);
+        dom.set_attr(injected, "id", "claude-debug");
+        let overlay = dom.add(Some(body), "div");
+        dom.add_selector(overlay, ".impeccable-overlay");
+        with_fonts(dom, overlay, vec![broken()]);
+    };
+    let (mut dom, body) = page();
+    reserved(&mut dom, body);
+    let own = with_fonts(&mut dom, body, vec![broken()]);
+    let live = dom.add(Some(body), "div");
+    dom.add_selector(live, "[id^=\"impeccable-live-\"]");
+    with_fonts(&mut dom, live, vec![broken()]);
+    // Reported on the page's paragraph, which stands alone on this stack.
+    assert_eq!(
+        fallback_findings(&dom),
+        vec![(
+            Some(own),
+            "web font \"Fixture Han\" failed to load; Han text renders in PingFang SC".to_string()
+        )]
+    );
+
+    let (mut dom, body) = page();
+    reserved(&mut dom, body);
+    assert!(fallback_findings(&dom).is_empty());
+}
+
 // ─── missing facts and degenerate input ────────────────────────────────────
 
 #[test]

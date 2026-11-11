@@ -83,12 +83,16 @@ const MEASURE_JS: &str = r##"(() => {
 
   // A block nested in the element (a sub-list in a list item) is its own
   // passage; only text that flows in the element's own lines belongs to it.
+  // Text that is laid out but not painted (visibility, opacity) keeps its
+  // box, so its rects cannot tell it from text a reader sees.
   const inlineCache = new Map();
   const flowsInline = (el) => {
     let inline = inlineCache.get(el);
     if (inline === undefined) {
-      const display = getComputedStyle(el).display;
-      inline = display.startsWith('inline') || display === 'contents' || display === 'ruby';
+      const style = getComputedStyle(el);
+      const display = style.display;
+      inline = (display.startsWith('inline') || display === 'contents' || display === 'ruby')
+        && (parseFloat(style.opacity) || 0) > 0.01;
       inlineCache.set(el, inline);
     }
     return inline;
@@ -97,9 +101,12 @@ const MEASURE_JS: &str = r##"(() => {
     const nodes = [];
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-      let inline = true;
-      for (let up = node.parentElement; up && up !== el; up = up.parentElement) {
-        if (!flowsInline(up)) { inline = false; break; }
+      // Inherited, and a descendant can switch it back on: read where the
+      // text sits, not along the ancestors.
+      const visibility = getComputedStyle(node.parentElement).visibility;
+      let inline = visibility !== 'hidden' && visibility !== 'collapse';
+      for (let up = node.parentElement; inline && up && up !== el; up = up.parentElement) {
+        inline = flowsInline(up);
       }
       if (inline) nodes.push(node);
     }
@@ -121,7 +128,10 @@ const MEASURE_JS: &str = r##"(() => {
       range.setEnd(node, i + size);
       for (const rect of range.getClientRects()) {
         if (rect.width > 0 && rect.height > 0) {
-          chars.push({ ch: text.slice(i, i + size), top: rect.top, bottom: rect.bottom });
+          chars.push({
+            ch: text.slice(i, i + size), top: rect.top, bottom: rect.bottom,
+            left: rect.left, right: rect.right,
+          });
           break;
         }
       }
@@ -132,24 +142,40 @@ const MEASURE_JS: &str = r##"(() => {
   };
   // Same row test as the snapshot's line rects: vertical bands that overlap
   // by more than half the shorter one are one line.
+  const sameRow = (line, c) => {
+    const overlap = Math.min(line.bottom, c.bottom) - Math.max(line.top, c.top);
+    return overlap > Math.min(line.bottom - line.top, c.bottom - c.top) / 2;
+  };
+  // Text set in columns: the rows of one column are level with the rows of
+  // the next without being the same lines. Characters come in reading order,
+  // so the one that sits above the line before it and to the right of all
+  // the text since the last such jump is the top of the next column; a row
+  // is only looked for within its column. Lines read column by column.
   const linesOf = (nodes) => {
     const lines = [];
+    let column = 0;
+    let right = -Infinity;
+    let last = null;
     for (const node of nodes) {
       for (const c of charsOf(node)) {
+        if (last && c.top < last.top && c.left >= right && !sameRow(last, c)) {
+          column += 1;
+          right = -Infinity;
+        }
         let line = null;
-        for (let i = lines.length - 1; i >= 0; i--) {
-          const overlap = Math.min(lines[i].bottom, c.bottom) - Math.max(lines[i].top, c.top);
-          const shorter = Math.min(lines[i].bottom - lines[i].top, c.bottom - c.top);
-          if (overlap > shorter / 2) { line = lines[i]; break; }
+        for (let i = lines.length - 1; i >= 0 && lines[i].column === column; i--) {
+          if (sameRow(lines[i], c)) { line = lines[i]; break; }
         }
         if (!line) {
-          line = { top: c.top, bottom: c.bottom, text: '' };
+          line = { column, top: c.top, bottom: c.bottom, text: '' };
           lines.push(line);
         }
         line.text += c.ch;
+        last = line;
+        right = Math.max(right, c.right);
       }
     }
-    return lines.sort((a, b) => a.top - b.top).map(line => line.text);
+    return lines.sort((a, b) => a.column - b.column || a.top - b.top).map(line => line.text);
   };
 
   const unquote = (name) => name.trim().replace(/^["']|["']$/g, '').trim();

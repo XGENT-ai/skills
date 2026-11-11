@@ -255,7 +255,7 @@ pub trait Dom {
         None
     }
     /// The text on each rendered line of the element (inline descendants
-    /// included), top to bottom. `None` when this DOM did not record it.
+    /// included), in reading order. `None` when this DOM did not record it.
     fn text_line_texts(&self, _el: ElId) -> Option<Vec<String>> {
         None
     }

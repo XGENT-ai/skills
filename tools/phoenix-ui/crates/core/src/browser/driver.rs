@@ -1303,6 +1303,27 @@ fn browser_value_ignored(f: &BrowserFinding, entries: &[(String, String)]) -> bo
     })
 }
 
+/// Nodes that are not the page's own content: the detector's overlay chrome,
+/// UI a host agent injects (`claude-` / `cic-` ids) and the live-mode subtree.
+/// The element loop skips them; a page rule that walks the document itself
+/// has to ask.
+pub fn is_reserved_node(dom: &dyn Dom, el: ElId) -> bool {
+    if super::dom::closest_or_none(
+        dom,
+        el,
+        ".impeccable-overlay, .impeccable-label, .impeccable-banner, .impeccable-tooltip",
+    )
+    .is_some()
+    {
+        return true;
+    }
+    let el_id = super::dom::safe_id(dom, el);
+    if el_id.starts_with("claude-") || el_id.starts_with("cic-") {
+        return true;
+    }
+    super::dom::closest_or_none(dom, el, "[id^=\"impeccable-live-\"]").is_some()
+}
+
 /// JS: index.mjs#collectBrowserFindings()
 pub fn collect_browser_findings(dom: &dyn Dom, config: &BrowserConfig) -> CollectResult {
     use super::element_checks as ec;
@@ -1343,20 +1364,7 @@ pub fn collect_browser_findings(dom: &dyn Dom, config: &BrowserConfig) -> Collec
     let body_key = body.unwrap_or(0);
 
     for el in dom.query_all(None, "*").unwrap_or_default() {
-        if super::dom::closest_or_none(
-            dom,
-            el,
-            ".impeccable-overlay, .impeccable-label, .impeccable-banner, .impeccable-tooltip",
-        )
-        .is_some()
-        {
-            continue;
-        }
-        let el_id = super::dom::safe_id(dom, el);
-        if el_id.starts_with("claude-") || el_id.starts_with("cic-") {
-            continue;
-        }
-        if super::dom::closest_or_none(dom, el, "[id^=\"impeccable-live-\"]").is_some() {
+        if is_reserved_node(dom, el) {
             continue;
         }
         if Some(el) == body || Some(el) == root {

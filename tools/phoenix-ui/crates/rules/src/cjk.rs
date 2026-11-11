@@ -14,6 +14,7 @@
 use impeccable_core::browser::dom::{
     has_direct_text_longer_than, pf0, HanFontRun, RenderedFont, GENERIC_FONT_FAMILIES,
 };
+use impeccable_core::browser::driver::is_reserved_node;
 use impeccable_core::browser::element_checks::is_rendered_for_browser_rule;
 use impeccable_core::browser::{BrowserFinding, Dom, ElFinding, ElId};
 use impeccable_core::checks::measures::resolve_length_px;
@@ -252,7 +253,9 @@ fn font_fallback(dom: &dyn Dom) -> Vec<ElFinding> {
         let Some(facts) = dom.han_font_facts(el) else {
             continue;
         };
-        if passage(dom, el).is_none() {
+        // The driver keeps reserved nodes from element rules only; this page
+        // rule walks the document on its own.
+        if is_reserved_node(dom, el) || passage(dom, el).is_none() {
             continue;
         }
         let mut seen: Vec<(String, u8)> = Vec::new();

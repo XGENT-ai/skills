@@ -8,6 +8,10 @@
   .narrow { width: min-content; word-break: keep-all; line-height: 1.7; }
   h2 { line-height: 1.3; }
   .manual { line-height: 1.7; }
+  .unseen { visibility: hidden; }
+  .seen { visibility: visible; }
+  .columns { width: 30em; height: 4.5em; margin: 0; columns: 2; column-fill: auto; line-height: 2; }
+  .columns p { margin: 0; }
 </style>
 </head>
 <body>
@@ -17,5 +21,12 @@
   <!-- A manual break is a break like any other. -->
   <h2>页面扫描新增五条中文排版规<br>则</h2>
   <p class="manual">本次扫描覆盖全部页面总共耗时 38<br>秒才最终全部完成</p>
+  <!-- Visible text inside a hidden inline is still text on the line. -->
+  <p class="narrow">本次扫描覆盖全部页面总共耗时<span class="unseen"><span class="seen">38</span></span> 秒才最终全部完成</p>
+  <!-- Two lines to a column. The lines of the second column follow the first column's;
+       they do not continue the lines beside them. -->
+  <p class="columns">页面扫描新增五条中文规则<br>它们只读取渲染之后的文字<br>并且逐行核对每一段的末<br>行</p>
+  <div class="columns"><p>本次扫描覆盖了全部的页面<br>从开始到结束总共耗时 38<br>秒才最终全部完成<br>随后输出完整报告</p></div>
+  <div class="columns"><p>这一页里总共检查了段落 12<br>每一段都要逐行地核对<br>秒表计时显示用时很短<br>结果随后写入报告</p></div>
 </body>
 </html>

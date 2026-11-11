@@ -74,7 +74,10 @@ in `ScanOptions.rule_pack`, `TextOptions.rule_pack`,
 `DetectHtmlOptions.rule_pack` and `BrowserConfig.rule_pack`. Pack findings are
 appended after the built-in passes and before inline ignores, so
 `phoenix-ui-disable` waives them like built-in rules. The in-page WASM
-detector runs the built-in rules only.
+detector runs the built-in rules only. The driver calls `check_element_dom`
+only on page content; `check_page_dom` walks the document itself and has to
+leave out the overlay, injected agent UI and the live subtree with
+`driver::is_reserved_node`.
 
 A pack can take a built-in rule over on an element: the driver asks
 `replaces_builtin(dom, el)` after the built-in element rules and drops the
@@ -86,7 +89,8 @@ instead; switching a Chinese rule off does not bring the built-in back.
 When a pack is present, the URL engine runs a typography probe
 (`crates/browser/src/typography.rs`) after the snapshot and hands the result
 to `SnapshotDom::set_typography`. Rules read it through
-`Dom::text_line_texts` (the text on each rendered line) and
+`Dom::text_line_texts` (the painted text on each rendered line, in reading
+order: column by column where the text is set in columns) and
 `Dom::han_font_facts` (the fonts that rendered an element's Han characters,
 read over CDP from a hidden copy of that text that is removed again). Both
 answer `None` wherever nothing measured them, which is always the case for the
