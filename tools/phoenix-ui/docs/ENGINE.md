@@ -12,7 +12,7 @@ ENGINE_VERSION          the engine version the launcher reports
 .cargo/config.toml      the `cargo xtask` alias
 browser-bundle/         the page JS the in-page detector bundle is built from
 crates/
-  cli          the `phoenix-ui` binary: verb router, exit codes, native capture
+  cli          the `phoenix-ui` binary: verb router, exit codes, native capture, media, prep-image
   common       Io handle (stdout/stderr/stdin/env/cwd), path + process helpers
   context      context, doctor, staleness, signals, concept-seed, critique, ...
   hook         the design hook (hook, hook-before-edit, hook-admin)

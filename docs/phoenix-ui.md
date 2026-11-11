@@ -141,7 +141,7 @@ phoenix-ui media search paper --kind texture --use page
 phoenix-ui media fetch C1 T1 --maps all --resolution 1k
 phoenix-ui media search "rocket launch" --kind video
 phoenix-ui media fetch N1 --video-size medium
-phoenix-ui media audit
+phoenix-ui media audit src public
 ```
 
 - `search`：词组以 `|` 分隔；`--kind all|texture|design|photo|blueprint|map|plate|science|video` 分别为全部、材质贴图、设计器物、摄影、测绘图纸、地图、版画、科学和视频；`--limit` 为 1–30，全部默认 12，其余默认 6。`--use page` 只保留“可上线”条目。`--sheet` 下载预览并生成联系表。
@@ -160,9 +160,42 @@ phoenix-ui media audit
 
 取用会检查体积、内容类型、文件签名与完整解码：图片必须整张解码成功，坏图不落位、不登记；贴图还核对信源给出的字节数。视频以首帧解码为成功条件，同时生成 `-poster.png`，需要本机浏览器支持该视频编码；浏览器不可用、编码不支持或超时均使该视频取用失败，视频与首帧都不落位。首帧就是第 0 帧，开头是黑场时保留黑图。
 
-交付前运行 `media audit`：`reference` 表示产品引用素材区路径，`copy` 表示存在字节完全相同的副本，`credit` 表示出现来源/下载/许可链接、许可原文或署名。清掉发现后再交付；`credit` 可能碰巧匹配产品文案，主代理判断保留时在交付报告写明依据。
+交付前对实际产品源码和静态资源路径运行 `media audit <路径…>`（如 `media audit src public`），避免把项目内安装的技能文档当作产品扫描；省略路径时扫描当前目录：`reference` 表示产品引用素材区路径，`copy` 表示存在字节完全相同的副本，`credit` 表示出现来源/下载/许可链接、许可原文或署名。清掉发现后再交付；`credit` 可能碰巧匹配产品文案，主代理判断保留时在交付报告写明依据。
 
 退出码：0 完成且没有错误（搜索零条也为 0）；1 参数/素材区/索引错误、全部编号不存在或全部信源不可用；2 部分信源、预览或取用失败，或 audit 有发现。全部连接失败时明确输出“网络不可用”，不改索引；其他全部失败列出原因。国会图书馆在部分网络下会对非浏览器客户端返回 403，按不可用报告，不绕过限制。
+
+## 交付图片处理（prep-image）
+
+```bash
+phoenix-ui embed-prompt src/assets/hero.png --prompt "项目图片的来源说明"
+phoenix-ui prep-image src/assets/hero.png --width 600 --widths 600,1200 --out public/img
+phoenix-ui prep-image src/assets/logo.png --width 300 --trim --out public/img
+phoenix-ui prep-image src/assets/hero.png --width 600 --crop 16:9 --out public/img
+phoenix-ui embed-prompt --scan public/img
+```
+
+`prep-image` 完全离线，接受 PNG、JPEG、WebP 文件或目录（仅当前层的这三种图片）。输入没有内嵌来源或 `<图片>.json` 旁注时拒绝该文件，先用 `embed-prompt` 写入准确来源。目录输入必须指定 `--out`，且不能输出回该输入目录。
+
+- `--width <显示宽>` 导出显示宽的 2 倍；`--widths <像素宽,…>` 增加实际像素宽版本，至少给一个选项，两者可同给，取值 1–16384。超过原图宽时不放大，报告注明并去重。
+- `--trim` 裁全透明边；`--crop <宽:高>` 居中裁切，也接受 `/`、`x` 或小数（0.01–100）。先应用 EXIF 方向，再裁透明边、按比例裁切、缩放；全透明图、APNG 和动画 WebP 被拒绝。
+- 不透明像素输出 JPEG，`--quality 1–100` 默认 82；有透明像素输出无损 WebP，缩放使用预乘 alpha 避免暗边，保留原 ICC 配置。不提供有损 WebP、AVIF 或格式选项。
+- `--out <目录>` 默认各输入所在目录。文件名为 `<原文件名去扩展名>-<像素宽>.jpg|webp`；本批输出与任何输入冲突或不同输入命中同一输出时，相关输入失败，不覆盖原图；其他既有同名输出可覆盖。
+- 两个以上输出生成按宽度升序的 `srcset`/`sizes` 片段，路径相对当前目录并 URL 编码。`--sizes` 可改 sizes；有 `--width W` 时默认 `(max-width: Wpx) 100vw, Wpx`，否则 `100vw`。
+
+原图字节保持不变，报告列出 SHA-256、输出像素尺寸与体积，`--json` 返回结构化报告。来源载体沿用 `embed-prompt`：PNG 的 tEXt、JPEG 的 COM（文字过长改旁注）、WebP 的 `<图片>.json` 旁注；移动 WebP 时须同时移动旁注。输出可直接 `embed-prompt --read` 或 `--scan`。
+
+退出码：0 全部成功；1 参数错误或没有输入，不写文件；2 个别输入失败，其余照常处理。
+
+## 联网边界
+
+| 命令 | 联网范围 |
+| --- | --- |
+| `context`、`hook`、`detect <源码文件>` | 不发起外网请求，保留既有本机端口探测 |
+| `detect <url>`、`capture` | 目标页面与其自身资源；浏览器自身后台请求的验证范围见上文“浏览器与隐私” |
+| `media search/preview/fetch` | 显式调用时访问素材信源与条目提供的图片地址；`media audit` 不联网 |
+| `prep-image` | 纯本地图片处理，不联网 |
+
+以上命令运行时不自动更新或下载 engine。
 
 ## 融合用法与 UI 验收
 

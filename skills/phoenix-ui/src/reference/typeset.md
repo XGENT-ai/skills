@@ -71,7 +71,7 @@ These are starting points, not hard rules. Where the project's DESIGN.md says ot
 - **Size:** body copy starts at 16–18px on reading pages, 14–16px in product interfaces, and 13–14px in dense tools used for long sessions. Do not manufacture refinement with 9–12px explanatory text.
 - **Line height:** body copy 1.6–1.75. Multi-line Chinese headings start at 1.2–1.35; check at every viewport that glyphs on adjacent lines do not collide. Never fix a heading's height to a single line, and never squeeze the content after it with a negative margin.
 - **Measure:** about 25–40 Han characters per line of body copy.
-- **Line breaks:** wrap a number with its unit, and any term that must not split, in a no-wrap span. Break short passages such as first-viewport descriptions and captions by hand, at sense boundaries. A last line left with only one or two characters, or a word split across two lines, is a defect.
+- **Line breaks:** wrap a number with its unit, and any term that must not split, in a no-wrap span. Break short passages such as first-viewport descriptions and captions by hand, at sense boundaries. A last line left with only one or two characters, or a word split across two lines, is a defect. Prefer `<br>` for semantic breaks; wrapping an entire passage in an inline-block span puts that passage outside the `xgent/cjk-*` page rules and font notes.
 - **Mixed Chinese and Latin:** check baseline alignment and visual weight between the two scripts. Condensed display faces are for display headings and very short labels only.
 - **Font fallback:** check which font actually renders the Han characters. Fix what `xgent/cjk-font-fallback` reports; a generic family resolving normally is not a problem.
 

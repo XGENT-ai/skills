@@ -7,18 +7,22 @@ metadata:
   internal: true
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: 41f82846c59f857443f10f209214fbba2cc5e175ce6f39aefe38e59dc362a6dd
+  source_sha256: bf4fd94c4e6dd22e28b753917c06e37ac1ad602bb389b21abdf6cd02b694d4a3
 ---
 
 Phoenix UI provides local design tools for any UI project, including standalone sites, applications, and embedded interfaces. Follow the target project's product truth, accepted direction, and design rules; derive platform and host constraints from that project's own context. Use the command references to create complete, accessible interfaces with a clear visual direction.
 
-Install this runtime through `@xgent-ai/skills` on npm. Source copies from skills.sh do not include an engine installation. The engine does not update or download during context, detection, or hooks. Explicit `engine install` restores the version pinned by the installed package.
+Install this runtime through `@xgent-ai/skills` on npm. Source copies from skills.sh do not include an engine installation. The engine does not update or download during context, detection, or hooks. Only `media` accesses media sources, and only when invoked. Explicit `engine install` restores the version pinned by the installed package.
 
 Core principles:
 - Go all out. No hedging, no shortcuts. The deliverable must be complete (except assets the user must provide).
 - Dream big and bold. Distinct, beautiful, outstanding and highly inspiring work.
 - Let the coding agent choose sub-agents and parallelism for efficiency under its own orchestration policy and the user's constraints. Phoenix adds no separate approval or waiting step for delegation.
 - Keep Phoenix design self-QA to one batched inspection and at most one confirmation after fixing the findings. This ceiling applies to the design pass. Independent review-ui/apply-ui-review cycles and work the user has authorized follow their own completion conditions. Finish-reviewer and component-review evidence do not close an independent UI acceptance cycle.
+
+## Media requests
+
+Before each `media search` or `media fetch`, send a short message to the user naming the subject and preview use—for example, “我会检索真实古地图，用于预览稿选图。” Then call the command. This message must precede the tool call; its tool description or a final explanation does not replace it. Continue directly after the message, without asking for approval. Read the media clauses in [new-work.md](reference/new-work.md) before searching: open the contact sheet, show use grades, and keep fetched media under `.phoenix-ui/`. After using fetched media in a preview, run `<skill-base-dir>/scripts/phoenix-ui media audit <product-paths...>` over the actual product source and shipped asset paths, and report the result before delivery.
 
 ## Setup
 
