@@ -122,14 +122,19 @@ test('render imports from standard input without running the CLI', t => {
 });
 
 for (const snapshot of [false, true]) {
-  test(`CLI renders through a symlink with ${snapshot ? '--assets-from' : 'two arguments'}`, t => {
+  test(`CLI renders through a symlink with ${snapshot ? '--assets-from' : 'two arguments'}`, async t => {
     const w = workspace(t), text = draft('![Pixel](pixel.png)');
     fs.writeFileSync(path.join(w.dir, 'pixel.png'), Buffer.from([0, 1, 2, 255]));
     const direct = w.run(text);
     assert.equal(direct.status, 0, direct.stderr);
     const expected = fs.readFileSync(w.output, 'utf8');
-    fs.renameSync(w.output, path.join(w.dir, 'snapshot.html'));
-    if (snapshot) fs.unlinkSync(path.join(w.dir, 'pixel.png'));
+    if (snapshot) {
+      assert.doesNotMatch(expected, /id="elintp-assets"/);
+      const { renderPage } = await import(script);
+      const review = renderPage(text, { cwd: w.dir, review: { round: 1, pageKey: 'key', items: [] } });
+      fs.writeFileSync(path.join(w.dir, 'snapshot.html'), review.html);
+      fs.unlinkSync(path.join(w.dir, 'pixel.png'));
+    }
     fs.symlinkSync(path.dirname(script), path.join(w.dir, 'scripts'), 'dir');
     const args = [path.join(w.dir, 'scripts/render.mjs'), 'draft.md', w.output];
     if (snapshot) args.push('--assets-from', 'snapshot.html');
@@ -143,24 +148,33 @@ for (const snapshot of [false, true]) {
   });
 }
 
-test('p2 final content and resource snapshots round-trip safely without original files', async t => {
+test('p2 final content and review resource snapshots round-trip safely without original files', async t => {
   const w = workspace(t), text = draft('</script><script>literal</script> \u2028\u2029\n\n![Pixel](pixel.png)\n\n![Missing](absent.png)\n\n:::figure Reader\nreader: reader.html\n:::');
   const assets = { 'pixel.png': Buffer.from([0, 1, 2, 255]).toString('base64'), 'absent.png': null,
     'reader.html': Buffer.from('<!doctype html><html><head></head><body>Reader original</body></html>').toString('base64') };
   const { renderPage } = await import(script);
   const review = renderPage(text, { cwd: w.dir, assets, review: { round: 2, pageKey: 'key', items: [] } });
-  fs.writeFileSync(w.output, review.html);
+  assert.deepEqual(embedded(review.html, 'elintp-assets'), assets);
+  fs.writeFileSync(path.join(w.dir, 'review.html'), review.html);
   fs.writeFileSync(path.join(w.dir, 'draft.md'), text);
-  // Same input/output HTML path proves the snapshot is consumed before replacement.
-  const result = spawnSync(process.execPath, [script, 'draft.md', w.output, '--assets-from', w.output], { cwd: w.dir, encoding: 'utf8' });
+  const result = spawnSync(process.execPath, [script, 'draft.md', w.output, '--assets-from', 'review.html'], { cwd: w.dir, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   const html = fs.readFileSync(w.output, 'utf8');
   assert.equal(embedded(html, 'elintp-draft'), text);
-  assert.deepEqual(embedded(html, 'elintp-assets'), assets);
+  assert.doesNotMatch(html, /id="elintp-assets"/);
   assert.match(html, /data:image\/png;base64,AAEC\/w==/);
   assert.match(html, /Reader original/);
   assert.doesNotMatch(html, /<script>literal<\/script>/);
   const old = html;
+  const noSnapshot = spawnSync(process.execPath, [script, 'draft.md', w.output, '--assets-from', w.output], { cwd: w.dir, encoding: 'utf8' });
+  assert.equal(noSnapshot.status, 1);
+  assert.match(noSnapshot.stderr, /没有资源快照.*审阅页.*result\.json/);
+  assert.equal(fs.readFileSync(w.output, 'utf8'), old);
+  const legacy = html.replace('</body>', `<script type="application/json" id="elintp-assets">${JSON.stringify(assets)}</script></body>`);
+  fs.writeFileSync(path.join(w.dir, 'legacy.html'), legacy);
+  const legacyResult = spawnSync(process.execPath, [script, 'draft.md', 'legacy-final.html', '--assets-from', 'legacy.html'], { cwd: w.dir, encoding: 'utf8' });
+  assert.equal(legacyResult.status, 0, legacyResult.stderr);
+  assert.equal(fs.readFileSync(path.join(w.dir, 'legacy-final.html'), 'utf8'), old);
   fs.writeFileSync(path.join(w.dir, 'bad.json'), JSON.stringify({ assets: { 'pixel.png': 'bad!' } }));
   const bad = spawnSync(process.execPath, [script, 'draft.md', w.output, '--assets-from', 'bad.json'], { cwd: w.dir, encoding: 'utf8' });
   assert.equal(bad.status, 1);
@@ -192,8 +206,10 @@ test('p2 final output is deterministic and snapshot bytes override current files
   fs.writeFileSync(path.join(w.dir, 'result.json'), JSON.stringify({ assets }));
   const { renderPage } = await import(script);
   const expected = renderPage(text, { cwd: w.dir, assets }).html;
+  assert.doesNotMatch(expected, /id="elintp-assets"/);
+  const review = renderPage(text, { cwd: w.dir, assets, review: { round: 1, pageKey: 'key', items: [] } });
   for (const source of ['result.json', 'snapshot.html']) {
-    fs.writeFileSync(path.join(w.dir, 'snapshot.html'), expected);
+    fs.writeFileSync(path.join(w.dir, 'snapshot.html'), review.html);
     const result = spawnSync(process.execPath, [script, 'draft.md', w.output, '--assets-from', source], { cwd: w.dir, encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
     assert.equal(fs.readFileSync(w.output, 'utf8'), expected);

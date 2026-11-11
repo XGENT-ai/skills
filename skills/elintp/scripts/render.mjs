@@ -22,9 +22,10 @@ export function validateAssets(assets) {
 
 export function readAssetSnapshot(file) {
   const text = readFileSync(file, 'utf8');
-  const data = text.trimStart().startsWith('{') ? JSON.parse(text).assets
-    : JSON.parse(text.match(/<script type="application\/json" id="elintp-assets">([\s\S]*?)<\/script>/)?.[1] || 'null');
-  return validateAssets(data);
+  if (text.trimStart().startsWith('{')) return validateAssets(JSON.parse(text).assets);
+  const match = text.match(/<script type="application\/json" id="elintp-assets">([\s\S]*?)<\/script>/);
+  if (!match) throw new Error(`${file} 没有资源快照；新终稿不含快照，请改用当前审阅页或 result.json。`);
+  return validateAssets(JSON.parse(match[1]));
 }
 
 export function renderPage(text, { cwd, assets = null, review = null }) {
@@ -40,14 +41,16 @@ export function renderPage(text, { cwd, assets = null, review = null }) {
     SECTIONS: sections.map((section, i) => `<section id="s${i + 1}" data-slot="${section.slot}">${section.slot === 'more' ? '' : `<p class="slot-label">${ui[section.slot]}</p>`}<h2>${esc(section.title)}</h2>${section.blocks.join('\n')}</section>`).join('\n'),
     SOURCES: meta.source.length ? `<footer class="sources"><h2>${ui.sources}</h2>${meta.source.map(source => `<p>${esc(source)}</p>`).join('')}</footer>` : '',
   };
-  parts.DATA = `<script type="application/json" id="elintp-assets">${embedJson(parsed.assets)}</script>`;
+  parts.DATA = review
+    ? `<script type="application/json" id="elintp-assets">${embedJson(parsed.assets)}</script>`
+    : `<script type="application/json" id="elintp-draft">${embedJson(text)}</script>`;
   parts.REVIEWCSS = '';
   parts.REVIEWJS = '';
   if (review) {
     parts.DATA += `<script type="application/json" id="elintp-review">${embedJson({ schemaVersion: 1, title: meta.title, ...review, draft: text, ui: ui.review })}</script>`;
     parts.REVIEWCSS = `<style>${readFileSync(join(ASSETS, 'review.css'), 'utf8')}</style>`;
     parts.REVIEWJS = `<script>${readFileSync(join(ASSETS, 'review.js'), 'utf8')}</script>`;
-  } else parts.DATA += `<script type="application/json" id="elintp-draft">${embedJson(text)}</script>`;
+  }
   parts.JS = readFileSync(join(ASSETS, 'page.js'), 'utf8');
   parts.CSS = readFileSync(join(ASSETS, 'page.css'), 'utf8');
   const html = readFileSync(join(ASSETS, 'page.html'), 'utf8').replace(/\/\*__([A-Z]+)__\*\//g, (_, key) => parts[key]);
@@ -55,7 +58,7 @@ export function renderPage(text, { cwd, assets = null, review = null }) {
 }
 
 function main(args) {
-  if (args.length !== 2 && !(args.length === 4 && args[2] === '--assets-from')) fail(['用法：node render.mjs <内容稿.md> <输出.html> [--assets-from <页面.html或结果.json>]'], 1);
+  if (args.length !== 2 && !(args.length === 4 && args[2] === '--assets-from')) fail(['用法：node render.mjs <内容稿.md> <输出.html> [--assets-from <含快照的审阅页或旧 P2 终稿 HTML / result.json>]'], 1);
   try {
     const result = renderPage(readFileSync(args[0], 'utf8'), { cwd: process.cwd(), assets: args.length === 4 ? readAssetSnapshot(args[3]) : null });
     if (result.errors.length) fail(result.errors, 2);

@@ -2,7 +2,7 @@
 
 写内容稿前读本文件。内容稿是受限 Markdown；只负责内容、数据和本地文件引用。页面的样式与布局由脚本固定，不写 CSS、布局参数或图形坐标。自绘降级图另存为 SVG。
 
-默认用下节的 `review.mjs` 生成可提交意见的本机审阅页，作者确认后用 `render.mjs` 生成离线终稿。相对路径按运行命令的当前目录解析，跨目录时可用绝对路径。成功生成打印 `PAGE:`；退出码 2 时按位置、问题与改法修正内容稿或局部修订，旧页面不会被覆盖。P2 审阅页和终稿都内嵌精确内容稿与原引用资源快照，可在原工作目录丢失后恢复；P1 旧页没有这些数据。
+默认用下节的 `review.mjs` 生成可提交意见的本机审阅页，作者确认后用 `render.mjs` 生成离线终稿。相对路径按运行命令的当前目录解析，跨目录时可用绝对路径。成功生成打印 `PAGE:`；退出码 2 时按位置、问题与改法修正内容稿或局部修订，旧页面不会被覆盖。P2 审阅页内嵌精确内容稿与原引用资源快照，可在原工作目录丢失后恢复；终稿只保留内容稿数据，不保存第二份资源快照。只拿新终稿重新开审时，资源需来自原目录或最近的审阅页 / result.json；P1 旧页没有这些数据。
 
 ## 审阅、恢复与终稿
 
@@ -36,10 +36,10 @@ node <本 skill 目录>/scripts/review.mjs <当前内容稿.md> <审阅页.html>
 | --- | --- |
 | 审阅页 `elintp-review` | `{schemaVersion:1,title,round,pageKey,draft,items,ui}`；`draft` 是当前稿精确原文，`items` 是上一轮保留项，不代表本轮尚未提交的浏览器意见 |
 | 终稿 `elintp-draft` | JSON 字符串，解码后逐字等于内容稿 |
-| 两类页面 `elintp-assets` | 对象：原始引用字符串 → 原资源精确字节的 base64；缺失图片为 `null`，无资源为 `{}` |
+| 审阅页 `elintp-assets` | 对象：原始引用字符串 → 原资源精确字节的 base64；缺失图片为 `null`，无资源为 `{}` |
 | `result.json` | `{schemaVersion:1,title,round,submittedAt,draft,assets,items}`；成功提交的完整轮次和资源快照 |
 
-可用 Node 标准库从 P2 页面提取当前稿和资源快照到临时目录：
+可用 Node 标准库从 P2 审阅页提取当前稿和资源快照，或从终稿只提取当前稿到临时目录：
 
 ```sh
 node - <页面.html> <恢复稿.md> <资源快照.json> <<'JS'
@@ -53,15 +53,16 @@ function embedded(id) {
 const review = embedded('elintp-review');
 const draft = review ? review.draft : embedded('elintp-draft');
 const assets = embedded('elintp-assets');
-if (typeof draft !== 'string' || !assets) throw new Error('页面没有 P2 内容稿或资源快照');
+if (typeof draft !== 'string') throw new Error('页面没有 P2 内容稿');
 fs.writeFileSync(draftPath, draft);
-fs.writeFileSync(assetsPath, JSON.stringify(assets, null, 2) + '\n');
+if (assets) fs.writeFileSync(assetsPath, JSON.stringify(assets, null, 2) + '\n');
+else console.error('新终稿不含资源快照；重新开审时，资源需来自原目录或最近的审阅页 / result.json。');
 JS
 ```
 
 已有 `result.json` 时，读取其中的 `draft/assets/items`；下一轮直接用它作 `--previous`。可同时保留当前审阅页，以它提取的稿本为当前版本，并核对结果轮次。不要把终稿或只有资源映射的 JSON 当成上一轮提交结果。
 
-只有审阅页和另存的**已提交意见**时，可重建上一结果：`schemaVersion` 为 1，`title/round/draft` 取自 `elintp-review`，`assets` 取自 `elintp-assets`，`items` 填实际已提交意见。每项形如 `{blockId:"s1:b1",sectionId:"s1",section:"小节标题",quote:"原块引文",kind:"unclear",note:"原意见"}`；`kind` 仅 `unclear/question/suggestion`，`note` 可省略，`quote` 是可见文字折叠空白后开头 80 个 Unicode 字符。lead 的 `sectionId` 为 `lead`，其小节名用页面标题；正文依次为 `s1…sn`。`submittedAt` 无法核实时省略，不伪造时间或未发生的提交。缺少必要字段、无效轮次或标题不匹配会被拒绝，不猜测修复。
+只有审阅页和另存的**已提交意见**时，可重建上一结果：`schemaVersion` 为 1，`title/round/draft` 取自 `elintp-review`，`assets` 取自 `elintp-assets`，`items` 填实际已提交意见。每项形如 `{blockId:"s1:b1",sectionId:"s1",section:"小节标题",quote:"原块引文",kind:"unclear",note:"原意见"}`；`kind` 仅 `unclear/question/suggestion`，`note` 可省略。普通块的 `quote` 是可见文字折叠空白后开头 80 个 Unicode 字符；空图注图片使用内容稿中的完整原引用，不折叠空白、trim 或截断。lead 的 `sectionId` 为 `lead`，其小节名用页面标题；正文依次为 `s1…sn`。`submittedAt` 无法核实时省略，不伪造时间或未发生的提交。缺少必要字段、无效轮次或标题不匹配会被拒绝，不猜测修复。
 
 只查看或恢复单个图文件时，以原引用为键从 `assets` 取值，用 `Buffer.from(value, 'base64')` 写入该资源工作文件；值为 `null` 表示审阅时图片就已缺失。无需还原全部旧目录。不要把意见文字当作文件路径。
 
@@ -73,9 +74,9 @@ JS
 node <本 skill 目录>/scripts/render.mjs <当前内容稿.md> <终稿.html> --assets-from <当前审阅页.html>
 ```
 
-`--assets-from` 也接受完整 `result.json` 或 P2 终稿 HTML。脚本先读完快照再写输出，所以可与输出 HTML 同路径；同键资源（含 `null`）始终取快照，不回读已变化的原文件，新引用才从当前目录读取。省略此选项仍是原两参数终稿命令，从当前目录读取资源。
+`--assets-from` 也接受完整 `result.json` 或含快照的旧 P2 终稿 HTML；不含快照的新终稿会退出 1 并提示改用当前审阅页或 result.json，输出文件不动。脚本先读完快照再写输出，所以可与输出 HTML 同路径；同键资源（含 `null`）始终取快照，不回读已变化的原文件，新引用才从当前目录读取。省略此选项仍是原两参数终稿命令，从当前目录读取资源。
 
-终稿重新渲染正文，保留 `elintp-draft` 与 `elintp-assets`，不保留审阅脚本、控件、意见、轮次、pageKey、结果路径或连接。不要用正则删除审阅节点来制造终稿。实际断网打开终稿，核对正文、图、出处、主题与大纲；交付单文件，不附临时结果。参数、快照、I/O 与监听失败退出 1；格式或局部修订错误退出 2。手写降级页不带审阅能力，不伪造结果。
+终稿重新渲染正文，只保留 `elintp-draft`，不保留 `elintp-assets`、审阅脚本、控件、意见、轮次、pageKey、结果路径或连接。不要用正则删除审阅节点来制造终稿。实际断网打开终稿，核对正文、图、出处、主题与大纲；交付单文件，不附临时结果。参数、快照、I/O 与监听失败退出 1；格式或局部修订错误退出 2。手写降级页不带审阅能力，不伪造结果。
 
 ## 页头与小节
 

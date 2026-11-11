@@ -2,19 +2,25 @@
   'use strict';
   const data = JSON.parse(document.getElementById('elintp-review').textContent);
   const ui = data.ui, key = `elintp-review:${data.pageKey}:r${data.round}`;
-  const catalog = [];
-  function register(element, sectionId) {
-    const text = element.matches('figure') ? element.querySelector('figcaption').innerText : element.innerText;
-    const quote = [...text.replace(/\s+/g, ' ').trim()].slice(0, 80).join('');
+  const catalog = [], registered = new Set();
+  function register(element, sectionId, useReference = false) {
+    const text = useReference ? element.dataset.ref : element.matches('figure') ? element.querySelector('figcaption').innerText : element.innerText;
+    const quote = useReference ? text : [...text.replace(/\s+/g, ' ').trim()].slice(0, 80).join('');
     if (!quote) return;
     const number = catalog.filter(block => block.sectionId === sectionId).length + 1;
     catalog.push({ element, sectionId, blockId: `${sectionId}:b${number}`, quote });
+    registered.add(element);
   }
   document.querySelectorAll('.lead > p').forEach(element => register(element, 'lead'));
   document.querySelectorAll('main > section').forEach(section => {
     for (const element of section.children) {
       if (element.matches('ul,ol')) element.querySelectorAll('li').forEach(li => register(li, section.id));
       else if (element.matches('p:not(.slot-label),h3,pre,figure,.metrics,.table-scroll,aside')) register(element, section.id);
+    }
+  });
+  document.querySelectorAll('main > section').forEach(section => {
+    for (const element of section.children) {
+      if (element.matches('figure[data-ref]') && !registered.has(element)) register(element, section.id, true);
     }
   });
 

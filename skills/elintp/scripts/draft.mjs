@@ -240,7 +240,8 @@ export function parseDraft(text, { cwd, assets = null }) {
             catch { snapshot[file] = null; }
             if (!bytes) warnings.push(`WARN L${line}: ${ui.missing}：${file}`);
             const mime = { jpg: 'jpeg', svg: 'svg+xml' }[extension] || extension;
-            result.push(`<figure>${bytes ? `<div class="image-scroll" role="region" tabindex="0" aria-label="${escapeHTML(caption)}"><img src="data:image/${mime};base64,${bytes.toString('base64')}" alt="${escapeHTML(caption)}"></div>` : `<div class="missing-image">${ui.missing}：${escapeHTML(file)}</div>`}<figcaption>${inline(caption, line)}</figcaption></figure>`);
+            const ref = caption.trim() ? '' : ` data-ref="${escapeHTML(file)}"`;
+            result.push(`<figure${ref}>${bytes ? `<div class="image-scroll" role="region" tabindex="0" aria-label="${escapeHTML(caption)}"><img src="data:image/${mime};base64,${bytes.toString('base64')}" alt="${escapeHTML(caption)}"></div>` : `<div class="missing-image">${ui.missing}：${escapeHTML(file)}</div>`}<figcaption>${inline(caption, line)}</figcaption></figure>`);
           }
         }
         i++;
