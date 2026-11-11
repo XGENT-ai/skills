@@ -105,3 +105,5 @@
 - be9b7836-8f3f-4b9b-9aae-b7d465073c09 — [dev-plan 验证节奏与 E2E 比重修订](be9b7836-8f3f-4b9b-9aae-b7d465073c09.md)
 - 958f838e-cc99-4c24-afc7-67fcea5ee334 — [feature-demo skill 与 e2e 录屏调研](958f838e-cc99-4c24-afc7-67fcea5ee334.md)
 - 853ad1a1-d5a5-4e10-a98a-7c5170f3533c — [gaps plan「未回写进度」排查](853ad1a1-d5a5-4e10-a98a-7c5170f3533c.md)
+
+- 01a1c859-4d66-7ab2-ac5d-cfa8eee032f4 · [ELINTP-VISUALS-P1 实施](01a1c859-4d66-7ab2-ac5d-cfa8eee032f4.md)
