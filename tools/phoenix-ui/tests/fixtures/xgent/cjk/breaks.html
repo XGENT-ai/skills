@@ -12,6 +12,7 @@
   .seen { visibility: visible; }
   .columns { width: 30em; height: 4.5em; margin: 0; columns: 2; column-fill: auto; line-height: 2; }
   .columns p { margin: 0; }
+  .one-row { height: 2.5em; }
 </style>
 </head>
 <body>
@@ -28,5 +29,8 @@
   <p class="columns">页面扫描新增五条中文规则<br>它们只读取渲染之后的文字<br>并且逐行核对每一段的末<br>行</p>
   <div class="columns"><p>本次扫描覆盖了全部的页面<br>从开始到结束总共耗时 38<br>秒才最终全部完成<br>随后输出完整报告</p></div>
   <div class="columns"><p>这一页里总共检查了段落 12<br>每一段都要逐行地核对<br>秒表计时显示用时很短<br>结果随后写入报告</p></div>
+  <!-- One line to a column. The second column's only line is level with the first's
+       and is still the paragraph's last line. -->
+  <p class="columns one-row">页面扫描逐行核对每一段的末<br>行</p>
 </body>
 </html>

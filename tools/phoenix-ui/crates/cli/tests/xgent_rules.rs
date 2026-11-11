@@ -308,7 +308,8 @@ const URL_EXPECTATIONS: &[(&str, &[&str])] = &[
     // number made visible inside a hidden inline, then three paragraphs in
     // two columns: a last line alone in the second column, a number and its
     // unit either side of the column break, and a number that only sits
-    // beside a unit in the next column.
+    // beside a unit in the next column. Last, columns of one line each, the
+    // second holding a single character.
     (
         "cjk/breaks.html",
         &[
@@ -319,6 +320,7 @@ const URL_EXPECTATIONS: &[(&str, &[&str])] = &[
             "xgent/cjk-split-unit",
             "xgent/cjk-orphan",
             "xgent/cjk-split-unit",
+            "xgent/cjk-orphan",
         ],
     ),
     // The second paragraph's Han sits in a <strong>; the third lists a

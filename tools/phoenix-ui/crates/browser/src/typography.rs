@@ -147,21 +147,50 @@ const MEASURE_JS: &str = r##"(() => {
     return overlap > Math.min(line.bottom - line.top, c.bottom - c.top) / 2;
   };
   // Text set in columns: the rows of one column are level with the rows of
-  // the next without being the same lines. Characters come in reading order,
-  // so the one that sits above the line before it and to the right of all
-  // the text since the last such jump is the top of the next column; a row
-  // is only looked for within its column. Lines read column by column.
-  const linesOf = (nodes) => {
+  // the next without being the same lines, and where a column holds a single
+  // line the next column starts on that very row, so character boxes alone
+  // cannot tell a column break from a gap inside a line. The multi-column
+  // container can: its columns, overflow columns included, repeat from its
+  // content edge at one pitch (CSS Multi-column Layout, the pseudo-algorithm
+  // for the used column count and width). A passage that spans all columns
+  // is in none.
+  const columnGrid = (el) => {
+    for (let cur = el; cur; cur = cur.parentElement) {
+      const style = getComputedStyle(cur);
+      const count = parseInt(style.columnCount, 10) || Infinity;
+      const width = parseFloat(style.columnWidth);
+      if (count !== Infinity || width > 0) {
+        const padding = parseFloat(style.paddingLeft) || 0;
+        const inner = cur.clientWidth - padding - (parseFloat(style.paddingRight) || 0);
+        const declared = style.columnGap;
+        const gap = declared === 'normal' ? parseFloat(style.fontSize)
+          : declared.endsWith('%') ? inner * parseFloat(declared) / 100
+          : parseFloat(declared) || 0;
+        const fit = width > 0 ? Math.max(1, Math.floor((inner + gap) / (width + gap))) : Infinity;
+        return {
+          left: cur.getBoundingClientRect().left + cur.clientLeft + padding - cur.scrollLeft,
+          pitch: (inner + gap) / Math.min(count, fit),
+          gap,
+        };
+      }
+      if (style.columnSpan === 'all') return null;
+    }
+    return null;
+  };
+  // Characters come in reading order. The one that sits in a later column of
+  // the grid than the character before it, a column gap or more away, starts
+  // the next column; a row is only looked for within its column. The gap is
+  // what keeps a word that overflows its column in its line. Lines read
+  // column by column.
+  const linesOf = (nodes, grid) => {
     const lines = [];
+    const at = (c) => Math.floor(((c.left + c.right) / 2 - grid.left) / grid.pitch);
     let column = 0;
-    let right = -Infinity;
-    let last = null;
+    let prev = null;
     for (const node of nodes) {
       for (const c of charsOf(node)) {
-        if (last && c.top < last.top && c.left >= right && !sameRow(last, c)) {
-          column += 1;
-          right = -Infinity;
-        }
+        if (grid && prev && at(c) > at(prev) && c.left - prev.right > grid.gap - 1) column += 1;
+        prev = c;
         let line = null;
         for (let i = lines.length - 1; i >= 0 && lines[i].column === column; i--) {
           if (sameRow(lines[i], c)) { line = lines[i]; break; }
@@ -171,8 +200,6 @@ const MEASURE_JS: &str = r##"(() => {
           lines.push(line);
         }
         line.text += c.ch;
-        last = line;
-        right = Math.max(right, c.right);
       }
     }
     return lines.sort((a, b) => a.column - b.column || a.top - b.top).map(line => line.text);
@@ -248,7 +275,7 @@ const MEASURE_JS: &str = r##"(() => {
     const el = els[id];
     if (!el || el.nodeType !== 1 || !candidate(el)) continue;
     const nodes = textNodes(el);
-    const lines = linesOf(nodes);
+    const lines = linesOf(nodes, columnGrid(el));
     if (!lines.length) continue;
     out.lines.push([id, lines]);
     const sample = [...lines.join('').trim()].slice(0, 40).join('');
