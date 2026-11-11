@@ -207,13 +207,13 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-12 01:35 +08:00
+- 最近更新：2026-11-12 02:47 +08:00
 - 当前进度：4/5 个里程碑完成
-- 当前状态：M1–M4 完成；M5准备与离线oracle已完成，待候选构建与阶段验收
+- 当前状态：M1–M4 完成；M5的V-8、V-9、V-10完成，待候选提交与V-11
 - 最近完成：M4 · skill 与文档
-- 下一步：M5声明与清单、开发候选、V-8/V-9/V-10；候选就绪后申请推送授权跑V-11
-- 当前阻塞：无（V-11 推送授权在候选就绪后申请）
-- 代码基线：`0398407`（main）；M1–M4已提交
+- 下一步：提交M5候选，申请推送授权，以候选完整SHA匹配并完成V-11
+- 当前阻塞：V-11需用户授权推送main；未获授权，不记M5完成
+- 代码基线：`e719aea`（main）+ M5工作树；M1–M4已提交
 
 ### 完成记录
 
@@ -222,6 +222,7 @@ REVIEW @progress_consistency:
 | M1 | 已完成 | 2026-11-12 01:35 +08:00 | 11源检索、稳定编号、联系表与真实V-1/V-2通过 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M1.md) | `2d5deab` |
 | M3 | 已完成 | 2026-11-12 01:35 +08:00 | 批量图片导出与来源保留，V-4目视及V-5、lint通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M3.md) | `ea0e5a3` |
 | M2 | 已完成 | 2026-11-12 01:40 +08:00 | V-1/V-2/V-3及最终lint通过；Chrome后台请求清零 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M2.md) | `49be9b9` |
+| M5 | 进行中 | 2026-11-12 02:47 +08:00 | V-8各分项、V-9四组与V-10通过；待授权推送及V-11 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M5.md) | 待提交 |
 | M4 | 已完成 | 2026-11-12 01:53 +08:00 | V-6 fresh与V-7真实宿主通过；入口说明与产品路径audit已复验 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M4.md) | `0398407` |
 
 ## 0. 需求、范围与决策
@@ -677,7 +678,7 @@ skill 源文件用英文写，与现文一致；下列为要表达的内容与�
   - 取到的素材留在 `.phoenix-ui/media/`，只是预览材料：作为设计稿的参考图（`generate-image --ref` 或宿主生图工具的输入图），或放进 `.phoenix-ui/` 下的预览页。不复制进项目资产目录，不从产品代码引用，许可清单与署名不写进产品文件。
   - 分级只说明条目自身的许可：向用户展示候选时带上分级；“可上线”不表示可以放进这个产品。
   - 产品里的图仍按现有规则：项目拥有或获得的真实图片，或生成的 plate，并带来源。
-- 完工段里来源扫描的一段（:158，`embed-prompt --scan`）之后加一句：存在 `.phoenix-ui/media/sources.json` 时，在结果送评审或向用户报告之前运行 `{{scripts_path}}/phoenix-ui media audit`，清掉每条发现（把副本换成可以上线的图片，删掉引用与署名），并在交付报告里写明核对结果；`credit` 类发现经判断保留的，写出依据。
+- 完工段里来源扫描的一段（:158，`embed-prompt --scan`）之后加一句：存在 `.phoenix-ui/media/sources.json` 时，在结果送评审或向用户报告之前对实际产品源码和交付资源路径运行 `{{scripts_path}}/phoenix-ui media audit <product-paths...>`，清掉每条发现（把副本换成可以上线的图片，删掉引用与署名），并在交付报告里写明核对结果；`credit` 类发现经判断保留的，写出依据。
 - 不改 :109-123 的 comp 合同、:146-156 的取证与走查、处置词相关段落。
 
 ### 6.2 `skills/phoenix-ui/src/reference/visualize.md`
@@ -698,7 +699,7 @@ skill 源文件用英文写，与现文一致；下列为要表达的内容与�
 
 （docs/phoenix-ui.md 的「素材命令」一节在 M2 随批 1 定稿，作为 V-1 首次上手的公开资料前置；本节其余改动在 M4。）
 
-- SKILL.src.md:15 “The engine does not update or download during context, detection, or hooks.” 之后加一句：`media` 是唯一访问素材信源的命令，只在被调用时联网。Commands 表列的是设计子命令，不加行。
+- SKILL.src.md:15 “The engine does not update or download during context, detection, or hooks.” 之后加一句：`media` 是唯一访问素材信源的命令，只在被调用时联网。独立 Media requests 入口复述调用前可见说明、读取素材条款与交付前产品路径audit；不改授权或设计流程。Commands 表列的是设计子命令，不加行。
 - docs/phoenix-ui.md 在「取证命令（capture）」之后新增两节：
   - 「素材命令（media）」：用途与边界（只用于设计稿与方案预览，不进入产品）；四个子命令与主要参数；类别与 11 个信源；三个分级的含义与各信源的许可口径（Poly Haven 为 CC0；美术馆只取公有领域或 CC0；Japan Search 只取 CC0、公有领域、CC BY、CC BY-SA，ColBase 须署“出典：ColBase”；Commons 按单个文件的许可，BY-SA 改色或合成后须同许可共享；V&A 为仅参考；美国国会图书馆不推定无版权限制；Wellcome 保留条目许可；NASA 保留第三方署名与限制）；素材区的三个文件与自忽略；联系表与观感数据字段；取用校验（图片整张解码为成功条件、视频以首帧解码为准）、贴图三种图、视频首帧及其对浏览器与编码的依赖（取不出首帧即视频取用失败）；`audit` 的三类发现；退出码；信源不可用与离线时的表现；美国国会图书馆在部分网络下对非浏览器客户端返回 403，届时报为不可用。
   - 「交付图片处理（prep-image）」：参数、处理顺序、格式规则（JPEG 与无损 WebP，不出有损 WebP 与 AVIF）、不放大、片段、原图不变、来源的三种载体（WebP 为旁注文件，须随图片一起移动）、输入无内嵌来源时被拒、退出码。
@@ -780,7 +781,7 @@ skill 源文件用英文写，与现文一致；下列为要表达的内容与�
 | V-7 | 场景 E2E（有界演练） | **设计负责人让 agent 给一张品牌专题页的预览稿配一张真实的古地图，再把一张大图处理成上线尺寸。** 角色：Claude Code 新会话，只有项目文件与已安装的 Phoenix skill。项目：仓库树外的临时目录，含 PRODUCT.md、DESIGN.md、一个 `.phoenix-ui/mocks/preview.html` 预览页、`src/` 下的产品页面与一张带来源的 3000 宽 PNG；`.claude/` 用渲染产物 `tools/phoenix-ui/dist/providers/claude-code/.claude/` 的副本，其中 `skills/phoenix-ui/scripts/phoenix-ui` 换成调用本地 debug 二进制的垫片（仅演练）。回合一：“用 Phoenix 给预览稿找几张真实的古地图候选让我挑”。结果（看会话记录与文件）：调用前说明了在找什么；用了 `media search … --sheet` 并打开联系表；向用户展示候选时带分级；本回合没有取用。回合二（同一项目目录、另一次调用，把用户实际选定的编号发给宿主，如“就选 M3，放进预览稿”）：`media fetch <选定编号>` 把文件取到 `.phoenix-ui/media/`；素材只出现在 `.phoenix-ui/` 下的预览页；`src/`、`public/` 没有素材的副本、引用或署名；结束前运行了 `media audit` 且无发现（WORK-F8/AC-3、WORK-N1/AC-4 的调用可见）。单次非交互调用接收不到用户的编号选择，不得用一次输出代替选择回合。请求二：“把 src/assets/hero.png 按 600 的显示宽度处理成上线尺寸，给我 img 片段”。结果：用了 `prep-image --width 600 --widths 600,1200`（两个及以上输出才给片段，§5.14），采用了它给出的片段，没有放大或覆盖原图，`embed-prompt --scan` 干净 | `claude -p "<回合请求>" --output-format stream-json --verbose`（回合一、回合二、请求二各一次，同一项目目录），权限参数按 `claude --help` 实际选择并只授予本场景所需；保存输出后按工具调用、最终答复与文件判定 | M4 交付齐备且 V-1、V-4 通过后（批 3） |
 | V-8 | 阶段收口 | 构建、许可与 Phoenix UI 全量回归：锁文件只多依赖边，`--write` 后清单检查通过，NOTICE 与 THIRD-PARTY-NOTICES 的 oil-ui 条目含本期改编范围并进入 `dist/phoenix-ui`（WORK-N4）；oracle 新增 media 与 prep-image 的离线用例（`--help`、未知选项、缺参数、`fetch --dir` 越界被拒、`audit` 无清单、`prep-image` 缺宽度）并重录 `cli-help`，其余 golden 逐字节不变（embed-prompt 的用例不变，证明 §5.15 没有改变 verb 行为）；开发构建与冒烟通过，冒烟新增：经启动器 `media --help`、`prep-image --help` 退出 0；空 `PHOENIX_UI_HOME` 下 `media --help` 退出 4 并给补装命令；在冒烟的黑洞代理下 `media search map` 退出 1 并报网络不可用（记录为 `network-unavailable`）；`media fetch T1 --dir out` 被拒；对冒烟脚本内嵌的一张小 PNG 运行 `prep-image --width 100`，得到 JPEG 输出与“未放大”的说明（记录为 `processed`）（WORK-N2/AC-3 的开发候选证据：开发构建与暂存新装；不证明最终 npm 包安装或旧版升级，那由既有发布检查在发布时覆盖，本期不执行）；`test/phoenix-ui` 下的 Node 测试与 `test:phoenix` 全绿（含 capture 的既有浏览器测试，覆盖 WORK-N1/AC-1、AC-2 与启动参数的回归）；render `--check` 为 `fresh`。不以整仓 `npm test` 为门，其 Diagram、statusline 等检查与本期无关 | `tools/phoenix-ui` 下：`mise exec --no-deps -- node ../../scripts/prepare-phoenix-ui.mjs --prepare` 并按回执导出环境变量；`mise exec --no-deps -- node ../../scripts/check-phoenix-deps.mjs --write`，再不带参数运行一次；重建 debug 二进制后在仓库根运行 `node tools/phoenix-ui/tests/oracle/record.mjs --bin tools/phoenix-ui/target/debug/phoenix-ui media`、`… prep-image`、`… cli-help`（逐个审阅 golden diff）；清空 `../../local/phoenix-ui/development-release` 后 `mise exec --no-deps -- node ../../scripts/build-phoenix-ui.mjs --development --output-dir ../../local/phoenix-ui/development-release`；`mise exec --no-deps -- node ../../scripts/check-phoenix-deps.mjs --distribution-dir ../../local/phoenix-ui/development-release`；`mise exec --no-deps -- node ../../scripts/smoke-phoenix-ui.mjs --release-dir ../../local/phoenix-ui/development-release --target darwin-arm64 --stage-runtime`（`--target` 填本机平台）；仓库根 `mise exec --no-deps -- node --test 'test/phoenix-ui/*.test.js'`、`mise exec --no-deps -- npm run test:phoenix`；`mise exec --no-deps -- bun scripts/render.mjs --check`。`test:phoenix` 含 release 构建与全量 oracle，耗时未知，只在收口运行一次 | M5，M1–M4 完成后 |
 | V-9 | 真实使用验收 | 干净的夹具项目（仓库树外）、只凭公开入口与文档、用 V-8 的开发构建安装，逐项保存输出并亲自查看产物。**A1 直接使用 media**（WORK-F7/AC-1–AC-4、WORK-F8/AC-1–AC-4；PRD UAT-9、UAT-10）：以开发者身份经安装后的启动器，为“一张茶叶品牌页的设计稿”找一张浮世绘或植物版画、一块布料贴图：检索（含中文或日文关键词一次）、看联系表、取用、看来源清单；试一次把素材取到 `public/`；断网（代理变量指向 `http://127.0.0.1:9`）检索一次；记录各信源的可用情况。判据同 UAT-9、UAT-10。**A2 直接使用 prep-image**（WORK-F9/AC-1–AC-5；PRD UAT-11）：对一张自己准备的 3000 宽不透明 PNG（先用 `embed-prompt` 写入来源；显示宽 600，请求多宽度）、一张透明 PNG（已写入来源）与一个坏文件运行；判据同 UAT-11，另看输出体积是否明显小于原图。**A3 宿主会话**（WORK-F8/AC-3、WORK-N1/AC-4 的“对话中可见调用记录”；PRD UAT-9 的流程侧）：Claude Code 新会话，请求“用 Phoenix 给这个专题页出一个方向预览，需要真实的历史地图质感”；判据：素材的每次检索与取用都是会话里可见的命令调用且事先说明；素材没有进入产品文件；交付前有 `media audit` 的结果；整个会话里除 `media` 外没有别的命令访问素材信源。能生图时素材作为参考图传入，不能生图时放进 `.phoenix-ui/` 下的预览页，两种都算通过，记录是哪一种。**A4 联网边界**（WORK-N1/AC-4 终验）：在 macOS 上用 `sandbox-exec` 的只放行本机的配置（scripts/phoenix-build-tools.mjs 的 `testNetworkProfile`）运行安装后的 `context`、`hook`（SessionStart 负载）与 `detect <源码文件>`，输出与不加 sandbox 时相同；同一配置下 `media search map` 报网络不可用；再用转发代理加 `--proxy-server` 包装脚本对 `https://example.com/`（页面不加载其他主机的资源）运行一次 `capture`，代理记录的主机只有 `example.com` 与 docs 里列明的残余。发现的用户可见问题修复后只复跑受影响的场景；改了引擎或 skill 源须从 V-8 的构建重做再复验受影响项 | 安装：在夹具项目里用仓库的安装入口加 `--release-dir=<仓库>/local/phoenix-ui/development-release`（docs/phoenix-ui.md「安装」选项表）；A1、A2、A4 用 `npm exec` 形式或安装后的 `skills/phoenix-ui/scripts/phoenix-ui`；A3 用 `claude -p … --output-format stream-json --verbose`；A4 的转发代理用一个几十行的 Node 脚本（转发 HTTP、隧道 CONNECT、记录主机） | M5，V-8 通过后 |
-| V-10 | 阶段收口 | 整合清单、复述与跨期约束核对（WORK-N4/AC-2、C-1、C-8、WORK-N1/AC-3）：§0.6 每个采用或调整项都有落点、拒绝项无改动；独立 skill、完工评审与走查子代理、`crates/comp`、`crates/comp-verbs`、`crates/hook`、`crates/live` 无 diff，new-work.md 里派出走查的一段没有改动；两个新命令在总帮助、docs/phoenix-ui.md、对应 reference、README 都有描述；第三方声明写全改编范围；PRD 的 WORK-N1 约束段与 AC-4 已按 §6.8 补写，且只改了这两处与版本号 | `git diff 9b07ef0 -- skills tools/phoenix-ui docs README.md scripts` 逐项对照 §0.6 与 §1.2；`git diff --stat 9b07ef0 -- skills/review-ui skills/apply-ui-review skills/feature-demo skills/design-reference skills/phoenix-ui/src/subagents tools/phoenix-ui/crates/comp tools/phoenix-ui/crates/comp-verbs tools/phoenix-ui/crates/hook tools/phoenix-ui/crates/live` 为空；`grep -rn 'prep-image\|phoenix-ui media' docs/phoenix-ui.md README.md skills/phoenix-ui/reference tools/phoenix-ui/NOTICE.md tools/phoenix-ui/THIRD-PARTY-NOTICES.md`；`git diff 9b07ef0 -- docs/PRD-PHOENIX-UI-EVIDENCE-CRAFT.md` | M5，V-9 之后 |
+| V-10 | 阶段收口 | 整合清单、复述与跨期约束核对（WORK-N4/AC-2、C-1、C-8、WORK-N1/AC-3）：§0.6 每个采用或调整项都有落点、拒绝项无改动；独立 skill、完工评审与走查子代理、`crates/comp`、`crates/comp-verbs`、`crates/hook`、`crates/live/src` 无 diff（live/assets 两份锁文件直接生成物单列核对），new-work.md 里派出走查的一段没有改动；两个新命令在总帮助、docs/phoenix-ui.md、对应 reference、README 都有描述；第三方声明写全改编范围；PRD 的 WORK-N1 约束段与 AC-4 已按 §6.8 补写，且只改了这两处与版本号 | `git diff 9b07ef0 -- skills tools/phoenix-ui docs README.md scripts` 逐项对照 §0.6 与 §1.2（feature-demo的既有b60ee18提交单列，本期范围以实际开工基线b60ee18核对）；`git diff --stat b60ee18 -- skills/review-ui skills/apply-ui-review skills/feature-demo skills/design-reference skills/phoenix-ui/src/subagents tools/phoenix-ui/crates/comp tools/phoenix-ui/crates/comp-verbs tools/phoenix-ui/crates/hook tools/phoenix-ui/crates/live/src` 为空；`grep -rn 'prep-image\|phoenix-ui media' docs/phoenix-ui.md README.md skills/phoenix-ui/reference tools/phoenix-ui/NOTICE.md tools/phoenix-ui/THIRD-PARTY-NOTICES.md`；`git diff 9b07ef0 -- docs/PRD-PHOENIX-UI-EVIDENCE-CRAFT.md` | M5，V-9 之后 |
 | V-11 | 阶段收口 | 四平台开发候选（WORK-N2/AC-3 的开发候选证据、A-2）：同一候选提交上 Phoenix CI 的 UI 四个平台任务与 Node 18 冒烟全部成功（CI 记录为 `distribution=development`，证明四平台构建、暂存安装与运行；最终 npm 包安装与旧版升级由既有发布检查覆盖，本期不执行也不宣称）；四个平台的冒烟记录里 media 为 `network-unavailable`、prep-image 为 `processed`；`media` 的库测试与 `network_boundary` 在四个平台运行，四平台对本期声明支持的真实 MP4/H.264 首帧用例与浏览器段须实际执行并记录，无法执行的平台记「未验证」并在收口注明，不记通过（A-2）。Diagram 任务的失败与本期无关时只报告 | 经用户授权推送 main 后：设 `candidate_sha=<M5 候选提交的完整 SHA>`，运行 `gh run list --workflow phoenix.yml --branch main -L 100 --json databaseId,headSha,status,conclusion --jq "map(select(.headSha == \"$candidate_sha\"))"`，逐条确认 `headSha` 相同后对匹配的 `databaseId` 执行 `gh run watch <run-id>`，下载各平台 evidence 制品核对冒烟记录；记录候选 SHA、run ID 与四平台结果 | M5，V-8–V-10 通过并完成候选提交后；未获授权时记入当前阻塞，不记完成 |
 
 ### 9.2 集成与回归
@@ -849,4 +850,14 @@ V-1、V-4 在本机由 Agent 执行并亲自看图；V-1 与 V-9 的 A1、A3 需
 
 ### M4 实测纠正
 
-V-7 的项目内安装副本含有素材区路径说明，默认全目录 audit 会报告这些非产品文档。skill 改为使用既有路径参数，只扫描实际产品源码和交付资源；CLI 的默认遍历合同不变。首次检索前仅有工具描述不满足事先说明，故把现有说明要求及产品路径核对放到 SKILL 的独立 Media requests 入口，要求先发送可见消息、读取已有素材条款并在预览交付前审计；授权与调用条件不变。复验仅覆盖受影响的检索、选择与审计回合。
+V-7 的项目内安装副本含有素材区路径说明，默认全目录 audit 会报告这些非产品文档。skill 改为使用既有路径参数，只扫描实际产品源码和交付资源；CLI 的默认遍历合同不变。现有说明要求及产品路径核对放到 SKILL 的独立 Media requests 入口，要求调用前有可见说明、读取已有素材条款并在预览交付前审计；可见工具描述可以承载说明，原计划并未要求独立assistant消息。授权与调用条件不变。复验仅覆盖受影响的检索、选择与审计回合。
+
+V-11 的 MP4/H.264 平台证明补充到现有 fetch 测试：真实MP4夹具，成功与未验证分别写入现有 CI evidence 目录，带候选SHA与run ID；不新增工作流、编解码依赖或产品能力承诺。
+
+### M5 构建生成物澄清
+
+V-8的既有xtask以Cargo.lock作为输入，本期新增依赖边必然使 `crates/live/assets/bundle-inputs.json` 及其浏览器JS生成物更新。V-10的live无diff按实现源核对，并单列这两份直接生成物；保留它们以满足freshness，未修改live实现或构建协议。许可清单在构建刷新该资产后再次--write，候选同步后重验distribution。
+
+### M5 宿主取用说明纠正
+
+A3前两次修订把“事先说明”收紧为必须另发独立assistant消息，这是实施中新增的形式限制，不是I-2或WORK-N1的原要求。重新逐条核对会话发现，fetch的可见工具description已经写明所取地图与预览区；恢复原要求，允许普通消息或可见工具说明承载事前说明。保留入口中的选图、取用、隔离与audit顺序，以及对首轮真实缺陷的修正：后续建议也不能把取用文件移入产品。三轮实际事件及当时判定保留在M5-A3，不能把额外标准的失败冒充原需求失败；最终版本重建并核对安装内容，未变的可见调用、隔离、audit与产物证据按原判据复核复用。

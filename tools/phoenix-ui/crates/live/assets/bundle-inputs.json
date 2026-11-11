@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "inputSha256": "fd085a4094f216c0c08f6e8dba9b0e0a6ecf461ea28f5649eba4074ca2a009f5",
+  "inputSha256": "0ccd55ed3d5e3ce6c0e2fa622f993cf7bd439eda8d8658d0fd69860083ce7eb2",
   "inputs": {
     ".cargo/config.toml": {
       "sha256": "716b49c90c25aeeebc4b0359b111a62927d166a1d7f02c4fe83b89d55fb74887",
       "size": 49
     },
     "Cargo.lock": {
-      "sha256": "d30090b2983f0e71fe0040729da12c5f05bd1aec5304ca0164950189bc9e4d76",
-      "size": 47627
+      "sha256": "a1bea86427fe67cd1befbe5b6126ed0f961217567814061481cd88708a6f9106",
+      "size": 47678
     },
     "Cargo.toml": {
       "sha256": "982e35da2d0e0b66663bfebce99b2ad25ec2dd36e5de7ee85ac73040127b70be",
@@ -303,8 +303,8 @@
   },
   "outputs": {
     "crates/live/assets/detect-antipatterns-browser.js": {
-      "sha256": "706722fbff65c08623452582197dd7ab9940f4050fc13e1508eb2895c62ae60c",
-      "size": 2011277
+      "sha256": "d58666e1426de734e0c12a7012fd03941a69ea0a36938a465599a37a47e8fbf0",
+      "size": 2010993
     }
   }
 }

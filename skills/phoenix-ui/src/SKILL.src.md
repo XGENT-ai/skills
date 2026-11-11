@@ -22,7 +22,13 @@ Core principles:
 
 ## Media requests
 
-Before each `media search` or `media fetch`, send a short message to the user naming the subject and preview use—for example, “我会检索真实古地图，用于预览稿选图。” Then call the command. This message must precede the tool call; its tool description or a final explanation does not replace it. Continue directly after the message, without asking for approval. Read the media clauses in [new-work.md](reference/new-work.md) before searching: open the contact sheet, show use grades, and keep fetched media under `.phoenix-ui/`. After using fetched media in a preview, run `{{scripts_path}}/phoenix-ui media audit <product-paths...>` over the actual product source and shipped asset paths, and report the result before delivery.
+For real imagery in a direction, comp, or preview, follow this sequence. Before each search or fetch, make its subject and preview purpose visible in the conversation; an assistant message or the tool call's visible description can carry that explanation. Continue without asking for approval.
+
+1. Read the media clauses in [new-work.md](reference/new-work.md).
+2. Announce the search and run `media search … --sheet`. Open the contact sheet, show the candidates' use grades, and choose the reference(s).
+3. Announce the selected refs and their preview use, then run `media fetch <ref>`. Keep each additional search or fetch visible with its own explanation.
+4. Keep fetched files under `.phoenix-ui/`. A `page` grade does not permit moving them into product assets, now or later. Product imagery must be separately obtained project imagery or generated replacements.
+5. After using fetched media in a preview, run `{{scripts_path}}/phoenix-ui media audit <product-paths...>` over the actual product source and shipped asset paths. Report the result before delivery.
 
 ## Setup
 

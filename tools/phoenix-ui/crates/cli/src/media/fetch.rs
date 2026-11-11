@@ -525,6 +525,7 @@ mod tests {
                             "/html" => (b"<html>error</html>".to_vec(),"text/html"),
                             "/large" => (vec![b'x';1024*1024+1],"image/png"),
                             "/video" => (include_bytes!("../../../../tests/fixtures/media/sample.webm").to_vec(),"video/webm"),
+                            "/h264" => (include_bytes!("../../../../tests/fixtures/media/sample-h264.mp4").to_vec(),"video/mp4"),
                             "/files/paper" | "/files/paper-all" => (serde_json::to_vec(&json!({"Diffuse":{"1k":{"jpg":{"url":format!("{host}/image"),"size":PNG.len()}}},"Rough":{"1k":{"jpg":{"url":format!("{host}/image"),"size":PNG.len()}}},"nor_gl":{"1k":{"jpg":{"url":format!("{host}/image"),"size":if route.ends_with("paper-all"){PNG.len()}else{1}}}}})).unwrap(),"application/json"),
                             _ => (b"missing".to_vec(),"text/plain"),
                         };
@@ -711,5 +712,117 @@ mod tests {
             .unwrap()
             .any(|e| e.unwrap().file_type().unwrap().is_dir()));
         fs::remove_dir_all(area).unwrap();
+    }
+
+    #[test]
+    fn h264_first_frame_acceptance_records_actual_platform_capability() {
+        let env = std::env::vars().collect();
+        let browser = impeccable_browser::discovery::find_browser(&env);
+        let server = Server::new();
+        let area = area("h264");
+        let mut video = item("N3", &format!("{}/h264", server.url));
+        video["video"] = json!(true);
+        let (files, errors) = run(
+            &ureq::AgentBuilder::new().build(),
+            &Endpoints::default(),
+            &area,
+            &[video],
+            &options(),
+            &env,
+        )
+        .unwrap();
+        let platform = match std::env::consts::OS {
+            "macos" => "darwin",
+            "windows" => "windows",
+            other => other,
+        };
+        let architecture = match std::env::consts::ARCH {
+            "aarch64" => "arm64",
+            "x86_64" => "x64",
+            other => other,
+        };
+        let mut evidence = json!({
+            "schemaVersion": 1,
+            "target": format!("{platform}-{architecture}"),
+            "codec": "h264/mp4",
+            "browser": browser.as_ref().ok().map(|p| p.to_string_lossy()),
+            "sourceCommit": std::env::var("GITHUB_SHA").ok(),
+            "workflowRun": std::env::var("GITHUB_RUN_ID").ok(),
+        });
+        if errors.is_empty() {
+            assert_eq!(files.len(), 2);
+            assert!(files
+                .iter()
+                .all(|f| f["width"] == 64 && f["height"] == 48 && f["integrity"] == "decoded"));
+            let poster = files.iter().find(|f| f["derivedFrom"].is_string()).unwrap();
+            let original = files
+                .iter()
+                .find(|f| f["file"] == poster["derivedFrom"])
+                .unwrap();
+            assert!(original["file"].as_str().unwrap().ends_with(".mp4"));
+            assert_eq!(
+                fs::read(area.join(original["file"].as_str().unwrap())).unwrap(),
+                include_bytes!("../../../../tests/fixtures/media/sample-h264.mp4")
+            );
+            let png = image::open(area.join(poster["file"].as_str().unwrap())).unwrap();
+            assert_eq!((png.width(), png.height()), (64, 48));
+            let sources = index::read_sources(&area).unwrap();
+            assert_eq!(sources.len(), 2);
+            for file in &files {
+                let source = sources.iter().find(|s| s["file"] == file["file"]).unwrap();
+                for field in [
+                    "ref",
+                    "sha256",
+                    "license",
+                    "attribution",
+                    "width",
+                    "height",
+                    "integrity",
+                ] {
+                    assert_eq!(source[field], file[field]);
+                }
+            }
+            assert!(!fs::read_dir(&area).unwrap().any(|e| e
+                .unwrap()
+                .file_type()
+                .unwrap()
+                .is_dir()));
+            evidence["status"] = json!("passed");
+            evidence["files"] = json!(files.iter().map(|f| json!({"file": f["file"], "width": f["width"], "height": f["height"], "integrity": f["integrity"]})).collect::<Vec<_>>());
+        } else {
+            assert_eq!(errors.len(), 1, "{errors:?}");
+            let message = errors[0]["message"].as_str().unwrap();
+            let unavailable = browser.is_err() && message.starts_with("浏览器不可用：");
+            let decode_failure = message.starts_with("首帧未产出：视频解码失败：3 ")
+                || message.starts_with("首帧未产出：视频解码失败：4 ");
+            assert!(
+                unavailable || decode_failure,
+                "unexpected H.264 failure: {message}"
+            );
+            assert!(files.is_empty());
+            assert!(index::read_sources(&area).unwrap().is_empty());
+            assert_eq!(fs::read_dir(&area).unwrap().count(), 0);
+            evidence["status"] = json!("unverified");
+            evidence["reason"] = json!(message);
+            evidence["failureCleanup"] = json!("verified");
+        }
+        fs::remove_dir_all(area).unwrap();
+        let record = serde_json::to_string_pretty(&evidence).unwrap() + "\n";
+        println!("{record}");
+        if std::env::var("GITHUB_ACTIONS").as_deref() == Ok("true") {
+            assert!(
+                evidence["sourceCommit"].is_string() && evidence["workflowRun"].is_string(),
+                "CI video evidence requires the workflow and commit identity"
+            );
+            // The existing workflow uploads this directory even when a later phase fails.
+            let output = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../../../local/phoenix-ui/ci-prepare");
+            fs::create_dir_all(&output).unwrap();
+            fs::write(
+                output.join(format!("{platform}-{architecture}-media-h264.json")),
+                record,
+            )
+            .unwrap();
+        }
     }
 }

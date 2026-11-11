@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "请指定 search、preview、fetch 或 audit\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

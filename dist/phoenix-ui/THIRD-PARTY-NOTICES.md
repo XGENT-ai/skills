@@ -59,7 +59,11 @@ notices, are retained as supplied by their packages.
 `crates/cli/src/capture/` and the `phoenix-ui-ux-walker` subagent adapt parts
 of oil-ui 0.33.2 by oil-oil (screenshot steps, locating and failure hints,
 settling, mask/mark/sheet/stitch/frames methods, and the UX walkthrough
-handoff and report format), rewritten for Phoenix. oil-ui is used under the
+handoff and report format), rewritten for Phoenix. `phoenix-ui media`
+(`crates/cli/src/media/`) adapts its media source mappings, license grading,
+relevance filtering, stable references, and visual analysis algorithms.
+`phoenix-ui prep-image` (`crates/cli/src/prep_image.rs`) adapts its processing
+order and image snippet format. Both are rewritten in Rust. oil-ui is used under the
 MIT license, reproduced in full:
 
 ```text

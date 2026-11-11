@@ -1,0 +1,7 @@
+{
+  "stdout": "用法：phoenix-ui media <search|preview|fetch|audit> [选项]\n  search \"<词>[|<词>…]\" [--kind <类别>] [--limit <1-30>] [--use all|page] [--sheet]\n  preview <编号>…\n  fetch <编号>… [--maps color,roughness,normal|all] [--resolution 1k|2k|4k|8k]\n        [--video-size medium|small|preview|orig] [--max-mb <1-2048>]\n        [--download-timeout-ms <ms>]\n  audit [<路径>…]\n  公共：--dir <素材区>（默认 .phoenix-ui/media）、--json\n  联网超时：--timeout-ms <1000-120000>（默认 12000）\n\n素材只用于设计稿与方案预览，只进当前项目 .phoenix-ui/ 下的素材区，不进入产品。\n类别：all 全部、texture 材质贴图、design 设计器物、photo 摄影、blueprint 测绘图纸、\n      map 地图、plate 版画、science 科学、video 视频。\n分级：page 可上线、check 需核对、reference 仅参考；分级不授权素材进入当前产品。\nsearch/preview/fetch 会联网；audit 只读、不联网。\n--sheet/preview 生成 candidates.png，标注编号、分级、原图尺寸及观感数据。\nfetch 图片须完整解码；视频须同时得到首帧，依赖本机浏览器及视频编码支持。\naudit 查素材引用、相同副本及许可/署名；credit 提示由主代理判断并记录依据。\n退出码：0 完成（含零条结果）；1 无法运行或全部信源不可用；2 部分失败或 audit 有发现。\n",
+  "stderr": "",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}

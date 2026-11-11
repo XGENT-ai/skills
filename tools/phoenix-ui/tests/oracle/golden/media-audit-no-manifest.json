@@ -1,0 +1,7 @@
+{
+  "stdout": "{\"schema\":\"phoenix-ui-media-v1\",\"command\":\"audit\",\"area\":\".phoenix-ui/media\",\"message\":\"素材区没有取用记录，无可核对\",\"findings\":[]}\n",
+  "stderr": "",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}

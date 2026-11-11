@@ -1,0 +1,7 @@
+{
+  "stdout": "用法：phoenix-ui prep-image <图片或目录>… (--width <显示宽> | --widths <像素宽,…>) [选项]\n\n本地处理静态 PNG、JPEG、WebP，不联网、不改原图。输入须先用 embed-prompt 写入来源。\n目录只取直接子文件；目录输入必须给 --out，且输出目录不能是任一输入目录。\n\n  --width <显示宽>    CSS 像素宽，导出 2 倍宽；1–16384，不足时不放大\n  --widths <宽,…>     额外的像素宽，各 1–16384；可与 --width 同给\n  --sizes <值>       img 的 sizes；默认 (max-width: Wpx) 100vw, Wpx；无 --width 时为 100vw\n  --crop <宽:高>     居中裁切，接受 16:9、16/9、16x9、1.5；比例 0.01–100\n  --trim             先裁全透明边，再按比例裁切，最后缩放\n  --quality <1–100>  JPEG 质量，默认 82\n  --out <目录>       默认各原图所在目录；重跑覆盖同名输出，禁止覆盖本批原图或输出冲突\n  --json             输出 JSON 报告（像素尺寸、字节数、SHA-256、来源与说明）\n  --help             显示帮助\n\n不透明图出 JPEG，透明图出无损 WebP；不输出有损 WebP 或 AVIF。\n输出携带原图来源；WebP 的 <图片>.json 旁注须与图片一起移动。\n每张图有两个及以上输出时给出按宽度升序的 srcset/sizes 片段；路径相对当前目录并 URL 编码。\n损坏、动画或缺少来源的图片单独失败，其他输入照常处理。\n退出码：0 全部成功；1 参数错误或没有输入，不写文件；2 个别图片失败。\n",
+  "stderr": "",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}
