@@ -22,3 +22,8 @@
 - 状态：pending
 - 线索：`xgent_rules` 的 URL 表每页每视口单独起一次扫描（约 6 秒），一类一页时 446 秒，合并同类夹具后 199 秒。
 - 定位：`tools/phoenix-ui/crates/cli/tests/xgent_rules.rs` 的 `URL_EXPECTATIONS`
+
+## E005 — CDP 读字体不强制排版，只有真实会话的状态取证才暴露
+- 状态：pending
+- 线索：`CSS.getPlatformFontsForNode` 对刚插入、未排版的节点返回空。夹具表与单测全过，直到 V-7 的会话在点击后带过渡的状态里取证，才出现整页“字体未核实”的虚假备注（6 次重拍 3 次）；插入后读尺寸强制排版并在读空时重读后 12 次为 0。
+- 定位：`tools/phoenix-ui/crates/browser/src/typography.rs`（`LAYOUT_JS`）；提交 `532f8d8`；`docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M4.md`「缺陷与修复」
