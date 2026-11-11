@@ -31,6 +31,12 @@ const PROBE_SELECTOR: &str = "[data-phoenix-ui-font-probe] > span";
 const CLEANUP_JS: &str =
     "document.querySelectorAll('[data-phoenix-ui-font-probe]').forEach(node => node.remove())";
 
+/// Reading a node's fonts over CDP does not lay it out first: a node the
+/// browser has not laid out yet reports no fonts at all. Measuring the
+/// container makes the browser lay the probes out now.
+const LAYOUT_JS: &str =
+    "document.querySelectorAll('[data-phoenix-ui-font-probe]').forEach(node => node.getBoundingClientRect())";
+
 /// Runs against the capture in `window.__impCap`, whose element table gives
 /// the snapshot ids. The candidate test restates the text rules' own scope so
 /// only passages a rule will read are measured.
@@ -296,6 +302,7 @@ const MEASURE_JS: &str = r##"(() => {
     box.appendChild(node);
   }
   document.documentElement.appendChild(box);
+  box.getBoundingClientRect();
   return out;
 })()"##;
 
@@ -312,7 +319,18 @@ pub fn collect(
     let fonts = if measured["probes"].as_u64().unwrap_or(0) == 0 {
         Ok(Vec::new())
     } else {
-        let fonts = page.platform_fonts(PROBE_SELECTOR);
+        let mut fonts = page.platform_fonts(PROBE_SELECTOR);
+        // The page keeps running between the measurement and the read; if it
+        // invalidated layout in that gap, a probe comes back empty. Every
+        // probe holds text, so an empty one is that gap: lay out and read
+        // once more.
+        if fonts
+            .as_ref()
+            .is_ok_and(|read| read.iter().any(Vec::is_empty))
+        {
+            page.evaluate_value(LAYOUT_JS)?;
+            fonts = page.platform_fonts(PROBE_SELECTOR);
+        }
         page.evaluate_value(CLEANUP_JS)?;
         fonts.map_err(|error| error.message)
     };
