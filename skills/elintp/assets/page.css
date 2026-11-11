@@ -11,7 +11,7 @@
   --no: #a03535;
   --notice: #f5eddc;
 }
-@media (prefers-color-scheme: dark) {
+@media screen and (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
     --paper: #152124;
@@ -78,7 +78,8 @@ main > section:last-child { border-bottom: 0; margin-bottom: 0; }
 .outline a { display: block; padding: 8px 12px; border-left: 1px solid var(--line); color: var(--muted); text-decoration: none; }
 .outline a:hover { color: var(--accent); }
 .outline a[aria-current] { font-weight: 750; color: var(--accent); background: var(--surface); border-color: var(--accent); }
-.table-scroll { max-width: 100%; overflow-x: auto; margin: 24px 0 12px; }
+.table-scroll, .image-scroll { max-width: 100%; overflow-x: auto; }
+.table-scroll { margin: 24px 0 12px; }
 table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
 th, td { min-width: 8em; padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
 th { font-weight: 650; background: var(--surface); }
@@ -126,6 +127,8 @@ figcaption p { margin: 8px 0 0; }
   .outline { position: static; max-height: none; margin-bottom: 40px; }
   main > section { margin-bottom: 32px; padding-bottom: 32px; }
   aside { padding: 20px; }
+  /* A wide screenshot shrunk to a phone column is unreadable; keep its own size and let .image-scroll scroll. */
+  figure img { max-width: none; }
 }
 @media print {
   :root, :root[data-theme] { color-scheme: light; --paper: white; --surface: #f1f3f2; --fg: #172124; --muted: #445355; --line: #b8c3c1; --accent: #125b63; --ok: #226247; --warn: #79501c; --no: #a03535; --notice: #f5eddc; }
@@ -134,11 +137,15 @@ figcaption p { margin: 8px 0 0; }
   .page-head { padding: 0; }
   .reading-layout { display: block; }
   .column-notes dl[hidden] { display: block !important; }
-  .table-scroll, pre { overflow: visible; }
+  .table-scroll, .image-scroll, pre { overflow: visible; }
+  figure img { max-width: 100%; }
   table { table-layout: fixed; font-size: 9pt; }
   th, td { min-width: 0; padding: 6px; }
   pre { white-space: pre-wrap; overflow-wrap: anywhere; }
   h2, h3 { break-after: avoid; }
   figure, .metrics, aside { break-inside: avoid; }
-  iframe { height: 760px; max-height: 90vh; }
+  /* Paper cannot scroll a frame and is narrower than the reader's full layout: print the reader at its
+     desktop width in this page (840px) and at its content height (set by page.js), scaled to the paper. */
+  .reader-frame { container-type: inline-size; aspect-ratio: 840 / var(--reader-height, 760); overflow: hidden; }
+  iframe { width: 840px; height: calc(var(--reader-height, 760) * 1px); border: 0; border-radius: 0; background: none; transform: scale(tan(atan2(100cqw, 840px))); transform-origin: 0 0; }
 }

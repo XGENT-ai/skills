@@ -446,9 +446,9 @@ frontmatter 之后、第一个 `##` 之前是引言，只能是段落，至少�
 
 ### 5.4 图片与图
 
-- **图片**：路径是本地文件，扩展名限 `png`、`jpg`、`jpeg`、`gif`、`webp`、`avif`、`svg`，读入后以 data URI 放进 `<img>`。`http://`、`https://` 开头的路径是格式错误（改法：先存成本地文件）。文件不存在或读不了不算格式错误：页面在该位置显示「图片缺失：」加内容稿里写的路径，并保留图注，stderr 输出一行 `WARN`，退出码仍为 0。
+- **图片**：路径是本地文件，扩展名限 `png`、`jpg`、`jpeg`、`gif`、`webp`、`avif`、`svg`，读入后以 data URI 放进 `<img>`，外包可横向滚动的 `<div class="image-scroll" role="region" tabindex="0">`，`aria-label` 取图片说明。`http://`、`https://` 开头的路径是格式错误（改法：先存成本地文件）。文件不存在或读不了不算格式错误：页面在该位置显示「图片缺失：」加内容稿里写的路径，并保留图注，stderr 输出一行 `WARN`，退出码仍为 0。
 - **`:::figure` 的内容**：恰好一行来源，后面可跟若干行图注文字。
-  - `reader: <路径.html>`：phoenix-diagram 交付的阅读器 HTML。读入全文，转义 `&` 与 `"` 后写进带 `srcdoc`、`loading="lazy"` 的 `iframe`，`title` 取图的标题。文件不存在或读不了是格式错误。
+  - `reader: <路径.html>`：phoenix-diagram 交付的阅读器 HTML。读入全文，转义 `&` 与 `"` 后写进带 `srcdoc`、`loading="lazy"` 的 `iframe`，`title` 取图的标题；`iframe` 外包 `<div class="reader-frame">`，供打印时定尺寸。文件不存在或读不了是格式错误。
   - `svg: <路径.svg>`：Agent 自绘的 SVG 文件。通过白名单校验后去掉 XML 声明与注释，根元素加 `role="img"`，`aria-label` 取图的标题，内联进页面。每张图的 `id` 及指向它的本地引用（`href`、`xlink:href`、`url(#…)`、`aria-labelledby`、`aria-describedby`）按图在文中的顺序加固定前缀，不同图的同名 `id` 互不影响，也不与页面锚点相撞。
 - **SVG 白名单**：逐个标签检查，任何一处不符就是格式错误，报出 SVG 文件里的行号与标签，不做静默清洗。
   - 允许的元素：`svg`、`g`、`defs`、`title`、`desc`、`path`、`rect`、`circle`、`ellipse`、`line`、`polyline`、`polygon`、`text`、`tspan`、`marker`、`linearGradient`、`radialGradient`、`stop`、`clipPath`、`use`。
@@ -505,18 +505,19 @@ frontmatter 之后、第一个 `##` 之前是引言，只能是段落，至少�
 
 - 样式全部在 `page.css`，字体用系统字体栈，不嵌入字体文件，不引用任何外部地址（C-3）。
 - 颜色用 CSS 变量定义亮、暗两套：没有 `data-theme` 时由 `prefers-color-scheme` 决定，`data-theme="light"` 或 `"dark"` 时覆盖系统偏好。
-- 表格外包 `<div class="table-scroll" role="region" tabindex="0" aria-label="…">`，宽表在区域内横向滚动；`iframe` 与图片宽度不超过容器。页面本身在 360 CSS px 与 1440×900 下都不出现水平滚动条。
-- 阅读器 `iframe` 宽 100%，高度 `min(82vh, 760px)`；窄屏下由阅读器自己的窄屏布局处理宽内容。
+- 表格外包 `<div class="table-scroll" role="region" tabindex="0" aria-label="…">`，宽表在区域内横向滚动；`iframe` 宽度不超过容器。图片在宽于 760px 的窗口里缩到不超过容器；760px 及以下按原始尺寸显示，在 `.image-scroll` 内横向滚动，不把宽截图缩成看不清的小图。页面本身在 360 CSS px 与 1440×900 下都不出现水平滚动条。
+- 阅读器 `iframe` 宽 100%，高度 `min(82vh, 760px)`；窄屏下由阅读器自己的窄屏布局处理宽内容。打印时纸面不能滚动，且比阅读器的完整布局窄：`iframe` 按 840px 宽（它在本页桌面布局里的宽度）排版，高度取阅读器内容高度，再整体缩放到纸宽。
 - 模板标识与进度标记都是「符号加文字」：进度标记写作「计划记录：未完成 / 做了一半 / 已完成」，与「和原文一样真」的转述规则一致。
 
 ### 6.2 页面行为
 
 | 行为 | 有脚本时 | 脚本不运行或打印时 |
 | --- | --- | --- |
-| 亮暗 | 页头按钮切换 `data-theme`，选择存进 `localStorage` 的 `elintp-theme`；读写都包在 `try/catch` 里，存不了时仍可切换 | 按钮默认带 `hidden`，由脚本显示；页面跟随系统偏好。打印固定用亮色 |
-| 大纲 | 链接跳到小节；`IntersectionObserver` 给当前小节的链接加 `aria-current="true"`，样式上除颜色外另有粗细或标记区分 | 链接照常可跳；打印时隐藏大纲 |
+| 亮暗 | 页头按钮切换 `data-theme`，选择存进 `localStorage` 的 `elintp-theme`；读写都包在 `try/catch` 里，存不了时仍可切换 | 按钮默认带 `hidden`，由脚本显示；页面跟随系统偏好。打印固定用亮色，不随系统暗色或手选主题变化 |
+| 大纲 | 链接跳到小节；`IntersectionObserver` 给当前小节的链接加 `aria-current="true"`，样式上除颜色外另有粗细或标记区分。当前小节是标题已越过视口顶部下方 160px 参考线的最后一节；滚到页尾时，够不到参考线的后续小节里，刚经大纲或锚点跳到的那一节为当前，否则取最后一节 | 链接照常可跳；打印时隐藏大纲 |
 | 表头释义 | `.js` 下默认折叠在表格下方的「表头释义」按钮后（`aria-expanded`），按钮可用键盘操作 | 释义列表直接显示在表格下方 |
-| 键盘 | 跳到正文链接、亮暗按钮、大纲链接、释义按钮、可滚动表格区域都能用 Tab 到达并操作，焦点样式可见 | — |
+| 阅读器嵌图 | 在 `iframe` 内滚动、平移与缩放；打印前由脚本按 840px 宽并套用阅读器自己的打印样式量出内容高度 | 打印时完整显示图、图例与说明，不依赖内部滚动。脚本不运行时打印用 760px 默认高度，超出的部分不显示 |
+| 键盘 | 跳到正文链接、亮暗按钮、大纲链接、释义按钮、可滚动的表格与图片区域都能用 Tab 到达并操作，焦点样式可见 | — |
 
 界面文字随 `lang` 选择：小写后为 `zh`、`zh-cn`、`zh-sg` 或以 `zh-hans` 开头的用简体中文；`zh-tw`、`zh-hk`、`zh-mo` 或以 `zh-hant` 开头的用繁体中文；以 `en` 开头的用英文；其余语言用英文界面，`<html lang>` 仍是内容稿给出的标签。
 

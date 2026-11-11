@@ -228,7 +228,7 @@ export function parseDraft(text, { cwd }) {
             try { bytes = readFileSync(resolve(cwd, file)); }
             catch { warnings.push(`WARN L${line}: ${ui.missing}：${file}`); }
             const mime = { jpg: 'jpeg', svg: 'svg+xml' }[extension] || extension;
-            result.push(`<figure>${bytes ? `<img src="data:image/${mime};base64,${bytes.toString('base64')}" alt="${escapeHTML(caption)}">` : `<div class="missing-image">${ui.missing}：${escapeHTML(file)}</div>`}<figcaption>${inline(caption, line)}</figcaption></figure>`);
+            result.push(`<figure>${bytes ? `<div class="image-scroll" role="region" tabindex="0" aria-label="${escapeHTML(caption)}"><img src="data:image/${mime};base64,${bytes.toString('base64')}" alt="${escapeHTML(caption)}"></div>` : `<div class="missing-image">${ui.missing}：${escapeHTML(file)}</div>`}<figcaption>${inline(caption, line)}</figcaption></figure>`);
           }
         }
         i++;
@@ -257,7 +257,7 @@ export function parseDraft(text, { cwd }) {
           try { data = readFileSync(resolve(cwd, file), 'utf8'); }
           catch { error(content[0].line, `无法读取图文件 ${file}`, '确认本地路径存在且可读'); continue; }
           const graphic = type === 'reader'
-            ? `<iframe srcdoc="${escapeHTML(data)}" title="${escapeHTML(title)}" loading="lazy"></iframe>`
+            ? `<div class="reader-frame"><iframe srcdoc="${escapeHTML(data)}" title="${escapeHTML(title)}" loading="lazy"></iframe></div>`
             : inlineSVG(data, title, `fig${++svgNumber}-`, problem => error(content[0].line, problem, '按 SVG 元素、属性与本地片段白名单修正源文件'));
           result.push(`<figure class="diagram">${graphic}<figcaption><strong>${escapeHTML(title)}</strong>${content.slice(1).map(row => `<p>${inline(row.value, row.line)}</p>`).join('')}</figcaption></figure>`);
         } else {
