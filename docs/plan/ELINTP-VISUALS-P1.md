@@ -205,13 +205,13 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-11T14:40:00+08:00
+- 最近更新：2026-11-11T15:24:39+08:00
 - 当前进度：6/6 个里程碑完成
-- 当前状态：已完成；R1 代码评审 F-01（多张 SVG 同名 ID 串图）已修复并验证，待复审。R2 UI 验收通过后打磨的 UI-03 已修改待评审，UI-05 待用户决定
+- 当前状态：已完成；R3 剩余 UI-03、UI-05 按用户要求直接修复，修复方浏览器复验通过，待独立复审，无待用户决定项
 - 最近完成：M6 · 阶段收口
-- 下一步：由用户发起 `/review-code docs/plan/ELINTP-VISUALS-P1.md` 复审 F-01 的修复；由用户发起 `/review-ui docs/plan/ELINTP-VISUALS-P1.md` 复审 UI 修复
+- 下一步：由用户发起 `/review-code docs/plan/ELINTP-VISUALS-P1.md` 复审 UI 修复；由用户发起 `/review-ui docs/plan/ELINTP-VISUALS-P1.md` 独立复审 UI-03、UI-05
 - 当前阻塞：无
-- 代码基线：`256c43a3`（实现 `23c6748b`，R1 评审修复 `b9d0807d`，R1 UI 验收修复 `873ecb3b`，R2 UI 验收修复 `256c43a3`；其余提交仅验收记录与进度回填）
+- 代码基线：`dirty@c1271161`（R3 UI 修复待提交；实现 `23c6748b`，R1 评审修复 `b9d0807d`，R1 UI 验收修复 `873ecb3b`，R2 UI 验收修复 `256c43a3`；其余提交仅验收记录与进度回填）
 
 ### 完成记录
 
@@ -220,7 +220,7 @@ REVIEW @progress_consistency:
 | M1 | 已完成 | 2026-11-11T10:09:34+08:00 | 通用模板生成、两处错误一次报告且不覆盖旧页，Chrome 首屏结论可读 | [M1 记录](ELINTP-VISUALS-P1.records/M1.md) | 23c6748b |
 | M2 | 已完成 | 2026-11-11T12:37:09+08:00 | 四模板和全部组件；V-2、V-3 通过。R1 F-01 修复后各 SVG 图的 ID 互相隔离，V-3 与浏览器复验通过 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b；修复 b9d0807d |
 | M3 | 已完成 | 2026-11-11T11:49:32+08:00 | 主题、大纲、键盘、无脚本及打印行为通过 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b |
-| M4 | 已完成 | 2026-11-11T14:40:00+08:00 | 360/1440 亮暗阅读与真实阅读器交互通过。R1 UI 验收的打印、窄屏截图差距经 R2 复审已解决；大纲当前项按 R2 再次修改，待独立复审 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b；UI修复 873ecb3b；UI修复 256c43a3 |
+| M4 | 已完成 | 2026-11-11T15:24:39+08:00 | R3 剩余大纲、无脚本主题按钮已修复，360/1440 浏览器复验通过；源阅读器不变，打印前后逐页一致，待独立复审 | [M4 共同验收](ELINTP-VISUALS-P1.records/M4.md) | 23c6748b；UI修复 873ecb3b；UI修复 256c43a3；UI修复 待提交 |
 | M5 | 已完成 | 2026-11-11T11:57:53+08:00 | 六项全新上下文作者演练与文案整合核对通过 | [M5 记录](ELINTP-VISUALS-P1.records/M5.md) | 55fe9a26 |
 | M6 | 已完成 | 2026-11-11T11:57:53+08:00 | 干净副本两任务与第二节重讲通过；Chrome 通读、主题、大纲、旧页与静态收口通过 | [M6 记录](ELINTP-VISUALS-P1.records/M6.md) | 55fe9a26 |
 
@@ -448,7 +448,7 @@ frontmatter 之后、第一个 `##` 之前是引言，只能是段落，至少�
 
 - **图片**：路径是本地文件，扩展名限 `png`、`jpg`、`jpeg`、`gif`、`webp`、`avif`、`svg`，读入后以 data URI 放进 `<img>`，外包可横向滚动的 `<div class="image-scroll" role="region" tabindex="0">`，`aria-label` 取图片说明。`http://`、`https://` 开头的路径是格式错误（改法：先存成本地文件）。文件不存在或读不了不算格式错误：页面在该位置显示「图片缺失：」加内容稿里写的路径，并保留图注，stderr 输出一行 `WARN`，退出码仍为 0。
 - **`:::figure` 的内容**：恰好一行来源，后面可跟若干行图注文字。
-  - `reader: <路径.html>`：phoenix-diagram 交付的阅读器 HTML。读入全文，转义 `&` 与 `"` 后写进带 `srcdoc`、`loading="lazy"` 的 `iframe`，`title` 取图的标题；`iframe` 外包 `<div class="reader-frame">`，供打印时定尺寸。文件不存在或读不了是格式错误。
+  - `reader: <路径.html>`：phoenix-diagram 交付的阅读器 HTML。读入全文，在嵌入副本的 head 中加入 `<noscript>` 样式隐藏 `#btn-theme`，不改源图；转义 `&` 与 `"` 后写进带 `srcdoc`、`loading="lazy"` 的 `iframe`，`title` 取图的标题；`iframe` 外包 `<div class="reader-frame">`，供打印时定尺寸。文件不存在或读不了是格式错误。
   - `svg: <路径.svg>`：Agent 自绘的 SVG 文件。通过白名单校验后去掉 XML 声明与注释，根元素加 `role="img"`，`aria-label` 取图的标题，内联进页面。每张图的 `id` 及指向它的本地引用（`href`、`xlink:href`、`url(#…)`、`aria-labelledby`、`aria-describedby`）按图在文中的顺序加固定前缀，不同图的同名 `id` 互不影响，也不与页面锚点相撞。
 - **SVG 白名单**：逐个标签检查，任何一处不符就是格式错误，报出 SVG 文件里的行号与标签，不做静默清洗。
   - 允许的元素：`svg`、`g`、`defs`、`title`、`desc`、`path`、`rect`、`circle`、`ellipse`、`line`、`polyline`、`polygon`、`text`、`tspan`、`marker`、`linearGradient`、`radialGradient`、`stop`、`clipPath`、`use`。
@@ -514,7 +514,7 @@ frontmatter 之后、第一个 `##` 之前是引言，只能是段落，至少�
 | 行为 | 有脚本时 | 脚本不运行或打印时 |
 | --- | --- | --- |
 | 亮暗 | 页头按钮切换 `data-theme`，选择存进 `localStorage` 的 `elintp-theme`；读写都包在 `try/catch` 里，存不了时仍可切换 | 按钮默认带 `hidden`，由脚本显示；页面跟随系统偏好。打印固定用亮色，不随系统暗色或手选主题变化 |
-| 大纲 | 链接跳到小节；滚动时给当前小节的链接加 `aria-current="true"`，样式上除颜色外另有粗细或标记区分。当前小节随滚动位置判定，是标题已越过视口顶部下方 160px 参考线的最后一节；页尾够不到参考线的后续小节，只在刚经大纲或锚点跳到它、且页面还停在页尾时为当前 | 链接照常可跳；打印时隐藏大纲 |
+| 大纲 | 链接跳到小节；滚动时给当前小节的链接加 `aria-current="true"`，样式上除颜色外另有粗细或标记区分。当前小节统一随滚动位置判定，是标题已越过视口顶部下方 160px 参考线的最后一节；页尾多节同时可见时也使用同一规则，不因点击目标或地址中的锚点覆盖当前阅读位置 | 链接照常可跳；打印时隐藏大纲 |
 | 表头释义 | `.js` 下默认折叠在表格下方的「表头释义」按钮后（`aria-expanded`），按钮可用键盘操作 | 释义列表直接显示在表格下方 |
 | 阅读器嵌图 | 在 `iframe` 内滚动、平移与缩放；打印前由脚本按 840px 宽并套用阅读器自己的打印样式量出内容高度 | 打印时完整显示图、图例与说明，不依赖内部滚动。脚本不运行时打印用 760px 默认高度，超出的部分不显示 |
 | 键盘 | 跳到正文链接、亮暗按钮、大纲链接、释义按钮、可滚动的表格与图片区域都能用 Tab 到达并操作，焦点样式可见 | — |

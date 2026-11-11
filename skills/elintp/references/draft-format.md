@@ -95,7 +95,7 @@ svg: /absolute/path/queue.svg
 :::
 ```
 
-`:::figure` 后的标题必填；首个非空行只能是一个 `reader:` 或 `svg:` 来源，其后是图注。`reader:` 只引用 phoenix-diagram 已交付的自包含 HTML；脚本原样嵌入完整阅读器，不替图工具做审核。图文件不存在或读不了是格式错误。阅读器自己的主题控件独立于宿主页面。
+`:::figure` 后的标题必填；首个非空行只能是一个 `reader:` 或 `svg:` 来源，其后是图注。`reader:` 只引用 phoenix-diagram 已交付的自包含 HTML；脚本嵌入完整阅读器，并加入无脚本时隐藏主题按钮的规则，不修改源图文件、不替图工具做审核。图文件不存在或读不了是格式错误。启用脚本时，阅读器自己的主题控件独立于宿主页面。
 
 自绘 SVG 根元素须有 `viewBox`。文字与线条用 `currentColor`，或使用模板类名 `f-fg`、`f-muted`、`f-accent`、`f-surface`、`f-ok`、`f-warn`、`f-no` 表示填充；对应 `s-` 前缀表示描边。不用固定黑白色，否则暗色下可能不可读。
 

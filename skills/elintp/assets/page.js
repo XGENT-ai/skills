@@ -37,26 +37,14 @@
   const links = [...document.querySelectorAll('.outline a')];
   if (!links.length) return;
   const sections = [...document.querySelectorAll('main > section')];
-  const hashSection = () => sections.find(section => `#${section.id}` === location.hash);
-  const atEnd = () => innerHeight + scrollY >= document.documentElement.scrollHeight - 2;
-  let jumped = hashSection();
   const markCurrent = () => {
     let current = sections[0];
     for (const section of sections) if (section.getBoundingClientRect().top <= 160) current = section;
-    // At the end of the page the sections below the reading line can no longer reach it, so one of them is current only while the reader has just jumped to it.
-    if (atEnd() && sections.indexOf(jumped) > sections.indexOf(current)) current = jumped;
     for (const link of links) {
       if (link.hash === `#${current.id}`) link.setAttribute('aria-current', 'true');
       else link.removeAttribute('aria-current');
     }
   };
-  addEventListener('scroll', () => {
-    if (!atEnd()) jumped = null;
-    markCurrent();
-  }, { passive: true });
-  const markJump = () => { jumped = hashSection(); markCurrent(); };
-  addEventListener('hashchange', markJump);
-  // Activating the link for the hash already in the address scrolls without a hashchange.
-  for (const link of links) link.addEventListener('click', () => setTimeout(markJump));
+  addEventListener('scroll', markCurrent, { passive: true });
   markCurrent();
 })();

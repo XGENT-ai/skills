@@ -256,6 +256,8 @@ export function parseDraft(text, { cwd }) {
           let data;
           try { data = readFileSync(resolve(cwd, file), 'utf8'); }
           catch { error(content[0].line, `无法读取图文件 ${file}`, '确认本地路径存在且可读'); continue; }
+          // Host styles cannot hide a reader control across the iframe boundary when scripts are disabled.
+          if (type === 'reader') data = data.replace(/<\/head>/i, '<noscript><style>#btn-theme{display:none!important}</style></noscript></head>');
           const graphic = type === 'reader'
             ? `<div class="reader-frame"><iframe srcdoc="${escapeHTML(data)}" title="${escapeHTML(title)}" loading="lazy"></iframe></div>`
             : inlineSVG(data, title, `fig${++svgNumber}-`, problem => error(content[0].line, problem, '按 SVG 元素、属性与本地片段白名单修正源文件'));
