@@ -211,7 +211,7 @@ REVIEW @progress_consistency:
 - 最近完成：M4 · 干净副本真实使用与阶段收口
 - 下一步：由用户运行 $review-code docs/plan/ELINTP-VISUALS-P2.md 复审 R1 F-01 修复
 - 当前阻塞：无
-- 代码基线：dirty@e658c5ca（R1 F-01 修复，待按约定提交）
+- 代码基线：f2b205bd（R1 F-01 修复）
 
 ### 完成记录
 
@@ -220,7 +220,7 @@ REVIEW @progress_consistency:
 | M1 | 已完成 | 2026-11-11T17:46:06+08:00 | 浏览器真实标注、断连恢复与一次提交通过 | [M1 记录](ELINTP-VISUALS-P2.records/M1.md) | 924f8793 |
 | M2 | 已完成 | 2026-11-11T17:51:31+08:00 | 局部区域/资源保护、连续轮次通过 | [M2 记录](ELINTP-VISUALS-P2.records/M2.md) | 924f8793 |
 | M3 | 已完成 | 2026-11-11T17:51:31+08:00 | 离线终稿与公开恢复流程通过 | [M3 记录](ELINTP-VISUALS-P2.records/M3.md) | 924f8793 |
-| M4 | 已完成 | 2026-11-11T18:42:27+08:00 | 阶段证据保留；R1 F-01 符号链接 CLI 已修复并验证，待复审 | [M4 记录](ELINTP-VISUALS-P2.records/M4.md) | 924f8793 |
+| M4 | 已完成 | 2026-11-11T18:42:27+08:00 | 阶段证据保留；R1 F-01 符号链接 CLI 已修复并验证，待复审 | [M4 记录](ELINTP-VISUALS-P2.records/M4.md) | 924f8793；修复 f2b205bd |
 
 ## 0. 需求、范围与决策
 
