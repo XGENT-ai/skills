@@ -207,9 +207,9 @@ REVIEW @progress_consistency:
 
 - 最近更新：2026-11-11T19:58+08:00
 - 当前进度：4/4 个里程碑完成
-- 当前状态：V-7 当前修复版宿主取证与 V-9 同一候选四平台、Node 18 全部通过；M4 补证收口，最终记录待提交
+- 当前状态：V-7 当前修复版宿主取证与 V-9 同一候选四平台、Node 18 全部通过；M4 补证收口，最终记录已提交 `80b3512`
 - 最近完成：M4
-- 下一步：完成最终记录提交及 SHA 回填后，由用户用 `$review-code docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.md` 发起代码复审
+- 下一步：由用户用 `$review-code docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.md` 发起代码复审
 - 当前阻塞：无
 - 代码基线：`cd60330b222592aa56e3e653c6a8da9d0e25c972`（main；含测试修正 `73a832a`，已推送；CI run `43007878500` success，引擎与 V-7 已验版本相同）
 
@@ -220,7 +220,7 @@ REVIEW @progress_consistency:
 | M1 | 已完成 | 2026-11-11T17:56+08:00 | 排版事实、让位与备注通道已交付；R3 F-02/F-04 已修复并验证：栅格随缩放和 RTL 推进，零栏距以真实文字分片防止同行误拆。 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M1.md) | 70fa92e 修复 532f8d8 修复 aa1d065 修复 f273d66 修复 080c3be |
 | M2 | 已完成 | 2026-11-11T17:56+08:00 | 五条中文规则与夹具已交付；R3 扩充两视口回归通过（breaks 11 条、clean 0 条），保留普通分栏和跨栏数字单位；探针 7 项通过。 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M2.md) | e69c600 修复 3d764e1 修复 aa1d065 修复 f273d66 修复 080c3be 修复 73a832a |
 | M3 | 已完成 | 2026-11-11T11:31+08:00 | typeset 中文口径、伪汉字条款、`findingsNotes` 的消费与披露、规则文档与渲染生成物；V-4 通过，V-5 演练会话按中文口径整理页面并跑了页面扫描，复查无发现。 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M3.md) | 76814c1 |
-| M4 | 已完成 | 2026-11-11T19:58+08:00 | 显式继承已有 HTTP(S)_PROXY 后 V-7 宿主取证通过；测试退出码断言修正后，候选 cd60330 的四平台与 Node 18 全部通过，指定中文/字体用例实际执行且无浏览器跳过。 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M4.md) | f6cc578 补证待提交 |
+| M4 | 已完成 | 2026-11-11T19:58+08:00 | 显式继承已有 HTTP(S)_PROXY 后 V-7 宿主取证通过；测试退出码断言修正后，候选 cd60330 的四平台与 Node 18 全部通过，指定中文/字体用例实际执行且无浏览器跳过。 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M4.md) | f6cc578 补证 80b3512 |
 
 ## 0. 需求、范围与决策
 
