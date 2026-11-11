@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>孤字与数字单位分行</title>
+<style>
+  body { margin: 0; padding: 24px; font-family: sans-serif; font-size: 16px; }
+  .narrow { width: min-content; word-break: keep-all; line-height: 1.7; }
+  h2 { line-height: 1.3; }
+  .manual { line-height: 1.7; }
+</style>
+</head>
+<body>
+  <!-- Lines break only at the spaces, whatever font renders the text. -->
+  <p class="narrow">中文排版检测规则上线 五条规则随页面扫描 了</p>
+  <p class="narrow">本次扫描覆盖全部页面总共耗时38 秒才最终全部完成</p>
+  <!-- A manual break is a break like any other. -->
+  <h2>页面扫描新增五条中文排版规<br>则</h2>
+  <p class="manual">本次扫描覆盖全部页面总共耗时 38<br>秒才最终全部完成</p>
+</body>
+</html>

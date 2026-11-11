@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>合格的中文排版</title>
+<style>
+  body { margin: 0; padding: 24px; font-family: sans-serif; font-size: 16px; }
+  .body { width: 30em; line-height: 1.6; }
+  .narrow { width: min-content; word-break: keep-all; line-height: 1.7; }
+  .gone { display: none; }
+  li { line-height: 1.7; }
+</style>
+</head>
+<body>
+  <p class="body">过去的行高与行长检查只按拉丁文字的习惯判断，一段中文正文即使排得又密又长，也常常不会得到任何提示。汉字是方块字，每个字都占满一个字宽，同样的行高放在英文里显得疏朗，放在中文里却会让上下两行贴在一起；同样的栏宽，英文读起来刚好，中文一行却塞进了五十多个字，读者读到行尾再折回来时很容易找错行。这次更新让以汉字为主的正文改由</p>
+  <!-- Text under display:none sits on no line: it must not complete a number or leave an orphan. -->
+  <p class="narrow"><span class="gone">了</span>本次扫描覆盖全部页面总共耗时<span class="gone">38</span> 秒才最终全部完成<span class="gone"> 了</span></p>
+  <!-- A sub-list is its own passage, not the last lines of the item above it. -->
+  <ul>
+    <li>先安装依赖然后再执行下面的两条命令
+      <ul>
+        <li>安装</li>
+        <li>运行</li>
+      </ul>
+    </li>
+  </ul>
+</body>
+</html>

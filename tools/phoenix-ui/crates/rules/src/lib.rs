@@ -2,7 +2,8 @@
 //!
 //! XGENT's own findings live in this crate and run only on the engines that
 //! are handed [`PACK`]: the native `detect` binary (files and URLs) and the
-//! hook verbs. The in-page WASM detector does not run a pack.
+//! hook verbs. The in-page WASM detector does not run a pack. The `cjk-*`
+//! rules read a rendered page, so they report on URL scans only.
 //!
 //! Rule ids are namespaced `xgent/…` so [`impeccable_core::rule_pack::install`]
 //! can never collide with a built-in id, and every rule applies the engine's
@@ -14,6 +15,7 @@ use impeccable_core::findings::Finding;
 use impeccable_core::registry::Antipattern;
 use impeccable_core::rule_pack::RulePack;
 
+pub mod cjk;
 pub mod dom;
 pub mod text;
 
@@ -117,6 +119,66 @@ pub(crate) const FONT_FAMILY_COUNT: Antipattern = Antipattern {
     skill_guideline: None,
 };
 
+/// `xgent/cjk-tight-leading`: Chinese body text set below 1.5x.
+pub(crate) const CJK_TIGHT_LEADING: Antipattern = Antipattern {
+    id: "xgent/cjk-tight-leading",
+    category: "quality",
+    scopes: Some(&["type"]),
+    severity: None,
+    name: "Tight leading on Chinese text",
+    description: "Multi-line Chinese body text is set below 1.5x line height. Han characters fill the em box, so lines set at Latin leading run together. Use 1.6 to 1.75 for body copy.",
+    skill_section: None,
+    skill_guideline: None,
+};
+
+/// `xgent/cjk-line-length`: Chinese body lines past 40 characters.
+pub(crate) const CJK_LINE_LENGTH: Antipattern = Antipattern {
+    id: "xgent/cjk-line-length",
+    category: "quality",
+    scopes: Some(&["type", "layout"]),
+    severity: None,
+    name: "Chinese lines too long",
+    description: "Chinese body lines run past 40 characters. Each Han character is a full em wide, so a measure tuned for 65 to 75 Latin characters is far too long for it. Keep body copy to about 25 to 40 characters per line.",
+    skill_section: None,
+    skill_guideline: None,
+};
+
+/// `xgent/cjk-orphan`: a last line of one or two Han characters.
+pub(crate) const CJK_ORPHAN: Antipattern = Antipattern {
+    id: "xgent/cjk-orphan",
+    category: "quality",
+    scopes: Some(&["type"]),
+    severity: Some("advisory"),
+    name: "Last line holds one or two characters",
+    description: "A Chinese paragraph or heading ends on a line of only one or two characters. Tighten the copy, change the measure, or break the line by meaning so the last line carries a full phrase.",
+    skill_section: None,
+    skill_guideline: None,
+};
+
+/// `xgent/cjk-split-unit`: a number and its unit on different lines.
+pub(crate) const CJK_SPLIT_UNIT: Antipattern = Antipattern {
+    id: "xgent/cjk-split-unit",
+    category: "quality",
+    scopes: Some(&["type"]),
+    severity: Some("advisory"),
+    name: "Number split from its unit",
+    description: "A number and the unit after it wrap onto different lines, so the reader meets the figure without what it counts. Keep them together with a no-wrap span or a non-breaking space.",
+    skill_section: None,
+    skill_guideline: None,
+};
+
+/// `xgent/cjk-font-fallback`: Han drawn by a font the list did not plan for.
+pub(crate) const CJK_FONT_FALLBACK: Antipattern = Antipattern {
+    id: "xgent/cjk-font-fallback",
+    category: "quality",
+    scopes: Some(&["type"]),
+    severity: Some("advisory"),
+    name: "Chinese text falls back to an unplanned font",
+    description: "Han characters render in a font the font list did not plan for: a web font failed to load, one passage is split across fonts, or no listed font has the characters and the list has no generic family. List a font that covers Chinese, then a generic family.",
+    skill_section: None,
+    skill_guideline: None,
+};
+
 static ROWS: &[Antipattern] = &[
     TRANSITION_ALL,
     FOCUS_OUTLINE_REMOVED,
@@ -126,6 +188,11 @@ static ROWS: &[Antipattern] = &[
     REDRAWN_WINDOW_CHROME,
     EMOJI_ICON,
     FONT_FAMILY_COUNT,
+    CJK_TIGHT_LEADING,
+    CJK_LINE_LENGTH,
+    CJK_ORPHAN,
+    CJK_SPLIT_UNIT,
+    CJK_FONT_FALLBACK,
 ];
 
 /// The XGENT rule pack. A unit struct: all state is the static rows.
@@ -149,10 +216,22 @@ impl RulePack for XgentPack {
         dom: &dyn impeccable_core::browser::Dom,
         el: impeccable_core::browser::ElId,
     ) -> Vec<BrowserFinding> {
-        dom::check_element(dom, el)
+        let mut findings = dom::check_element(dom, el);
+        findings.extend(cjk::check_element(dom, el));
+        findings
+    }
+
+    fn replaces_builtin(
+        &self,
+        dom: &dyn impeccable_core::browser::Dom,
+        el: impeccable_core::browser::ElId,
+    ) -> &'static [&'static str] {
+        cjk::replaces_builtin(dom, el)
     }
 
     fn check_page_dom(&self, dom: &dyn impeccable_core::browser::Dom) -> Vec<ElFinding> {
-        dom::check_page(dom)
+        let mut findings = dom::check_page(dom);
+        findings.extend(cjk::check_page(dom));
+        findings
     }
 }

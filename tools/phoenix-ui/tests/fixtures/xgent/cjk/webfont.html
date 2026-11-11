@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>加载失败的字体</title>
+<style>
+  @font-face { font-family: "Fixture Han"; src: url("missing-fixture-han.woff2") format("woff2"); }
+  body { margin: 0; padding: 24px; font-family: sans-serif; font-size: 16px; }
+  p { line-height: 1.7; }
+  .web-first { width: 18em; font-family: "Fixture Han", sans-serif; }
+  .narrow { width: min-content; word-break: keep-all; line-height: 1.7; }
+  .inline { font-family: "Fixture Han", serif; }
+  .generic-first { font-family: sans-serif, "Fixture Han"; }
+</style>
+</head>
+<body>
+  <p class="web-first">过去的行高与行长检查只按拉丁文字的习惯判断，一段中文正文即使排得又密又长，也常常不会得到任何提示。汉字是方块字，每个字都占满一个字宽，同样的行高放在英文里显得疏朗，放在中文里却会让上下两行贴在一起；同样的栏宽，英文读起来刚好，中文一行却塞进了五十多个字，读者读到行尾再折回来时很容易找错行。这次更新让以汉字为主的正文改由</p>
+  <!-- The paragraph's own text is Latin; its Han sits in an inline descendant. -->
+  <p class="narrow inline">Phoenix UI: <strong>本次扫描覆盖全部页面总共耗时38 秒才最终全部完成</strong></p>
+  <!-- The generic family in front takes the Han before the broken font is asked. -->
+  <p class="generic-first">这一段把通用字体族写在了最前面。</p>
+</body>
+</html>
