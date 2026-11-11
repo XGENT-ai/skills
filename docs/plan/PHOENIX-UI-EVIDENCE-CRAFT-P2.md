@@ -205,21 +205,22 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-11T11:55+08:00
+- 最近更新：2026-11-11T13:01+08:00
 - 当前进度：3/4 个里程碑完成
-- 当前状态：M1–M3 完成并已提交；M4 阶段收口未开始
+- 当前状态：M4 进行中。V-6（开发构建、冒烟、`test:phoenix`）、V-7（A1、A2、A3 及备注子项）、V-8 均通过；V-7 发现并修复了一处探针缺陷（`532f8d8`），受波及检查已复验。候选提交已做，尚未推送
 - 最近完成：M3
-- 下一步：M4 ①`prepare-phoenix-ui.mjs --prepare`、开发构建、冒烟与 `npm run test:phoenix`（V-6）；②用该开发构建在仓库树外的夹具项目里跑 V-7 的 A1、A2、A3；③V-8 并做候选提交；④向用户申请推送后按候选 SHA 跑 V-9
-- 当前阻塞：无（V-9 的推送须用户授权，见 §11）
-- 代码基线：`76814c1`（main，未推送；工作树另有本计划、记录与台账等未提交文档）
+- 下一步：取得用户对推送 main 的授权后推送候选提交，按其完整 SHA 精确匹配 Phoenix CI 的 run 跑 V-9，回填 run ID 与四平台结果；通过后记 M4 完成、做最终提交并提示用户发起代码评审
+- 当前阻塞：V-9 需要用户授权推送 main（C-9）；未授权前 M4 不记完成
+- 代码基线：`532f8d8`（main，未推送；其后只有计划与记录文档的提交）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-11T11:24+08:00 | 排版探针、`Dom` 两个事实方法、内置规则让位钩子与备注通道；页内包已重新生成。批末检查与 M2 共用。 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M1.md) | 70fa92e |
+| M4 | 进行中 | 2026-11-11T13:01+08:00 | 开发构建、全量回归、真实使用验收（新建中文页面、直接使用 detect、设计稿含伪汉字、字体备注的完工披露）与清单核对通过；四平台候选（V-9）待推送授权。 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M4.md) | 待提交 |
+| M1 | 已完成 | 2026-11-11T11:24+08:00 | 排版探针、`Dom` 两个事实方法、内置规则让位钩子与备注通道；页内包已重新生成。批末检查与 M2 共用。V-7 发现读字体前未排版的缺陷，已修。 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M1.md) | 70fa92e 修复 532f8d8 |
 | M2 | 已完成 | 2026-11-11T11:24+08:00 | 五条 `xgent/cjk-*` 规则与夹具；真实页面上的发现、开关、非中文对照、capture 与延迟字体备注均符合 V-1，V-2、V-3 通过。 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M2.md) | e69c600 |
-| M3 | 已完成 | 2026-11-11T11:55+08:00 | typeset 中文口径、伪汉字条款、`findingsNotes` 的消费与披露、规则文档与渲染生成物；V-4 通过，V-5 演练会话按中文口径整理页面并跑了页面扫描，复查无发现。 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M3.md) | 76814c1 |
+| M3 | 已完成 | 2026-11-11T11:31+08:00 | typeset 中文口径、伪汉字条款、`findingsNotes` 的消费与披露、规则文档与渲染生成物；V-4 通过，V-5 演练会话按中文口径整理页面并跑了页面扫描，复查无发现。 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P2.records/M3.md) | 76814c1 |
 
 ## 0. 需求、范围与决策
 
@@ -463,7 +464,7 @@ pub fn collect(page: &mut Page<'_>, url: &str, notes: &mut Vec<String>) -> CdpRe
    - Web 字体状态：从 `document.fonts` 保留 family、weight、style、stretch、unicodeRange、status；按 CSS 字体面选择语义（含描述符范围）匹配当前 run，只有其范围覆盖可见汉字的面才参与。`unicodeRange` 解析 `U+X`、`U+X-Y` 与 `?` 通配；匹配面仍 `loading` 则该 run 未核实。`failed` 保存匹配的 error 面及其声明位置，不仅保存族名。
    - 探针容器：在 `document.documentElement` 末尾追加 `div[data-phoenix-ui-font-probe][aria-hidden="true"]`，样式 `position:fixed; left:-99999px; top:0; visibility:hidden; pointer-events:none; white-space:nowrap`；每个元素的每个 run 一个 span，复制上述字体属性与 lang，文本只含该 run 的可见汉字。批量读取仍保留 `(元素 id, run)` 对应关系。
    - 失败面归属：仅对匹配的失败面，用该面覆盖的汉字、同 run 的字体属性追加至多三个探针。①只声明失败面所在的字体族：结果里仍有 Web 字体（`isCustomFont`）说明该族另一个面仍在渲染这些字（如 700 失败而 run 用的 400 正常），这个失败面不记入事实。②失败面之前的声明前缀（失败面排在首位时不需要）。③一个不存在的字体族，作为“什么都没声明”时的兜底结果。前缀结果里有 Web 字体、有名称与前缀中具名字体相同的字体，或与兜底结果不同，即更早声明已承接这些字，不归因于失败面；前缀结果与兜底结果相同且前缀里没有通用族，即更早声明没有承接，失败面是来源；前缀结果与兜底结果相同而前缀里有通用族时，通用族可能正好解析到兜底字体，两者无法区分，记为归属未核实，不推定失败导致回退。任一探针读不到字体同样记为未核实。
-2. **读字体**：`page.platform_fonts("[data-phoenix-ui-font-probe] > span")` 按文档顺序读取字体，并以第 1 步保留的身份映射回元素/run。
+2. **读字体**：`page.platform_fonts("[data-phoenix-ui-font-probe] > span")` 按文档顺序读取字体，并以第 1 步保留的身份映射回元素/run。`CSS.getPlatformFontsForNode` 不会先排版：第 1 步插入容器后立即读取其尺寸以强制同步排版；读到的结果里有空列表时（页面在两步之间又使排版失效），再强制排版并重读一次。
 3. **清理**：再次 `evaluate_value` 移除容器；第 2 步出错也先清理再处理错误。
 4. **组装**：
    - 第 2 步调用报错：所有字体事实缺失，备注 `font sources not verified at <URL> (whole page): <错误信息>`。
@@ -656,6 +657,7 @@ V-1 在本机 Chrome 上由 Agent 执行并阅读输出；V-5、V-7 需要已登
 | 探针临时插入节点 | 监听 `<html>` 子树变化的页面可能出现可观察的副作用 | V-1、V-7 的真实页面观察；出现可复现问题时按 ADR-2 的重新评估处理 | M4 | 否 |
 | 字体名匹配的局限 | 用本地化字体名（如“微软雅黑”）且不写通用族的声明，可能被报为第三种情况；这类声明补一个通用族即可消除，文案只陈述事实 | 维护者按 PRD Q2 的方式观察误报并调整 | 发布后 | 否 |
 | 单位词表覆盖不全 | 少见量词前的拆行不报（advisory 漏报） | 维护者按反馈增补 §5.3 的常量 | 发布后 | 否 |
+| 按意群拆成 span 的文字不在候选范围内 | 候选沿用内置 `line-length` 的范围，要求元素有直接文本（§5.2、PRD WORK-F5 行为段）。V-5 与 V-7 的会话都按 typeset 的“按意群断句”把标题或短段落整段放进 `inline-block` 的 span，元素从此没有直接文本，五条规则与字体备注都不再覆盖它；修掉孤字的写法同时让这段文字退出了检测 | 用户决定是否把候选放宽到“直接文本或行内后代的文本”；这会改 PRD 的元素范围与 D12，另需核对对内置规则让位的影响，不在本期擅自扩大 | 发布后（或 P3 立项时） | 否 |
 | 中文门槛 1.5 / 40 字的误报率（PRD Q2） | 存量中文项目升级后 warning 增多 | 按 PRD：先按提案上线，项目可逐条关闭；维护者据反馈调整并对外说明 | 发布后 | 否 |
 | 推送授权与 CI | V-9 不能执行，M4 不能记完成 | 收口前向用户申请推送；未授权时记入当前阻塞 | M4 | 否（影响收口结论，不影响实施） |
 | 宿主会话与 comp-led 演练成本 | V-5、V-7 无法执行或 A3 耗时过长 | 运行前用 `claude --help` 核对参数并用最小会话确认 skill 可加载；A3 只判文案处理，首屏门禁结果不计入 | M3、M4 | 否 |
@@ -670,6 +672,7 @@ V-1 在本机 Chrome 上由 Agent 执行并阅读输出；V-5、V-7 需要已登
 - `crates/rules/tests/text.rs`:574-588 写死注册 ID 列表，新增规则不改这里会失败。
 - macOS 上 Chrome 无法在 `sandbox-exec` 内初始化沙箱，浏览器测试须在 sandbox 外跑（scripts/test-phoenix-ui.mjs:45-47）。
 - 发行版 `panic = "abort"`（tools/phoenix-ui/Cargo.toml:38）：规则与探针对外部输入不 `unwrap`、不越界索引。
+- `CSS.getPlatformFontsForNode` 不强制排版：刚插入、尚未排版的节点返回空列表。静态页面上下一帧通常先到所以看不出来，点击后带过渡动画的状态取证里约半数会读空，表现为整页“未核实”的虚假备注（V-7 A1 发现，探针已在插入后强制排版并在读空时重读）。
 - `CSS.getPlatformFontsForNode` 未先 `CSS.enable` 会报 `CSS agent was not enabled`；`display: none` 的节点返回空列表，探针容器必须用 `visibility: hidden`（§1.1 实测）。
 - 逐字分行得到的行文字，行尾空格留在上一行（§1.1 实测）：规则判定前先去首尾空白。
 - 依赖系统字体的断言在没有中文字体的 CI 机器上不成立：四平台夹具只用 `min-content` + `keep-all`、em 宽度与 `@font-face` 失败这类与字体无关的构造（D14）。
