@@ -107,3 +107,62 @@ test('figures that reuse SVG ids keep their own definitions', t => {
   assert.equal(w.run(input).status, 0);
   assert.equal(fs.readFileSync(w.output, 'utf8'), html);
 });
+
+const embedded = (html, id) => JSON.parse(html.match(new RegExp(`<script type="application/json" id="${id}">([\\s\\S]*?)</script>`))[1]);
+
+test('p2 final content and resource snapshots round-trip safely without original files', async t => {
+  const w = workspace(t), text = draft('</script><script>literal</script> \u2028\u2029\n\n![Pixel](pixel.png)\n\n![Missing](absent.png)\n\n:::figure Reader\nreader: reader.html\n:::');
+  const assets = { 'pixel.png': Buffer.from([0, 1, 2, 255]).toString('base64'), 'absent.png': null,
+    'reader.html': Buffer.from('<!doctype html><html><head></head><body>Reader original</body></html>').toString('base64') };
+  const { renderPage } = await import(script);
+  const review = renderPage(text, { cwd: w.dir, assets, review: { round: 2, pageKey: 'key', items: [] } });
+  fs.writeFileSync(w.output, review.html);
+  fs.writeFileSync(path.join(w.dir, 'draft.md'), text);
+  // Same input/output HTML path proves the snapshot is consumed before replacement.
+  const result = spawnSync(process.execPath, [script, 'draft.md', w.output, '--assets-from', w.output], { cwd: w.dir, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(w.output, 'utf8');
+  assert.equal(embedded(html, 'elintp-draft'), text);
+  assert.deepEqual(embedded(html, 'elintp-assets'), assets);
+  assert.match(html, /data:image\/png;base64,AAEC\/w==/);
+  assert.match(html, /Reader original/);
+  assert.doesNotMatch(html, /<script>literal<\/script>/);
+  const old = html;
+  fs.writeFileSync(path.join(w.dir, 'bad.json'), JSON.stringify({ assets: { 'pixel.png': 'bad!' } }));
+  const bad = spawnSync(process.execPath, [script, 'draft.md', w.output, '--assets-from', 'bad.json'], { cwd: w.dir, encoding: 'utf8' });
+  assert.equal(bad.status, 1);
+  assert.equal(fs.readFileSync(w.output, 'utf8'), old);
+});
+
+test('p2 final and review use identical reading content with isolated mode resources', async t => {
+  const w = workspace(t), text = draft('Current content.\n\n## scale | Scale\n200 tasks.\n\n## risks | Risk\nCapacity.', 'source: Original\n');
+  const { renderPage } = await import(script);
+  const review = renderPage(text, { cwd: w.dir, review: { round: 2, pageKey: 'private-key', items: [{ note: 'PRIVATE_FEEDBACK' }] } }).html;
+  const final = renderPage(text, { cwd: w.dir }).html;
+  for (const tag of ['header', 'main', 'footer']) {
+    const pattern = new RegExp(`<${tag}[^>]*>[\\s\\S]*?</${tag}>`);
+    assert.equal(final.match(pattern)[0], review.match(pattern)[0]);
+  }
+  assert.equal(embedded(review, 'elintp-review').draft, text);
+  assert.doesNotMatch(review, /id="elintp-draft"/);
+  assert.match(review, /fetch\('\/submit'/);
+  assert.doesNotMatch(final, /elintp-review|review-toolbar|\/submit|PRIVATE_FEEDBACK|private-key/);
+  assert.match(final, /theme-toggle/);
+  assert.match(final, /class="outline"/);
+});
+
+test('p2 final output is deterministic and snapshot bytes override current files', async t => {
+  const w = workspace(t), text = draft('![Pixel](pixel.png)'), image = Buffer.from('reviewed bytes');
+  const assets = { 'pixel.png': image.toString('base64') };
+  fs.writeFileSync(path.join(w.dir, 'pixel.png'), 'changed outside review');
+  fs.writeFileSync(path.join(w.dir, 'draft.md'), text);
+  fs.writeFileSync(path.join(w.dir, 'result.json'), JSON.stringify({ assets }));
+  const { renderPage } = await import(script);
+  const expected = renderPage(text, { cwd: w.dir, assets }).html;
+  for (const source of ['result.json', 'snapshot.html']) {
+    fs.writeFileSync(path.join(w.dir, 'snapshot.html'), expected);
+    const result = spawnSync(process.execPath, [script, 'draft.md', w.output, '--assets-from', source], { cwd: w.dir, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(fs.readFileSync(w.output, 'utf8'), expected);
+  }
+});

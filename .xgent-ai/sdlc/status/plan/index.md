@@ -19,6 +19,8 @@
 | 49a107bf-abd1-462b-9910-ff664d6be67d | 指令质量评测与自进化 v2（原文已删除） | [状态](49a107bf-abd1-462b-9910-ff664d6be67d.md) | 归档 |
 | a2287695-163a-4569-ba21-0fff8bf83af5 | [Phoenix Diagram P2](../../../../docs/plan/PHOENIX-DIAGRAM-P2.md) | [状态](a2287695-163a-4569-ba21-0fff8bf83af5.md) | 活动 |
 
+| e2fd7621-6529-41cf-8bce-db18e451cadf | [ELINTP-VISUALS P2](../../../../docs/plan/ELINTP-VISUALS-P2.md) | [状态](e2fd7621-6529-41cf-8bce-db18e451cadf.md) | 活动 |
+
 ## 维护约定
 
 改变本目录内容的执行者按[目录索引维护规则](../../protocol.md)（目录索引维护一节）同步索引：先保存事实和状态，再维护本层及入口变化的祖先；无变化不重写。创建子目录时同步建立其 index.md；合并按 ID 与路径保留双方记录，缺失目标先标待核对，不按时间覆盖或删除历史。查询只报告问题。

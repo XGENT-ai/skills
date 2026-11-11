@@ -107,3 +107,5 @@
 - 853ad1a1-d5a5-4e10-a98a-7c5170f3533c — [gaps plan「未回写进度」排查](853ad1a1-d5a5-4e10-a98a-7c5170f3533c.md)
 
 - 01a1c859-4d66-7ab2-ac5d-cfa8eee032f4 · [ELINTP-VISUALS-P1 实施](01a1c859-4d66-7ab2-ac5d-cfa8eee032f4.md)
+
+- e2fd7621-6529-41cf-8bce-db18e451cadf · [ELINTP-VISUALS-P2 实施](e2fd7621-6529-41cf-8bce-db18e451cadf.md)

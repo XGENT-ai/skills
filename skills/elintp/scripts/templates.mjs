@@ -42,3 +42,37 @@ export function interfaceText(lang) {
   if (['zh-tw', 'zh-hk', 'zh-mo'].includes(tag) || tag.startsWith('zh-hant')) return UI['zh-TW'];
   return UI.en;
 }
+
+UI['zh-CN'].review = {
+  toggle: '标注内容', submit: '提交给 Agent', clear: '清除全部', empty: '先选择内容块并添加标注',
+  count: '条标注', annotate: '添加标注', edit: '编辑标注', remove: '删除标注',
+  unclear: '没看懂', question: '疑问', suggestion: '建议', note: '一句说明（可选）',
+  save: '保存', cancel: '取消', kind: '标注类型', confirmClear: '清除全部标注？',
+  storage: '当前浏览器不能保存审阅草稿，请不要刷新，先提交',
+  sending: '正在提交…', sent: '已提交给 Agent', offline: '本机服务不可达，标注已保留。请让 Agent 用原端口重开本轮后再提交。',
+  badJSON: '提交内容不是合法 JSON', badRound: '轮次不匹配，请打开当前审阅页',
+  badItems: '至少添加一条标注后再提交', badItem: '标注的内容块、小节、类型或文字无效，请核对后再提交',
+  writeError: '结果文件写入失败，请让 Agent 检查结果路径后重试',
+};
+UI['zh-TW'].review = {
+  toggle: '標註內容', submit: '提交給 Agent', clear: '清除全部', empty: '先選擇內容區塊並新增標註',
+  count: '條標註', annotate: '新增標註', edit: '編輯標註', remove: '刪除標註',
+  unclear: '沒看懂', question: '疑問', suggestion: '建議', note: '一句說明（選填）',
+  save: '儲存', cancel: '取消', kind: '標註類型', confirmClear: '清除全部標註？',
+  storage: '目前瀏覽器無法儲存審閱草稿，請勿重新整理，先提交',
+  sending: '正在提交…', sent: '已提交給 Agent', offline: '本機服務無法連線，標註已保留。請讓 Agent 用原連接埠重開本輪後再提交。',
+  badJSON: '提交內容不是合法 JSON', badRound: '輪次不符，請開啟目前審閱頁',
+  badItems: '至少新增一條標註後再提交', badItem: '標註的區塊、小節、類型或文字無效，請核對後再提交',
+  writeError: '結果檔案寫入失敗，請讓 Agent 檢查結果路徑後重試',
+};
+UI.en.review = {
+  toggle: 'Annotate content', submit: 'Submit to Agent', clear: 'Clear all', empty: 'Choose a content block and add feedback first',
+  count: 'annotations', annotate: 'Add annotation', edit: 'Edit annotation', remove: 'Delete annotation',
+  unclear: 'Unclear', question: 'Question', suggestion: 'Suggestion', note: 'One-line note (optional)',
+  save: 'Save', cancel: 'Cancel', kind: 'Annotation type', confirmClear: 'Clear all annotations?',
+  storage: 'This browser cannot save review drafts. Please submit before refreshing.',
+  sending: 'Submitting…', sent: 'Submitted to Agent', offline: 'Local service is unreachable. Annotations are kept. Ask the Agent to reopen this round on the original port, then submit again.',
+  badJSON: 'Submission is not valid JSON', badRound: 'Round mismatch. Open the current review page.',
+  badItems: 'Add at least one annotation before submitting', badItem: 'Invalid annotation block, section, type or text. Check it and submit again.',
+  writeError: 'Could not write the result file. Ask the Agent to check its path, then retry.',
+};

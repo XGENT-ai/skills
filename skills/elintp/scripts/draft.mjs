@@ -83,7 +83,18 @@ function inlineSVG(source, title, prefix, report) {
   return failed ? '' : output;
 }
 
-export function parseDraft(text, { cwd }) {
+export function parseDraft(text, { cwd, assets = null }) {
+  const snapshot = Object.create(null);
+  let references = [];
+  const rawLines = text.match(/[^\r\n]*(?:\r\n|\r|\n|$)/g);
+  function resource(file) {
+    references.push(file);
+    if (!Object.hasOwn(snapshot, file)) {
+      if (assets && Object.hasOwn(assets, file)) snapshot[file] = assets[file];
+      else snapshot[file] = readFileSync(resolve(cwd, file)).toString('base64');
+    }
+    return snapshot[file] === null ? null : Buffer.from(snapshot[file], 'base64');
+  }
   const lines = text.replace(/\r\n?/g, '\n').split('\n');
   const errors = [];
   const warnings = [];
@@ -225,8 +236,9 @@ export function parseDraft(text, { cwd }) {
           else if (!['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg'].includes(extension)) error(line, '不支持此图片扩展名', '使用 png、jpg、jpeg、gif、webp、avif 或 svg');
           else {
             let bytes;
-            try { bytes = readFileSync(resolve(cwd, file)); }
-            catch { warnings.push(`WARN L${line}: ${ui.missing}：${file}`); }
+            try { bytes = resource(file); }
+            catch { snapshot[file] = null; }
+            if (!bytes) warnings.push(`WARN L${line}: ${ui.missing}：${file}`);
             const mime = { jpg: 'jpeg', svg: 'svg+xml' }[extension] || extension;
             result.push(`<figure>${bytes ? `<div class="image-scroll" role="region" tabindex="0" aria-label="${escapeHTML(caption)}"><img src="data:image/${mime};base64,${bytes.toString('base64')}" alt="${escapeHTML(caption)}"></div>` : `<div class="missing-image">${ui.missing}：${escapeHTML(file)}</div>`}<figcaption>${inline(caption, line)}</figcaption></figure>`);
           }
@@ -254,7 +266,7 @@ export function parseDraft(text, { cwd }) {
           if (sources.length !== 1 || !source) { error(line, '图须恰好一行来源且放在图注之前', '首行写 reader: 路径.html 或 svg: 路径.svg，其后只写图注'); continue; }
           const [, type, file] = source;
           let data;
-          try { data = readFileSync(resolve(cwd, file), 'utf8'); }
+          try { data = resource(file).toString('utf8'); }
           catch { error(content[0].line, `无法读取图文件 ${file}`, '确认本地路径存在且可读'); continue; }
           // Host styles cannot hide a reader control across the iframe boundary when scripts are disabled.
           if (type === 'reader') data = data.replace(/<\/head>/i, '<noscript><style>#btn-theme{display:none!important}</style></noscript></head>');
@@ -294,6 +306,8 @@ export function parseDraft(text, { cwd }) {
     if (!fenced && value.startsWith(':::')) container = value !== ':::';
   }
   const lead = blocks(leadRows, true);
+  const region = rows => ({ raw: rows.map(row => rawLines[row.line - 1]).join(''), references: [...new Set(references)] });
+  const regions = { lead: region(leadRows), sections: [] };
   if (!lead.length) error(pos + 1, '缺少引言段落', '在第一个 ## 前写主题结论');
   const template = Object.hasOwn(TEMPLATES, meta.template) ? TEMPLATES[meta.template] : undefined;
   const spec = meta.template === 'plan' ? (Object.hasOwn(template, meta.progress) ? template[meta.progress] : undefined) : template;
@@ -307,11 +321,13 @@ export function parseDraft(text, { cwd }) {
       else if (order < previous) error(section.line, '小节顺序不正确', `按 ${spec.slots.join(' → ')} 排列`);
       if (order >= 0) { previous = Math.max(previous, order); seen.add(section.slot); }
     }
+    references = [];
     section.blocks = blocks(section.rows);
+    regions.sections.push(region(section.rows));
     if (!section.blocks.length) error(section.line, '小节没有内容', '添加正文；原文未说明时如实写明');
     delete section.rows;
   }
   if (spec) for (const slot of spec.required) if (!seen.has(slot)) error(lines.length, `缺少必填 slot ${slot}`, `添加 ## ${slot} | 标题 及正文`);
   errors.sort((a, b) => a.line - b.line);
-  return { meta, lead, sections, errors: errors.map(item => item.message), warnings };
+  return { meta, lead, sections, regions, assets: snapshot, errors: errors.map(item => item.message), warnings };
 }
