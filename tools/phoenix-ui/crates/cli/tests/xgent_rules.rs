@@ -436,16 +436,23 @@ fn font_findings_name_the_passage_that_fell_back_and_no_other() {
         .filter(|finding| finding["antipattern"] == "xgent/cjk-font-fallback")
         .map(|finding| finding["snippet"].as_str().unwrap_or("").to_string())
         .collect();
-    assert_eq!(
-        details,
-        vec![
-            // Three paragraphs share this stack; two are drawn whole by one
-            // font each and only the third is a mix.
-            "Han text renders in 2 fonts: Hiragino Mincho ProN (9 glyphs), Songti SC (9 glyphs)",
-            "no listed font renders Han and the list has no generic family; Han text renders in PingFang SC",
-            // The bold face failed; the regular face loaded, so the paragraph
-            // set in it is not counted here.
-            "web font \"Weighted Han\" failed to load; Han text renders in PingFang SC",
-        ]
-    );
+    // The fallback font's own name is whatever the system calls it (PingFang
+    // SC reads as its localized name under some system languages), so only
+    // the fonts the fixture names are pinned.
+    let fallback = "Han text renders in ";
+    let expected = [
+        // Three paragraphs share this stack; two are drawn whole by one font
+        // each and only the third is a mix.
+        "Han text renders in 2 fonts: Hiragino Mincho ProN (9 glyphs), Songti SC (9 glyphs)"
+            .to_string(),
+        format!("no listed font renders Han and the list has no generic family; {fallback}"),
+        // The bold face failed; the regular face loaded, so the paragraph set
+        // in it is not counted here.
+        format!("web font \"Weighted Han\" failed to load; {fallback}"),
+    ];
+    assert_eq!(details.len(), expected.len(), "{details:#?}");
+    for (detail, expected) in details.iter().zip(&expected) {
+        assert!(detail.starts_with(expected.as_str()), "{detail}");
+        assert!(!detail.contains("more element"), "{detail}");
+    }
 }
