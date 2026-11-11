@@ -1,12 +1,19 @@
 #!/usr/bin/env node
 // 用法：node render-report.mjs <批次目录>/report.json
 // 校验模板数据并在同目录生成 index.html；字段定义见 references/report-format.md。
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, extname, isAbsolute, join, normalize, resolve, sep } from 'node:path';
+import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, extname, join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const VIDEO_EXTENSIONS = new Set(['.webm', '.mp4']);
 const CHART_EXTENSIONS = new Set(['.html', '.htm']);
 const MAX_FILES_PER_KIND = 20;
+// 与 SPMS 模板报告的发布上限一致，生成时就拦下发布会被拒的批次。
+const MiB = 1024 * 1024;
+const MAX_TITLE_LENGTH = 200;
+const MAX_FILE_BYTES = { 视频: 100 * MiB, 图: 25 * MiB };
+const MAX_DATA_BYTES = 2 * MiB;
+const MAX_TOTAL_BYTES = 500 * MiB;
 
 const STYLE = `
   :root { color-scheme: light dark; --bg:#f6f7f9; --paper:#fff; --ink:#1b2029; --muted:#5a6473; --line:#dbe0e7; --warn:#a15c00; }
@@ -42,20 +49,40 @@ function fail(lines) {
 const isText = value => typeof value === 'string' && value.trim() !== '';
 const isTextList = value => Array.isArray(value) && value.every(isText);
 
-function validate(report, baseDir) {
+// 去掉开头的 ./ 后按 / 分段；不接受绝对路径、盘符、反斜杠和 .、.. 或空段，与 SPMS 的路径规则一致。
+export function batchPath(value) {
+  let path = value;
+  while (path.startsWith('./')) path = path.slice(2);
+  const segments = path.split('/');
+  if (path.includes('\\') || /^[A-Za-z]:/.test(path) || segments.some(segment => segment === '' || segment === '.' || segment === '..')) return null;
+  return path;
+}
+
+// 字段引用的全部媒体，按规范化后的路径去重。
+export function mediaPaths(report) {
+  const values = [report.overviewChart, ...report.items.flatMap(item => [item.video, item.chart])];
+  return [...new Set(values.filter(value => value !== undefined).map(batchPath))];
+}
+
+export function validate(report, baseDir) {
   const problems = [];
   const counts = { 视频: 0, 图: 0 };
+  const sizes = new Map();
   const checkFile = (value, label, extensions, kind) => {
     if (!isText(value)) return problems.push(`${label} 须是文件路径`);
-    const inside = !isAbsolute(value) && !normalize(value).startsWith(`..${sep}`) && normalize(value) !== '..';
-    if (!inside) return problems.push(`${label} 须在批次目录内：${value}`);
-    if (!extensions.has(extname(value).toLowerCase())) return problems.push(`${label} 的类型不允许：${value}`);
-    if (!existsSync(join(baseDir, value))) return problems.push(`${label} 找不到文件：${value}`);
+    const path = batchPath(value);
+    if (!path) return problems.push(`${label} 须是批次目录内的相对路径，不能含 .、.. 段或反斜杠：${value}`);
+    if (!extensions.has(extname(path).toLowerCase())) return problems.push(`${label} 的类型不允许：${value}`);
+    if (!existsSync(join(baseDir, path))) return problems.push(`${label} 找不到文件：${value}`);
     counts[kind] += 1;
+    const size = statSync(join(baseDir, path)).size;
+    if (size > MAX_FILE_BYTES[kind]) problems.push(`${label} 超过${kind}单文件上限 ${MAX_FILE_BYTES[kind] / MiB}MiB：${value}`);
+    sizes.set(path, size);
   };
 
   if (report?.schemaVersion !== 1) problems.push('schemaVersion 须是 1');
   for (const field of ['batchId', 'title']) if (!isText(report?.[field])) problems.push(`缺少 ${field}`);
+  if (isText(report?.title) && report.title.length > MAX_TITLE_LENGTH) problems.push(`title 不能超过 ${MAX_TITLE_LENGTH} 个字符`);
   if (report?.summary !== undefined && !isText(report.summary)) problems.push('summary 须是非空文字');
   for (const field of ['source', 'baseline', 'environment']) if (!isText(report?.meta?.[field])) problems.push(`缺少 meta.${field}`);
   if (report?.overviewChart !== undefined) checkFile(report.overviewChart, 'overviewChart', CHART_EXTENSIONS, '图');
@@ -84,6 +111,11 @@ function validate(report, baseDir) {
   for (const [kind, count] of Object.entries(counts)) {
     if (count > MAX_FILES_PER_KIND) problems.push(`${kind}最多 ${MAX_FILES_PER_KIND} 个，现有 ${count} 个`);
   }
+  const dataBytes = Buffer.byteLength(JSON.stringify(report));
+  if (dataBytes > MAX_DATA_BYTES) problems.push(`report.json 的字段数据不能超过 ${MAX_DATA_BYTES / MiB}MiB`);
+  // 同一文件被多处引用只计一次。
+  const totalBytes = dataBytes + [...sizes.values()].reduce((sum, size) => sum + size, 0);
+  if (totalBytes > MAX_TOTAL_BYTES) problems.push(`字段与全部引用文件合计不能超过 ${MAX_TOTAL_BYTES / MiB}MiB`);
   return problems;
 }
 
@@ -112,9 +144,9 @@ function renderItem(item) {
     <h2>${inline(item.name)}</h2>
     <p>${inline(item.summary)}</p>
     ${item.howTo ? `<h3>怎么用</h3>${list('ol', item.howTo)}` : ''}
+    ${item.note ? `<p class="note">${inline(item.note)}</p>` : ''}
     ${media.length ? `<div class="media${media.length === 2 ? ' both' : ''}">${media.join('')}</div>` : ''}
     ${item.limits ? `<h3>限制</h3>${list('ul', item.limits)}` : ''}
-    ${item.note ? `<p class="note">${inline(item.note)}</p>` : ''}
   </article>`;
 }
 
@@ -142,18 +174,21 @@ function render(report) {
 `;
 }
 
-const [reportPath, ...rest] = process.argv.slice(2);
-if (!reportPath || rest.length) fail(['用法：node render-report.mjs <批次目录>/report.json']);
-if (!existsSync(reportPath)) fail([`找不到数据文件：${reportPath}`]);
-let report;
-try {
-  report = JSON.parse(readFileSync(reportPath, 'utf8'));
-} catch (error) {
-  fail([`${reportPath} 不是合法 JSON：${error.message}`]);
+// 作为模块被 publish-report.mjs 引用时不执行命令行入口。
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
+  const [reportPath, ...rest] = process.argv.slice(2);
+  if (!reportPath || rest.length) fail(['用法：node render-report.mjs <批次目录>/report.json']);
+  if (!existsSync(reportPath)) fail([`找不到数据文件：${reportPath}`]);
+  let report;
+  try {
+    report = JSON.parse(readFileSync(reportPath, 'utf8'));
+  } catch (error) {
+    fail([`${reportPath} 不是合法 JSON：${error.message}`]);
+  }
+  const baseDir = dirname(resolve(reportPath));
+  const problems = validate(report, baseDir);
+  if (problems.length) fail([`${reportPath} 不合法：`, ...problems.map(problem => `- ${problem}`)]);
+  const output = join(baseDir, 'index.html');
+  writeFileSync(output, render(report));
+  console.log(output);
 }
-const baseDir = dirname(resolve(reportPath));
-const problems = validate(report, baseDir);
-if (problems.length) fail([`${reportPath} 不合法：`, ...problems.map(problem => `- ${problem}`)]);
-const output = join(baseDir, 'index.html');
-writeFileSync(output, render(report));
-console.log(output);
