@@ -17,6 +17,7 @@
 | b41a85fb-9c61-4d64-a2ad-58483ebc7aa9 | [Phoenix Diagram P3](../../../../docs/plan/PHOENIX-DIAGRAM-P3.md) | [状态](b41a85fb-9c61-4d64-a2ad-58483ebc7aa9.md) | 活动 |
 | b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460 | [Codex goal 上下文收尾提醒](../../../../docs/plan/codex-context-goal-guard.md) | [状态](b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) | 活动 |
 | beb7ee04-62ec-4ec9-8e00-0ff2e45a5c87 | [Phoenix UI 取证与盲测走查 P1 gaps](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1-gaps.md) | [状态](beb7ee04-62ec-4ec9-8e00-0ff2e45a5c87.md) | 活动 |
+| ddfc2db0-1081-4c9e-8cee-8aecf3179c7e | [Phoenix UI 中文排版检测与口径 P2](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.md) | [状态](ddfc2db0-1081-4c9e-8cee-8aecf3179c7e.md) | 活动 |
 | 3fafbda8-0f05-482b-8320-18ca474ee753 | [Phoenix UI 预览素材与交付图片处理 P3](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P3.md) | [状态](3fafbda8-0f05-482b-8320-18ca474ee753.md) | 活动 |
 | bbae83cd-7065-4f90-a350-5e6439fdfed6 | AGENTS.md 与 Skills 自进化（原文已删除） | [状态](bbae83cd-7065-4f90-a350-5e6439fdfed6.md) | 归档 |
 | 49a107bf-abd1-462b-9910-ff664d6be67d | 指令质量评测与自进化 v2（原文已删除） | [状态](49a107bf-abd1-462b-9910-ff664d6be67d.md) | 归档 |
