@@ -220,8 +220,8 @@ REVIEW @progress_consistency:
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-11-12 23:24 +08:00 | compare 的载荷校验、守护进程、路由与回传协议；与 M2 同批通过 V-1、V-2、V-3，同键守卫顺序在 V-1 中修正 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M1.md) | `0a49480`（与 M2 同一提交） |
 | M2 | 已完成 | 2026-11-12 23:24 +08:00 | 对比页界面；V-1 十步实拍逐张查看通过，V-2、V-3 与 lint 通过 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M2.md) | `0a49480` |
-| M3 | 已完成 | 2026-11-13 02:40 +08:00 | 六份参考与触发句；V-4 通过，V-5 的 R2–R6 符合，R1 按“回复清单后等用户回复”的流程复验通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M3.md) | `3adeb8a`；修订 `28a51d5`、`c93dec5`、待提交 |
-| M4 | 已完成 | 2026-11-13 02:40 +08:00 | 引擎命令表、docs、README、evals、声明文字；V-4 通过，交付后下一步经 V-7 A2、A3 验证，与 M3 共用的 R1 复验通过 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M4.md) | `d2fe94b`；修订 `28a51d5`、`c93dec5`、待提交 |
+| M3 | 已完成 | 2026-11-13 02:40 +08:00 | 六份参考与触发句；V-4 通过，V-5 的 R2–R6 符合，R1 按“回复清单后等用户回复”的流程复验通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M3.md) | `3adeb8a`；修订 `28a51d5`、`c93dec5`、`0279aec` |
+| M4 | 已完成 | 2026-11-13 02:40 +08:00 | 引擎命令表、docs、README、evals、声明文字；V-4 通过，交付后下一步经 V-7 A2、A3 验证，与 M3 共用的 R1 复验通过 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M4.md) | `d2fe94b`；修订 `28a51d5`、`c93dec5`、`0279aec` |
 | M5 | 进行中 | 2026-11-13 02:40 +08:00 | V-6、V-7、V-8 通过，流程改动后已重建并复跑分发检查与冒烟；V-9 待推送确认后运行 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M5.md) | 候选 `4844a90` |
 
 ## 0. 需求、范围与决策
