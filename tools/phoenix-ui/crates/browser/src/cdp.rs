@@ -2298,9 +2298,7 @@ mod tests {
         assert!(args.contains(&"--hide-scrollbars".to_string()));
         assert!(args.contains(&"--disable-component-update".to_string()));
         assert!(args.contains(&"--gaia-url=http://127.0.0.1:9".to_string()));
-        assert!(args.contains(
-            &"--component-updater=url-source=http://127.0.0.1:9/".to_string()
-        ));
+        assert!(args.contains(&"--component-updater=url-source=http://127.0.0.1:9/".to_string()));
         assert!(args.contains(&"--gcm-checkin-url=http://127.0.0.1:9/".to_string()));
         let disabled = args
             .iter()
