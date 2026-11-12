@@ -59,4 +59,4 @@ GET 使用 `llm_gateway.read`，生成POST、取消、ACK、封存及DELETE使�
 
 ## 契约维护依据
 
-本包按门户调用面与决策/搜索增量实现 `084bc9cf` 核对，可整目录导出给其他App。若可访问该版本源码，维护线索是 `docs/llm-gateway-service-calls.md`、`docs/llm-gateway-models-contract.md`、`docs/内容安全审核接入指引.md` 以及 `apps/llm-gateway-server/src/{lib/caller.ts,routes/gateway-ext.ts,routes/generation.ts}`；这些不是使用本包的运行依赖。目标部署的实际版本和能力需单独确认。
+本包按门户调用面与决策/搜索增量实现 `084bc9cf`、会话亲和实现 `cdcb722b` 核对，可整目录导出给其他App。若可访问该版本源码，维护线索是 `docs/llm-gateway-service-calls.md`、`docs/llm-gateway-models-contract.md`、`docs/内容安全审核接入指引.md` 以及 `apps/llm-gateway-server/src/{lib/caller.ts,lib/affinity.ts,routes/gateway-ext.ts,routes/generation.ts}`；这些不是使用本包的运行依赖。目标部署的实际版本和能力需单独确认。
