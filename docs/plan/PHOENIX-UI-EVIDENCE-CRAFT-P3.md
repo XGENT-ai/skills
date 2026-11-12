@@ -223,7 +223,7 @@ REVIEW @progress_consistency:
 | M3 | 已完成 | 2026-11-12 01:35 +08:00 | 批量图片导出与来源保留，V-4目视及V-5、lint通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M3.md) | `ea0e5a3` |
 | M2 | 已完成 | 2026-11-12 01:40 +08:00 | V-1/V-2/V-3及最终lint通过；Chrome后台请求清零 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M2.md) | `49be9b9` |
 | M4 | 已完成 | 2026-11-12 01:53 +08:00 | V-6 fresh与V-7真实宿主通过；入口说明与产品路径audit已复验 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M4.md) | `0398407` |
-| M5 | 已完成 | 2026-11-12 12:08 +08:00 | V-8–V-11通过：四平台与Node18于run 43141743915全绿，Linux残余已按D15登记 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M5.md) | 候选 `622cbfc`、`54b1d67`；`待提交` |
+| M5 | 已完成 | 2026-11-12 12:08 +08:00 | V-8–V-11通过：四平台与Node18于run 43141743915全绿，Linux残余已按D15登记 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M5.md) | 候选 `622cbfc`、`54b1d67`；`6033a7a` |
 
 ## 0. 需求、范围与决策
 
