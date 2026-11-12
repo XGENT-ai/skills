@@ -22,6 +22,7 @@
 | bbae83cd-7065-4f90-a350-5e6439fdfed6 | AGENTS.md 与 Skills 自进化（原文已删除） | [状态](bbae83cd-7065-4f90-a350-5e6439fdfed6.md) | 归档 |
 | 49a107bf-abd1-462b-9910-ff664d6be67d | 指令质量评测与自进化 v2（原文已删除） | [状态](49a107bf-abd1-462b-9910-ff664d6be67d.md) | 归档 |
 | a2287695-163a-4569-ba21-0fff8bf83af5 | [Phoenix Diagram P2](../../../../docs/plan/PHOENIX-DIAGRAM-P2.md) | [状态](a2287695-163a-4569-ba21-0fff8bf83af5.md) | 活动 |
+| db4510c9-7ece-40a0-9908-7600a14db4a5 | [Phoenix UI 预览素材与交付图片处理 P3 gaps](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.md) | [状态](db4510c9-7ece-40a0-9908-7600a14db4a5.md) | 活动 |
 
 ## 维护约定
 

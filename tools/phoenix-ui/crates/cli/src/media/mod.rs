@@ -427,10 +427,17 @@ fn print_result(io: &mut Io, result: &Value) {
     }
     if let Some(items) = result["items"].as_array() {
         for item in items {
+            let label = rights::use_label(text(item, "use"));
+            let license = text(item, "license");
+            let grade = if license.is_empty() {
+                label.to_string()
+            } else {
+                format!("{label}（{license}）")
+            };
             io.out(&format!(
                 "{}  {}  {}x{}  {}  {}\n",
                 text(item, "ref"),
-                rights::use_label(text(item, "use")),
+                grade,
                 item["originalWidth"],
                 item["originalHeight"],
                 text(item, "provider"),
@@ -605,6 +612,20 @@ mod tests {
         assert_eq!(again["count"], 1);
         assert_eq!(again["items"][0]["ref"], first["items"][0]["ref"]);
         assert_eq!(again["items"][0]["use"], "page");
+        let (mut io, captured) = Io::captured("", dir.clone(), Default::default());
+        let code = run_with(
+            &["search", "world map", "--kind=map"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>(),
+            &mut io,
+            &endpoints,
+        );
+        assert_eq!(code, 2);
+        let output = captured.stdout.borrow();
+        let plain = String::from_utf8_lossy(&output);
+        assert!(plain.contains("可上线（CC0）"));
+        assert!(plain.contains("仅参考（CC BY-NC）"));
         let before = std::fs::read(dir.join(".phoenix-ui/media/index.json")).unwrap();
         endpoints.commons = dead_url;
         let (code, offline) = call(&["search", "world map", "--kind=map", "--json"], &endpoints);

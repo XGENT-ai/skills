@@ -1,7 +1,7 @@
 # PHOENIX-UI-EVIDENCE-CRAFT · XGENT-ai Skills · Phoenix UI 取证、中文排版与素材细节增强（PRD）
 
 > 所属项目：XGENT-ai Skills（SPMS projectId `f26c604e1302957f12704f8f`，沿用 [PRD-PHOENIX-DIAGRAM](PRD-PHOENIX-DIAGRAM.md) 页头；本次 SPMS 连接失败，未能核实）· Release：未挂版本
-> 文档版本：v1.3 · 状态：范围已确认，已按[评审报告](PRD-PHOENIX-UI-EVIDENCE-CRAFT.review.md)修订，未录入 SPMS · 日期：2026-11-09
+> 文档版本：v1.4 · 状态：范围已确认，已按[评审报告](PRD-PHOENIX-UI-EVIDENCE-CRAFT.review.md)修订，未录入 SPMS · 日期：2026-11-09
 > `WORK-F*` / `WORK-N*` 是工作号，不是已创建的需求 key。参考对象是本机 `local/oil-ui-main`（oil-ui 0.33.2，MIT，目录无 `.git`，不能据此宣称已核对其上游最新版本；`/local` 被 `.gitignore` 忽略，文中指向它的链接只在本机可用）。
 > 范围（用户 2026-11-09 逐项决定，见[决定记录](PRD-PHOENIX-UI-EVIDENCE-CRAFT.decisions.md)）：纳入取证截图、盲测 UX 走查、中文排版、开放授权素材（只用于设计稿预览）、动效编排、方案并排对比、交付图片处理、设计指引小包共八项，以及 feature-demo、review-ui 在检测到 Phoenix 时对取证与走查的可选接入；确定性能力做成 `phoenix-ui` 命令；各项定位见 §5.1。本文只定义产品行为与验收，引擎实现、skill 改写、安装与发布由后续开发计划承接。
 
@@ -315,7 +315,7 @@ Phoenix UI 的方向生成（concept-seed 抽签与决策页）、设计稿驱�
   - **初始信源**：Poly Haven、Wikimedia Commons、大都会博物馆、芝加哥艺术博物馆、克利夫兰艺术博物馆、荷兰国立博物馆、Japan Search / ColBase、V&A、美国国会图书馆、Wellcome Collection、NASA，均为无需密钥的公开接口。
   - **结果**：每条带编号、标题、信源、原图尺寸、许可和使用分级。编号在同一任务目录内跨次检索保持不变。可以只要可上线条目。分级只说明条目自身的许可，不决定素材进入产品（素材不用于产品，见 WORK-F8）。
   - **联系表**：带编号、分级与尺寸的预览图，并给出每条的四边主色、是否浅色纸底和可压字的干净区域。
-  - **许可分级**沿用参考规则：Poly Haven 为 CC0；美术馆只取公有领域或 CC0；Japan Search 只取 CC0、公有领域、CC BY、CC BY-SA，ColBase 须署“出典：ColBase”；Commons 按单个文件的许可，BY-SA 改色或合成后须同许可共享；V&A 标为仅参考；美国国会图书馆不推定无版权限制（需核对）；Wellcome 保留条目许可；NASA 保留第三方署名与限制。
+  - **许可分级**沿用参考规则：Poly Haven 为 CC0；大都会、芝加哥、克利夫兰三家美术馆只取公有领域或 CC0；荷兰国立博物馆按条目记录的许可分级，记录没有许可信息时为需核对；Japan Search 只取 CC0、公有领域、CC BY、CC BY-SA，ColBase 须署“出典：ColBase”；Commons 按单个文件的许可，BY-SA 改色或合成后须同许可共享；V&A 标为仅参考；美国国会图书馆不推定无版权限制（需核对）；Wellcome 保留条目许可；NASA 保留第三方署名与限制。
 - **边界**：不接入付费图库或需要密钥的服务；不判断肖像权、商标等许可之外的使用限制，只给出条目自带的许可信息。
 - **依赖**：信源公开接口的可用性（无 SLA）；不可用时进入 AC-4 的状态。
 
@@ -338,7 +338,7 @@ Phoenix UI 的方向生成（concept-seed 抽签与决策页）、设计稿驱�
   - 素材只用于增强设计稿与方案预览的效果，不放进项目资产目录或产品代码。
   - 每次取用在素材区的来源清单中逐条记录文件名、标题、来源页、许可、署名要求与取用日期；这份记录只留在设计阶段，不进入产品文件与交付。
 - **边界**：不处理素材用于产品时的许可核对（N16）；不判断具体商业用途是否合规。
-- **依赖**：WORK-F7。
+- **依赖**：WORK-F7；取用视频另需本机浏览器且支持该视频编码（§4），否则该视频取用失败。
 
 | AC ID | 验收原文 | 期次 |
 | --- | --- | --- |
@@ -571,7 +571,7 @@ Phoenix UI 的方向生成（concept-seed 抽签与决策页）、设计稿驱�
 | --- | --- | --- |
 | AC-1 | 用户经 `npx @xgent-ai/skills install` 安装或升级后，在 macOS（arm64/x64）与 Linux（x64/arm64）上无需 Rust 编译器即可运行取证命令；engine 缺失或版本不符时返回固定包版本的补装命令，运行中不自动下载。 | P1 |
 | AC-2 | 本机找不到 Chrome、Chromium 或 Edge 时，取证命令明确报浏览器不可用；不依赖浏览器的 Phoenix 命令照常可用；Node 底线保持 ≥18，安装与运行不要求 Python。 | P1 |
-| AC-3 | 同一安装条件下，素材检索、取用与图片处理命令在四个平台可用，行为同 AC-1。 | P3 |
+| AC-3 | 同一安装条件下，素材检索、取用与图片处理命令在四个平台可用，行为同 AC-1。取用视频以本机浏览器能解码该视频为前提（§4）；不满足时该视频取用失败并说明原因，其余素材不受影响。 | P3 |
 | AC-4 | 同一安装条件下，对比页命令在四个平台可用，行为同 AC-1；Windows 等其他平台仍在安装预检阶段停止，与升级前一致。 | P4 |
 
 - **UAT 场景**：UAT-2；对应 S2 / WORK-N2/AC-1–AC-4。
@@ -629,6 +629,7 @@ Phoenix UI 的方向生成（concept-seed 抽签与决策页）、设计稿驱�
 | 提供方 | 所需能力 | 成立条件与依据 | 影响需求 | 未就绪时的产品状态 |
 | --- | --- | --- | --- | --- |
 | 用户本机 | Chrome / Chromium / Edge | 与 `detect <url>` 相同 | WORK-F1–F3、WORK-F5、WORK-F10、WORK-F15、WORK-F16 | 明确报浏览器不可用，交付写“未取证”；feature-demo、review-ui 沿用自身流程 |
+| 用户本机 | Chrome / Chromium / Edge，且能解码所取视频的编码 | 只在取用视频素材时需要，首帧由本机浏览器解码；不引入 ffmpeg（D9） | WORK-F8（视频）、WORK-N2/AC-3（视频取用） | 该视频取用失败并说明原因，视频与首帧都不落位；图片与贴图取用照常 |
 | 宿主 agent | 隔离子代理；子代理可操作页面 | 宿主自身能力 | WORK-F4、WORK-F17 | “未完成 UX 走查” |
 | Phoenix 安装 | feature-demo、review-ui 所在环境装有 phoenix-ui、支持取证命令的 engine 与走查子代理 | 可选；由各 skill 运行时检测 | WORK-F15–F17 | 沿用各 skill 现有流程，不安装、不阻塞；已安装但不适用于某个目标时，该目标同样沿用现有流程 |
 | 公开素材接口 | 无密钥检索与下载 | curate-media.mjs 现用接口；无 SLA | WORK-F7、WORK-F8 | 该信源不可用，其余照常；离线报网络不可用 |
