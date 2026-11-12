@@ -13,5 +13,8 @@
   <p id="stay">一直在</p>
   <label>截止 <input id="due" type="date"></label>
   <iframe title="嵌入页" srcdoc="<button>框内按钮</button>"></iframe>
+  <button id="alt" type="button">替代按钮</button>
+  <div id="host"></div>
+  <script>document.getElementById('host').attachShadow({ mode: 'open' }).innerHTML = '<button>影内按钮</button>';</script>
 </body>
 </html>

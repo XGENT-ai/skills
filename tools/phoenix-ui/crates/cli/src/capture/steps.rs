@@ -27,6 +27,8 @@ pub struct LocateError {
     pub hints: Vec<String>,
     /// The target exists but cannot be used yet (hidden); `waitFor` keeps polling.
     pub not_visible: bool,
+    /// Why the target may live outside the main document; `waitFor` repeats it on timeout.
+    pub scope_note: Option<String>,
 }
 
 impl LocateError {
@@ -35,6 +37,7 @@ impl LocateError {
             reason: reason.into(),
             hints: Vec::new(),
             not_visible: false,
+            scope_note: None,
         }
     }
 }
@@ -109,32 +112,42 @@ pub fn locate(
         }
         Some("hidden") => Err(LocateError {
             reason: format!("{}；先执行让它出现的那一步", text("reason")),
-            hints: Vec::new(),
+            hints: page_hints(page, target, &result),
             not_visible: true,
+            scope_note: None,
         }),
         Some("missing") => {
-            let mut hints = strings(result.get("hints"));
-            if let Locator::Role { role, name } = &target.locator {
-                hints = role_hints(page, role, name.as_deref().unwrap_or(""));
-            }
+            let hints = page_hints(page, target, &result);
             let mut reason = format!("找不到 {}", target.display());
             let frames = result.get("iframes").and_then(Value::as_u64).unwrap_or(0);
             let shadows = result
                 .get("shadowRoots")
                 .and_then(Value::as_u64)
                 .unwrap_or(0);
-            if frames + shadows > 0 {
-                reason.push_str(&format!(
-                    "；选择器只作用于主文档：页面有 {frames} 个 iframe、{shadows} 个开放 shadow root，可直接打开被嵌入的页面"
-                ));
+            let scope_note = (frames + shadows > 0).then(|| {
+                format!(
+                    "选择器只作用于主文档：页面有 {frames} 个 iframe、{shadows} 个开放 shadow root，可直接打开被嵌入的页面"
+                )
+            });
+            if let Some(note) = &scope_note {
+                reason.push_str(&format!("；{note}"));
             }
             Err(LocateError {
                 reason,
                 hints,
                 not_visible: true,
+                scope_note,
             })
         }
         _ => Err(LocateError::plain(text("reason"))),
+    }
+}
+
+/// The page script's suggestions, or ranked accessibility names for a role locator.
+fn page_hints(page: &mut Page<'_>, target: &Target, result: &Value) -> Vec<String> {
+    match &target.locator {
+        Locator::Role { role, name } => role_hints(page, role, name.as_deref().unwrap_or("")),
+        _ => strings(result.get("hints")),
     }
 }
 
@@ -347,15 +360,24 @@ pub fn execute(
                 }
                 if start.elapsed() >= timeout {
                     let visible = probe.as_ref().map(|l| l.count).unwrap_or(0);
+                    let mut reason = format!(
+                        "等待 {} {}超时（{} ms），当前可见匹配 {visible} 个",
+                        target.display(),
+                        if *hidden { "消失" } else { "出现" },
+                        timeout.as_millis()
+                    );
+                    let (hints, note) = probe
+                        .err()
+                        .map(|e| (e.hints, e.scope_note))
+                        .unwrap_or_default();
+                    if let Some(note) = note {
+                        reason.push_str(&format!("；{note}"));
+                    }
                     return Err(LocateError {
-                        reason: format!(
-                            "等待 {} {}超时（{} ms），当前可见匹配 {visible} 个",
-                            target.display(),
-                            if *hidden { "消失" } else { "出现" },
-                            timeout.as_millis()
-                        ),
-                        hints: probe.err().map(|e| e.hints).unwrap_or_default(),
+                        reason,
+                        hints,
                         not_visible: false,
+                        scope_note: None,
                     });
                 }
                 page.idle(Duration::from_millis(100)).map_err(cdp)?;

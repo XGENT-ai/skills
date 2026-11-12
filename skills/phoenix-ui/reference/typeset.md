@@ -18,7 +18,7 @@ When a sub-agent tool is available and permitted, run these independently; other
    - **Authority and fit:** Which faces, weights, and roles are established? Do they fit the product and selected world, or are they unexamined defaults? Is every family necessary?
    - **Hierarchy:** Can heading, body, label, metadata, and data roles be distinguished at a glance? Are adjacent sizes or weights too close to carry different jobs?
    - **Scale and consistency:** Is there a deliberate role scale, or a collection of arbitrary values? Do repeated roles stay identical across screens and states?
-   - **Reading:** Does body copy stay within a comfortable 45–75 character measure? Are line height, paragraph rhythm, contrast, and tracking tuned to the actual face, width, language, and surface?
+   - **Reading:** Does Latin body copy stay within a comfortable 45–75 character measure, and Han-dominant body copy within about 25–40 Han characters per line? The 45–75 figure is never the basis for judging Chinese text. Are line height, paragraph rhythm, contrast, and tracking tuned to the actual face, width, language, and surface?
    - **Stress:** What happens with long headings, localization expansion, zoom, narrow containers, missing weights, and font fallback?
    - **Delivery:** Are only used assets loaded? Do fallback metrics, loading strategy, and variable-font settings avoid invisible text and disruptive reflow?
 2. **Mechanical scan:** run:
@@ -26,6 +26,14 @@ When a sub-agent tool is available and permitted, run these independently; other
 ```bash
 <skill-base-dir>/scripts/phoenix-ui detect --json --scope type [target files or dirs]
 ```
+
+With a reachable URL, also run the page scan in the same round, once per width picked in [craft-floor.md](craft-floor.md)'s Widths order:
+
+```bash
+<skill-base-dir>/scripts/phoenix-ui detect --json --scope type --viewport <W>x<H> <url>
+```
+
+The five `xgent/cjk-*` rules (`xgent/cjk-tight-leading`, `xgent/cjk-line-length`, `xgent/cjk-orphan`, `xgent/cjk-split-unit`, `xgent/cjk-font-fallback`) appear only in this page scan, never in the file scan. A `note:` line on stderr is not a finding: it means the font source of the passage it locates was not verified. Rescan within the existing rounds once fonts have settled, or check that passage's rendered font by hand and record the basis; a note still open at delivery is listed there as unverified, with its URL, passage, and reason. The absence of font findings never stands as proof the fonts were verified.
 
 Also inspect dynamic or arbitrary font values the detector cannot interpret. Synthesize both assessments before editing, noting what each caught alone. A clean scan is a floor, not proof of good typography.
 
@@ -44,7 +52,7 @@ Use the fewest roles and families that make the hierarchy unmistakable. Combine 
 ## Apply
 
 - Keep body copy comfortably readable and zoomable. Use 1rem / 16px as the ordinary web body floor unless a dense role, platform convention, or user setting justifies otherwise.
-- Keep prose in the 45–75ch range. Tune line height inversely with measure: wider lines generally need more leading.
+- Keep prose in the 45–75ch range. Tune line height inversely with measure: wider lines generally need more leading. Han-dominant prose is measured in Han characters instead; see Chinese copy below.
 - Compensate light text on dark surfaces on all three perceptual axes: slightly more line height, a touch more tracking, and one step more weight when the face needs it.
 - Tune line height to the face, width, language, and contrast, not a universal ratio.
 - Keep repeated roles consistent across screens and states.
@@ -56,6 +64,17 @@ Use the fewest roles and families that make the hierarchy unmistakable. Combine 
 
 Do not make type decorative at the expense of comprehension, or introduce a second family without a clear role it alone can perform.
 
+## Chinese copy (zh-CN / zh-TW)
+
+These are starting points, not hard rules. Where the project's DESIGN.md says otherwise, DESIGN.md governs; name the entry you followed in the delivery.
+
+- **Size:** body copy starts at 16–18px on reading pages, 14–16px in product interfaces, and 13–14px in dense tools used for long sessions. Do not manufacture refinement with 9–12px explanatory text.
+- **Line height:** body copy 1.6–1.75. Multi-line Chinese headings start at 1.2–1.35; check at every viewport that glyphs on adjacent lines do not collide. Never fix a heading's height to a single line, and never squeeze the content after it with a negative margin.
+- **Measure:** about 25–40 Han characters per line of body copy.
+- **Line breaks:** wrap a number with its unit, and any term that must not split, in a no-wrap span. Break short passages such as first-viewport descriptions and captions by hand, at sense boundaries. A last line left with only one or two characters, or a word split across two lines, is a defect. Prefer `<br>` for semantic breaks; wrapping an entire passage in an inline-block span puts that passage outside the `xgent/cjk-*` page rules and font notes.
+- **Mixed Chinese and Latin:** check baseline alignment and visual weight between the two scripts. Condensed display faces are for display headings and very short labels only.
+- **Font fallback:** check which font actually renders the Han characters. Fix what `xgent/cjk-font-fallback` reports; a generic family resolving normally is not a problem.
+
 ## Verify
 
 - Primary, secondary, body, and metadata roles are recognizable without reading the copy.
@@ -64,6 +83,8 @@ Do not make type decorative at the expense of comprehension, or introduce a seco
 - Loading does not create disruptive reflow or invisible text.
 - Zoom, text scaling, focus, contrast, and reduced viewport paths remain usable.
 - The final mechanical scan has no unexplained findings.
+- Multi-line Chinese body copy has a line height of 1.6–1.75 at every checked viewport; otherwise the delivery names the DESIGN.md entry it follows.
+- The page scan has no unexplained `xgent/cjk-*` findings.
 
 Answer each item with rendered or source evidence, then rerun the scan. Do not substitute a bare “yes” for verification.
 

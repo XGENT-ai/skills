@@ -584,6 +584,11 @@ fn registry_rows_match_the_reported_findings() {
             "xgent/redrawn-window-chrome",
             "xgent/emoji-icon",
             "xgent/font-family-count",
+            "xgent/cjk-tight-leading",
+            "xgent/cjk-line-length",
+            "xgent/cjk-orphan",
+            "xgent/cjk-split-unit",
+            "xgent/cjk-font-fallback",
         ]
     );
     for finding in scan("transition: all;\na:focus { outline: none; }\n", ".css") {

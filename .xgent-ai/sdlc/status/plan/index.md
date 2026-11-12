@@ -8,6 +8,7 @@
 | --- | --- | --- | --- |
 | 0a3629bb-8d93-476d-8d75-be7385bb12f0 | [Phoenix Diagram 状态图模型检查与上游解耦](../../../../docs/plan/PHOENIX-DIAGRAM-STATECHART.md) | [状态](0a3629bb-8d93-476d-8d75-be7385bb12f0.md) | 活动 |
 | 0a3ce7b8-4697-4225-be2f-09f368cb8d6e | [Phoenix UI 借鉴 hallmark](../../../../docs/plan/phoenix-ui-hallmark.md) | [状态](0a3ce7b8-4697-4225-be2f-09f368cb8d6e.md) | 活动 |
+| 11519166-68ab-4aeb-9468-794b8662667c | [Phoenix UI 取证与盲测走查 P1](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1.md) | [状态](11519166-68ab-4aeb-9468-794b8662667c.md) | 活动 |
 | 091b457b-53b0-4d16-bb58-406a02ccf1f6 | [xgent-init 历史方案](../../../../docs/plan/xgent-init.md) | [状态](091b457b-53b0-4d16-bb58-406a02ccf1f6.md) | 归档 |
 | 3cdd61a5-ef48-4526-8b3b-4271426843e8 | [Phoenix Diagram P1](../../../../docs/plan/PHOENIX-DIAGRAM-P1.md) | [状态](3cdd61a5-ef48-4526-8b3b-4271426843e8.md) | 活动 |
 | 59495a4e-0427-41ad-920f-227e1050f1e2 | [ELINTP-VISUALS P2 gaps](../../../../docs/plan/ELINTP-VISUALS-P2-gaps.md) | [状态](59495a4e-0427-41ad-920f-227e1050f1e2.md) | 活动 |
@@ -16,6 +17,7 @@
 | b0529f6d-7982-404a-b16a-fe0de78e15c5 | [Phoenix Diagram P2 gaps](../../../../docs/plan/PHOENIX-DIAGRAM-P2-gaps.md) | [状态](b0529f6d-7982-404a-b16a-fe0de78e15c5.md) | 活动 |
 | b41a85fb-9c61-4d64-a2ad-58483ebc7aa9 | [Phoenix Diagram P3](../../../../docs/plan/PHOENIX-DIAGRAM-P3.md) | [状态](b41a85fb-9c61-4d64-a2ad-58483ebc7aa9.md) | 活动 |
 | b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460 | [Codex goal 上下文收尾提醒](../../../../docs/plan/codex-context-goal-guard.md) | [状态](b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) | 活动 |
+| beb7ee04-62ec-4ec9-8e00-0ff2e45a5c87 | [Phoenix UI 取证与盲测走查 P1 gaps](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1-gaps.md) | [状态](beb7ee04-62ec-4ec9-8e00-0ff2e45a5c87.md) | 活动 |
 | bbae83cd-7065-4f90-a350-5e6439fdfed6 | AGENTS.md 与 Skills 自进化（原文已删除） | [状态](bbae83cd-7065-4f90-a350-5e6439fdfed6.md) | 归档 |
 | 49a107bf-abd1-462b-9910-ff664d6be67d | 指令质量评测与自进化 v2（原文已删除） | [状态](49a107bf-abd1-462b-9910-ff664d6be67d.md) | 归档 |
 | a2287695-163a-4569-ba21-0fff8bf83af5 | [Phoenix Diagram P2](../../../../docs/plan/PHOENIX-DIAGRAM-P2.md) | [状态](a2287695-163a-4569-ba21-0fff8bf83af5.md) | 活动 |

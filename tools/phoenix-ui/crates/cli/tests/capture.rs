@@ -8,7 +8,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
-use serde_json::Value;
+use serde_json::{json, Value};
 
 static NEXT: AtomicUsize = AtomicUsize::new(0);
 
@@ -356,6 +356,7 @@ fn block_writes_covers_every_channel() {
         "POST form",
         "POST xframe",
         "POST worker",
+        "POST sw",
     ] {
         assert!(
             blocked.iter().any(|b| b == expected),
@@ -370,6 +371,96 @@ fn block_writes_covers_every_channel() {
     // A blocked write is reported once, not again as a failed request.
     let failed = entry["failedRequests"].to_string();
     assert!(!failed.contains("/api/fetch"), "{failed}");
+    // Every shot carries the tool identity that captured it, so a later
+    // partial re-capture by another engine cannot rewrite it.
+    assert_eq!(
+        entry["tool"]["binarySha256"],
+        report["tool"]["binarySha256"]
+    );
+}
+
+/// A file name already used by a derived output is refused before anything
+/// runs, so one name still means one picture.
+#[test]
+fn a_name_used_by_a_derived_file_is_rejected_before_the_browser() {
+    let temp = Temp::new("names");
+    std::fs::write(temp.path().join("page.html"), "<p>x</p>").unwrap();
+    let out = phoenix(
+        &[
+            "capture",
+            "page.html",
+            "--viewport",
+            "desktop",
+            "--name",
+            "sheet-{viewport}.png",
+            "--sheet",
+            "--out",
+            "o",
+        ],
+        temp.path(),
+        &[("PHOENIX_UI_BROWSER", "/nonexistent")],
+    );
+    assert_eq!(out.code, 1);
+    assert!(
+        out.stderr.contains("输出文件名冲突") && out.stderr.contains("sheet-desktop.png"),
+        "{}",
+        out.stderr
+    );
+    assert!(!temp.path().join("o").exists(), "no output before a run");
+}
+
+/// ⑤ Elements narrower than a mark box (4 px) report a derived problem
+/// instead of panicking; the main pictures survive.
+#[test]
+fn marks_on_sub_4px_elements_report_a_problem_instead_of_panicking() {
+    if !browser_available() {
+        return;
+    }
+    let temp = Temp::new("tiny");
+    let served = Served::start(&pages());
+    let states = temp.write(
+        "states.json",
+        r##"{ "states": [
+          { "name": "divider", "steps": [{ "do": "waitFor", "target": { "css": "#v" } }], "type": { "element": { "css": "#v" } }, "mark": [{ "css": "#v" }] },
+          { "name": "rule", "steps": [{ "do": "waitFor", "target": { "css": "#h" } }], "type": { "element": { "css": "#h" } }, "mark": [{ "css": "#h" }] }
+        ] }"##,
+    );
+    let out = temp.path().join("out");
+    let run = phoenix(
+        &[
+            "capture",
+            &format!("{}tiny.html", served.url),
+            "--viewport",
+            "400x300",
+            "--states",
+            states.to_str().unwrap(),
+            "--out",
+            out.to_str().unwrap(),
+        ],
+        temp.path(),
+        &[],
+    );
+    // The mark image is missing (derived problem → 2), but the process
+    // survives and the main element pictures exist.
+    assert_eq!(run.code, 2, "{}{}", run.stdout, run.stderr);
+    let report = report(&out);
+    for file in ["400x300-divider.png", "400x300-rule.png"] {
+        let entry = shot(&report, file);
+        assert!(
+            out.join(file).exists(),
+            "{file} missing; files: {:?}",
+            std::fs::read_dir(&out)
+                .unwrap()
+                .map(|e| e.unwrap().file_name())
+                .collect::<Vec<_>>()
+        );
+        let problems = entry["derived"]["problems"].to_string();
+        assert!(
+            problems.contains("标注图未产出") && problems.contains("小于 4 像素"),
+            "{problems}"
+        );
+        assert!(!out.join(file.replace(".png", ".mark.png")).exists());
+    }
 }
 
 /// ③ Credentials never appear in the report, stdout or stderr; ④ the
@@ -563,16 +654,31 @@ fn step_failures_and_warnings() {
         hidden.contains("display:none") && hidden.contains("先执行让它出现的那一步"),
         "{hidden}"
     );
+    let hidden_hints = &failure(&report, "hidden-target")["hints"];
+    assert_eq!(
+        hidden_hints,
+        &json!([r#"{"text":"被盖住"}"#, r#"{"text":"替代按钮"}"#])
+    );
+    assert!(
+        run.stdout.contains(
+            "FAILED hidden-target 800x600 step 1 (click): 找到 1 个匹配，但都不可见：隐藏（display:none）；先执行让它出现的那一步\n  可改为：{\"text\":\"被盖住\"}"
+        ),
+        "{}",
+        run.stdout
+    );
     let covered = shot(&report, "800x600-covered.png")["steps"][0].clone();
     assert_eq!(covered["result"], "warning");
+    let covered_warning = covered["warnings"][0].as_str().unwrap();
     assert!(
-        covered["warnings"][0].as_str().unwrap().contains("遮挡"),
+        covered_warning.starts_with("目标中心被 span.veil 遮挡，动作照常执行")
+            && covered_warning
+                .ends_with(r#"；遮挡物：{"css":"span.veil"}；可用的可见元素：{"text":"替代按钮"}"#),
         "{covered}"
     );
     let disabled = shot(&report, "800x600-disabled.png")["steps"][0].clone();
-    assert!(
-        disabled["warnings"][0].as_str().unwrap().contains("禁用"),
-        "{disabled}"
+    assert_eq!(
+        disabled["warnings"][0],
+        r#"目标处于禁用状态（disabled），动作照常执行；可用的可见元素：{"text":"被盖住"}、{"text":"替代按钮"}"#
     );
     let missing = failure(&report, "missing-text");
     assert_eq!(missing["hints"][0], r#"{"text":"被盖住"}"#);
@@ -589,6 +695,16 @@ fn step_failures_and_warnings() {
         .unwrap()
         .to_string();
     assert!(framed.contains("1 个 iframe"), "{framed}");
+    for state in ["wait-framed", "wait-shadow"] {
+        let reason = failure(&report, state)["reason"].as_str().unwrap();
+        assert!(
+            reason.contains("出现超时（300 ms）")
+                && reason.contains(
+                    "；选择器只作用于主文档：页面有 1 个 iframe、1 个开放 shadow root，可直接打开被嵌入的页面"
+                ),
+            "{state}: {reason}"
+        );
+    }
     assert!(
         run.stdout.contains("FAILED framed 800x600 step 1 (click)"),
         "{}",

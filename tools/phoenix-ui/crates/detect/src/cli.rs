@@ -1,7 +1,10 @@
 //! Port of `cli/engine/cli/main.mjs`: `detectCli()`, the text formatter, and
 //! stdin dispatch.
 
+use std::cell::RefCell;
+use std::collections::HashSet;
 use std::io::Write;
+use std::rc::Rc;
 
 use impeccable_common::Io;
 use impeccable_core::findings::Finding;
@@ -405,6 +408,7 @@ pub fn url_scan_options(
         design_system,
         viewport: None,
         rule_pack,
+        notes: None,
     };
     (options, config)
 }
@@ -519,11 +523,13 @@ fn detect_cli(args_in: &[String], io: &mut Io, engines: &Engines) -> Result<i32,
         && !has(&args, "--no-design-system")
         && detection_config.design_system_not_disabled();
     let inline_ignores_enabled = config_enabled && !has(&args, "--no-inline-ignores");
+    let notes = Rc::new(RefCell::new(Vec::new()));
     let base = ScanOptions {
         inline_ignores: inline_ignores_enabled,
         design_system: None,
         viewport,
         rule_pack: engines.rule_pack,
+        notes: Some(notes.clone()),
     };
     let targets: Vec<String> = expand_joined_url_targets(
         args.iter()
@@ -640,10 +646,16 @@ fn detect_cli(args_in: &[String], io: &mut Io, engines: &Engines) -> Result<i32,
             let text = format_findings(&all, false, stderr_tty);
             ctx.io.err(&format!("{text}\n"));
         }
-        return Ok(exit_code);
-    }
-    if json_mode {
+    } else if json_mode {
         ctx.io.out("[]\n");
+    }
+    // What a page scan could not verify, after the findings. Each note names
+    // its own URL and passage, so only exact repeats collapse.
+    let mut seen = HashSet::new();
+    for note in notes.borrow().iter() {
+        if seen.insert(note.as_str()) {
+            ctx.io.err(&format!("note: {note}\n"));
+        }
     }
     Ok(exit_code)
 }

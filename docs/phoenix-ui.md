@@ -83,8 +83,25 @@ Phoenix UI 在 61 条内置规则之外，另带一组 XGENT 自有规则（ID �
 | `xgent/redrawn-window-chrome` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
 | `xgent/emoji-icon` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
 | `xgent/font-family-count` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
+| `xgent/cjk-tight-leading` | 页面（`detect <url>`，浏览器渲染） | warning | `detector.ignoreRules`、`hooks ignore-rule` |
+| `xgent/cjk-line-length` | 页面（`detect <url>`，浏览器渲染） | warning | `detector.ignoreRules`、`hooks ignore-rule` |
+| `xgent/cjk-orphan` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
+| `xgent/cjk-split-unit` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
+| `xgent/cjk-font-fallback` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
 
 「源码文件」指文本扫描，覆盖 CSS、HTML、Vue、JSX、TSX 等前端源文件；「页面」指把 http(s):// 或 file:// URL 交给 `detect`，由真实浏览器渲染后检查，可用 `--viewport <W>x<H>` 指定视口（默认 1280x800）。warning 级发现计入失败数，可能让退出码为 2；advisory 单独列出、不改变退出码，`--no-advisory` 只能隐藏 advisory 级发现。两条文本规则也随设计 hook 在编辑后运行：`xgent/focus-outline-removed` 会在 Stop 深检提醒中给出，并在 Cursor before-edit 中拒绝写入；`xgent/transition-all` 是 advisory，hook 默认不输出 advisory 发现。页面规则依赖浏览器渲染，hook 不会产生它们，需要时单独运行 `detect <url>`。
+
+五条 `xgent/cjk-*` 规则只作用于以汉字为主的文本：去掉空白与标点后，汉字超过可见字符的一半。其中正文指 `p`、`li`、`td`、`th`、`dd`、`blockquote`、`figcaption` 里超过 10 个字符的直接文本，标题指 `h1`–`h6`；日文、韩文和夹少量中文的拉丁文本不在其内，标识符或路径密集、汉字不过半的中文技术段落也不在其内，仍按内置规则判定。
+
+- `xgent/cjk-tight-leading`：多行中文正文行高低于字号的 1.5 倍（`line-height: normal` 不判定）。
+- `xgent/cjk-line-length`：中文正文至少两行超过 40 个汉字宽（每行渲染宽度除以字号与字距之和）。
+- `xgent/cjk-orphan`：正文或标题的最后一行只剩一两个汉字。
+- `xgent/cjk-split-unit`：数字和紧跟的单位（如“38 秒”“3 个工作日”“99.5%”）被拆到两行。
+- `xgent/cjk-font-fallback`：汉字被意外的字体渲染，只报三种情况：声明的 Web 字体加载失败、汉字因此改由后面的字体渲染；同一段汉字由两个以上字体渲染，且其中有声明的具名字体；声明的字体都没有渲染汉字，列表里也没有通用字体族。只声明通用字体族、具名字体渲染了全部汉字、拉丁字体在前而汉字落到后面的字体，都是正常结果。同一字体栈的同一种情况只报在第一处，并写出其余处数。发现里的字体名是系统报告的名称，可能是本地化名（如苹方在部分系统语言下报为“蘋方-簡”）；这时只写了具名字体、没写通用字体族的声明会被报成第三种情况，补一个通用字体族即可。手工 `<br>` 造成的孤字与数字单位分行同样会报。
+
+在这些中文正文上，内置的 `line-length`、`tight-leading` 由对应的中文规则接替，不再出现；关闭某条中文规则不会让内置规则回来。标题与其他标签上的文本仍由内置规则判定。升级后中文页面的 `detect <url>` 可能因此新增两类 warning 并使退出码变为 2，不接受时用 `hooks ignore-rule` 逐条关闭。hook 不产生这五条规则；live 叠层与浏览器扩展不运行它们，中文正文在那两处仍只有内置规则的结果。
+
+字体来源无法核实时（字体仍在加载、浏览器没有给出实际字体，或分不清是失败的 Web 字体还是排在它前面的通用字体族在起作用），不报 `xgent/cjk-font-fallback`，`detect` 在发现之后向 stderr 输出 `note:` 行，写明 URL、元素序号、该段文字的开头和原因。备注不是发现，不进 JSON 发现数组，不影响退出码；没有字体回退发现不等于字体已经核实。
 
 关闭方式（按影响范围选择）：
 
@@ -108,10 +125,86 @@ phoenix-ui capture stitch before.png after.png --match 320,320 --label 修改前
 
 - 目标：http(s):// 与 file:// 原样打开；本地 `.html` 文件或目录由内置静态服务器经 `http://127.0.0.1:<随机端口>` 提供（目录入口 `index.html`）。视口 `desktop`（1440x900）、`mobile`（390x844）、`<宽>x<高>` 或 `<标签>=<宽>x<高>`；`--dpr`、`--color-scheme light|dark`、`--reduced-motion`。
 - 状态文件（`--states`）：`initial` 描述初始状态的截图方式，`states` 逐个列出 `name` 与 `steps`；每个状态在不共享 cookie 与存储的新页面里从头执行自己的步骤。定位用 `{"role":…, "name":…}`、`{"text":…}` 或 `{"css":…}`（可加 `nth`），只查主文档，不进 iframe 与 Shadow DOM；动作有 click、dblclick、hover、fill、type、select、press、drag、scroll、wait、waitFor；原生日期、时间、颜色、范围输入用 fill 按其值格式设值（如 `2026-11-20`），type 落在这类控件上会失败。截图类型 `viewport`、`full` 或 `{"element": <定位>}`；`frames` 出序列帧，`mark` 出编号标注图。完整格式见 `phoenix-ui capture --help`。
-- 输出与命名：默认 `.phoenix-ui/capture/`，文件名模板默认 `{viewport}{-state}.png`（初始状态为 `desktop.png`，其他为 `desktop-<状态>.png`），`--name` 可改；报告 `capture-report.json`（schema `phoenix-ui-capture-v1`）逐张记录目标、地址、视口、像素比、配色、截图类型、拍摄时间、浏览器与命令版本、步骤与观察、控制台错误、失败请求与图片、横向溢出、被拦截的写请求和该状态的页面规则发现（与 `detect` 同一套规则与项目配置）；已存在的报告按文件名合并，只重取部分状态时其余条目保留。派生图：`--mask` 遮字版、`--thumbs` 扫视缩略图（480/180 宽）、`--sheet` 状态并排图、`frames` 序列帧、`mark` 标注图、`capture stitch` 修改前后拼图，都不替代状态截图。
+- 输出与命名：默认 `.phoenix-ui/capture/`，文件名模板默认 `{viewport}{-state}.png`（初始状态为 `desktop.png`，其他为 `desktop-<状态>.png`），`--name` 可改；报告 `capture-report.json`（schema `phoenix-ui-capture-v1`）逐张记录目标、地址、视口、像素比、配色、截图类型、拍摄时间、浏览器与命令版本、步骤与观察、控制台错误、失败请求与图片、横向溢出、被拦截的写请求和该状态的页面规则发现（`findings`，与 `detect` 同一套规则与项目配置）；页面扫描无法核实某段文字的字体来源时，该图条目另有 `findingsNotes` 数组，文本与 `detect` 的 `note:` 行相同，终端相应输出 `NOTE <状态> <视口> <文件>: …`。`findingsNotes` 表示所写 URL 与段落的字体来源尚未核实，不是发现，没有字体回退发现也不等于已核实：等字体加载稳定后在现有轮次内重取该状态，或人工核对该段的实际字体并记下依据；仍未解除的在最终交付的未验证项里写明 URL、段落与原因，不为它另加阻塞门或检测轮次；已存在的报告按文件名合并，只重取部分状态时其余条目保留。派生图：`--mask` 遮字版、`--thumbs` 扫视缩略图（480/180 宽）、`--sheet` 状态并排图、`frames` 序列帧、`mark` 标注图、`capture stitch` 修改前后拼图，都不替代状态截图。
 - 有效性：每张主截图自检步骤是否全部执行、有限动画是否结束、文字是否大面积透明、是否整张单色或有异常全黑带、画布是否绘出、尺寸是否符合截图类型。无效图写成 `<名>.invalid.png`，同名旧图（含失败状态的旧图）删除。退出码：0 全部有效；1 无法运行（参数或状态文件错误、浏览器不可用、目标打不开），不写报告；2 已运行但有失败状态、无效图、派生图未产出或扫描出错。
-- 浏览器与隐私：使用本机 Chrome、Chromium、Edge 或 Brave（`PHOENIX_UI_BROWSER` 可指定），无浏览器时退出 1 并说明，其他命令照常；资料目录是临时的，结束后删除；只访问目标页面及其自身加载的资源。`--block-writes` 中止页面、iframe 与 worker 发出的非 GET 请求并逐条记录，`--allow-write <路径>` 放行必要写入；凭据用步骤里的 `env` 引用环境变量，它的值与 URL 中的密码在报告、终端与错误信息中替换为 `***`（页面自己显示在截图里的内容不在此列）。
+- 浏览器与隐私：使用本机 Chrome、Chromium、Edge 或 Brave（`PHOENIX_UI_BROWSER` 可指定），无浏览器时退出 1 并说明，其他命令照常；资料目录是临时的，结束后删除。引擎自身不发请求；浏览器以启动参数抑制组件更新、账号、时间、搜索和 Safe Browsing 密钥等后台联网，目标页面自己的资源照常加载。在本机 Google Chrome 157.0.8103.40 上未观察到目标页面及其资源之外的请求；Linux Chrome/Chromium 仍有下文列明的后台请求。Edge、Brave 及其他版本未逐一验证。`--block-writes` 中止页面、iframe 与 worker 发出的非 GET 请求并逐条记录，`--allow-write <路径>` 放行必要写入；凭据用步骤里的 `env` 引用环境变量，它的值与 URL 中的密码在报告、终端与错误信息中替换为 `***`（页面自己显示在截图里的内容不在此列）。
 - 走查子代理：Phoenix 随包安装 `phoenix-ui-ux-walker`，以不知道任务的首次使用者身份，通过 capture 重放步骤走一条主要路径，报告卡住、走错与犹豫；Web 完工轮在有主要操作流程时与完工评审同轮派出。
+
+## 素材命令（media）
+
+`phoenix-ui media` 为设计稿与方案预览检索开放授权素材。素材只取到当前项目的 `.phoenix-ui/media/`，不复制进产品资产目录、不从产品代码引用，也不把许可清单或署名写进产品。分级描述条目自身的许可；“可上线”并不授权把素材放进当前产品。
+
+```bash
+phoenix-ui media search "old world map|nautical chart" --kind map --sheet
+phoenix-ui media preview C1 C2
+phoenix-ui media search paper --kind texture --use page
+phoenix-ui media fetch C1 T1 --maps all --resolution 1k
+phoenix-ui media search "rocket launch" --kind video
+phoenix-ui media fetch N1 --video-size medium
+phoenix-ui media audit src public
+```
+
+- `search`：词组以 `|` 分隔；`--kind all|texture|design|photo|blueprint|map|plate|science|video` 分别为全部、材质贴图、设计器物、摄影、测绘图纸、地图、版画、科学和视频；`--limit` 为 1–30，全部默认 12，其余默认 6。`--use page` 只保留“可上线”条目。`--sheet` 下载预览并生成联系表。
+- `preview <编号>…`：为索引里的候选重新生成联系表。
+- `fetch <编号>…`：只认当前素材区的编号。贴图的 `--maps color,roughness,normal` 或 `all` 取颜色、粗糙度与 OpenGL 法线，默认 color；`--resolution 1k|2k|4k|8k` 默认 1k。视频的 `--video-size medium|small|preview|orig` 默认 medium。`--max-mb` 限制单个文件，默认 256（1–2048）。下载超时 `--download-timeout-ms` 默认 180000。
+- `audit [路径…]`：默认核对整个当前项目，只读且不联网。跳过 `.git`、`node_modules` 与当前项目的 `.phoenix-ui/`，不跟随符号链接。
+- 公共选项：`--dir` 可改素材区，但必须仍在当前项目的 `.phoenix-ui/` 内，符号链接不能绕过边界；`--json` 输出结构化报告。联网子命令的 `--timeout-ms` 默认 12000，范围 1000–120000。选项支持 `--key value` 与 `--key=value`。
+
+11 个信源为 Poly Haven、V&A、Wellcome、美国国会图书馆、NASA、Wikimedia Commons、芝加哥艺术博物馆、克利夫兰艺术博物馆、大都会博物馆、Japan Search、荷兰国立博物馆。材质取 Poly Haven；设计器物查各博物馆、Japan Search 与 Poly Haven 模型预览；摄影查 Commons、国会图书馆与 NASA；图纸和地图查国会图书馆及 Commons；版画查 Wellcome、Japan Search 与 Commons；科学查 NASA 与 Wellcome；视频查 NASA。`all` 并发查询全部入口，单个信源失败不影响其余结果。
+
+许可分为 `page`（可上线：许可允许相应用途，仍须核对条目条件）、`check`（需核对：不明确或提及第三方权利）、`reference`（仅参考：非商业、禁止演绎或另需授权）。Poly Haven 为 CC0；美术馆的公有领域或 CC0 项按其声明分级；Japan Search 只取 CC0、公有领域、CC BY、CC BY-SA，ColBase 条目保留“出典：ColBase”署名要求。Commons 按单个文件许可，BY-SA 改色或合成后须同许可共享；V&A 为仅参考。国会图书馆不推定无版权限制，Wellcome 保留条目许可，NASA 保留第三方署名与限制。命令不判断肖像权、商标或具体商业用途。
+
+素材区保存 `index.json`（跨次检索沿用编号）、`sources.json`（逐文件的来源、许可、署名、取用日期、真实尺寸、SHA-256 与完整性）与 `.gitignore`（首次写入 `*`，已有文件不改）。这些文件留在本机；换机器后须重新检索取用。索引不是结果缓存，离线时不会返回旧候选。
+
+`candidates.png` 每格标编号、分级色带与原图尺寸，中文标题看终端或 JSON。`look` 记录整图明暗 `tone`、低饱和度 `mono`、四边色 `edges` 与平均边色 `edge`、边缘是否平坦 `edgeFlat`、浅色纸底 `paper`、可压字区域 `calm` 和宽高比 `ratio`。预览失败的格子显示 `NO PREVIEW`，`look` 为 null。
+
+取用会检查体积、内容类型、文件签名与完整解码：图片必须整张解码成功，坏图不落位、不登记；贴图还核对信源给出的字节数。视频以首帧解码为成功条件，同时生成 `-poster.png`，需要本机浏览器支持该视频编码；浏览器不可用、编码不支持或超时均使该视频取用失败，视频与首帧都不落位。首帧就是第 0 帧，开头是黑场时保留黑图。
+
+交付前对实际产品源码和静态资源路径运行 `media audit <路径…>`（如 `media audit src public`），避免把项目内安装的技能文档当作产品扫描；省略路径时扫描当前目录：`reference` 表示产品引用素材区路径，`copy` 表示存在字节完全相同的副本，`credit` 表示出现来源/下载/许可链接、许可原文或署名。清掉发现后再交付；`credit` 可能碰巧匹配产品文案，主代理判断保留时在交付报告写明依据。
+
+退出码：0 完成且没有错误（搜索零条也为 0）；1 参数/素材区/索引错误、全部编号不存在或全部信源不可用；2 部分信源、预览或取用失败，或 audit 有发现。全部连接失败时明确输出“网络不可用”，不改索引；其他全部失败列出原因。国会图书馆在部分网络下会对非浏览器客户端返回 403，按不可用报告，不绕过限制。
+
+## 交付图片处理（prep-image）
+
+```bash
+phoenix-ui embed-prompt src/assets/hero.png --prompt "项目图片的来源说明"
+phoenix-ui prep-image src/assets/hero.png --width 600 --widths 600,1200 --out public/img
+phoenix-ui prep-image src/assets/logo.png --width 300 --trim --out public/img
+phoenix-ui prep-image src/assets/hero.png --width 600 --crop 16:9 --out public/img
+phoenix-ui embed-prompt --scan public/img
+```
+
+`prep-image` 完全离线，接受 PNG、JPEG、WebP 文件或目录（仅当前层的这三种图片）。输入没有内嵌来源或 `<图片>.json` 旁注时拒绝该文件，先用 `embed-prompt` 写入准确来源。目录输入必须指定 `--out`，且不能输出回该输入目录。
+
+- `--width <显示宽>` 导出显示宽的 2 倍；`--widths <像素宽,…>` 增加实际像素宽版本，至少给一个选项，两者可同给，取值 1–16384。超过原图宽时不放大，报告注明并去重。
+- `--trim` 裁全透明边；`--crop <宽:高>` 居中裁切，也接受 `/`、`x` 或小数（0.01–100）。先应用 EXIF 方向，再裁透明边、按比例裁切、缩放；全透明图、APNG 和动画 WebP 被拒绝。
+- 不透明像素输出 JPEG，`--quality 1–100` 默认 82；有透明像素输出无损 WebP，缩放使用预乘 alpha 避免暗边，保留原 ICC 配置。不提供有损 WebP、AVIF 或格式选项。
+- `--out <目录>` 默认各输入所在目录。文件名为 `<原文件名去扩展名>-<像素宽>.jpg|webp`；本批输出与任何输入冲突或不同输入命中同一输出时，相关输入失败，不覆盖原图；其他既有同名输出可覆盖。
+- 两个以上输出生成按宽度升序的 `srcset`/`sizes` 片段，路径相对当前目录并 URL 编码。`--sizes` 可改 sizes；有 `--width W` 时默认 `(max-width: Wpx) 100vw, Wpx`，否则 `100vw`。
+
+原图字节保持不变，报告列出 SHA-256、输出像素尺寸与体积，`--json` 返回结构化报告。来源载体沿用 `embed-prompt`：PNG 的 tEXt、JPEG 的 COM（文字过长改旁注）、WebP 的 `<图片>.json` 旁注；移动 WebP 时须同时移动旁注。输出可直接 `embed-prompt --read` 或 `--scan`。
+
+退出码：0 全部成功；1 参数错误或没有输入，不写文件；2 个别输入失败，其余照常处理。
+
+## 联网边界
+
+| 命令 | 联网范围 |
+| --- | --- |
+| `context`、`hook`、`detect <源码文件>` | 不发起外网请求，保留既有本机端口探测 |
+| `detect <url>`、`capture` | 目标页面与其自身资源；浏览器自身后台请求的验证范围见上文“浏览器与隐私” |
+| `media search/preview/fetch` | 显式调用时访问素材信源与条目提供的图片地址；`media audit` 不联网 |
+| `prep-image` | 纯本地图片处理，不联网 |
+
+以上命令运行时不自动更新或下载 engine。
+
+已登记的浏览器自身残余（2026-11-12，独立临时资料目录、相同关闭参数）：
+
+| 实测环境 | 残余主机与已观察请求 | 验证限制 |
+| --- | --- | --- |
+| Linux x64，系统 Google Chrome；runner镜像清单声明156.0.8078.79，首轮未记录实际版本 | `update.googleapis.com`：HTTPS CONNECT及HTTP `POST /service/update2/json` | 更新检查端点；记录代理返回502，未证实组件下载，也不能由此保证该版本永不下载 |
+| Linux arm64，Chromium 147.0.7727.0（Playwright 1.59.1 / revision 1217） | `android.clients.google.com`：HTTPS CONNECT | 未取得HTTPS路径，具体调用者未确认 |
+
+这些是浏览器行为，不属于素材检索；关闭参数无法在上述版本保证零后台请求。联网边界测试仅在Linux登记这两个主机，仍拒绝清单外的请求；不屏蔽主机，以免破坏目标页面引用的资源。实测日志与排查边界见 [P3验收记录](plan/PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M5.md#v-11-联网边界排查)。
 
 ## 融合用法与 UI 验收
 

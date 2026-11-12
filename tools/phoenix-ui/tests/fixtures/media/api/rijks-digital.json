@@ -1,0 +1,14 @@
+{
+  "id": "https://id.rijksmuseum.nl/500113801161057672104100",
+  "access_point": [
+    {
+      "id": "https://iiif.micr.io/NXvPP/full/max/0/default.jpg",
+      "type": "DigitalObject"
+    }
+  ],
+  "_recording": {
+    "url": "https://id.rijksmuseum.nl/500113801161057672104100",
+    "date": "2026-11-12",
+    "note": "Real response; unrelated fields omitted."
+  }
+}

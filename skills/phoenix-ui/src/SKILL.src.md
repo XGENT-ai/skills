@@ -12,13 +12,23 @@ license: Apache 2.0
 
 Phoenix UI provides local design tools for any UI project, including standalone sites, applications, and embedded interfaces. Follow the target project's product truth, accepted direction, and design rules; derive platform and host constraints from that project's own context. Use the command references to create complete, accessible interfaces with a clear visual direction.
 
-Install this runtime through `@xgent-ai/skills` on npm. Source copies from skills.sh do not include an engine installation. The engine does not update or download during context, detection, or hooks. Explicit `engine install` restores the version pinned by the installed package.
+Install this runtime through `@xgent-ai/skills` on npm. Source copies from skills.sh do not include an engine installation. The engine does not update or download during context, detection, or hooks. Only `media` accesses media sources, and only when invoked. Explicit `engine install` restores the version pinned by the installed package.
 
 Core principles:
 - Go all out. No hedging, no shortcuts. The deliverable must be complete (except assets the user must provide).
 - Dream big and bold. Distinct, beautiful, outstanding and highly inspiring work.
 - Let the coding agent choose sub-agents and parallelism for efficiency under its own orchestration policy and the user's constraints. Phoenix adds no separate approval or waiting step for delegation.
 - Keep Phoenix design self-QA to one batched inspection and at most one confirmation after fixing the findings. This ceiling applies to the design pass. Independent review-ui/apply-ui-review cycles and work the user has authorized follow their own completion conditions. Finish-reviewer and component-review evidence do not close an independent UI acceptance cycle.
+
+## Media requests
+
+For real imagery in a direction, comp, or preview, follow this sequence. Before each search or fetch, make its subject and preview purpose visible in the conversation; an assistant message or the tool call's visible description can carry that explanation. Continue without asking for approval.
+
+1. Read the media clauses in [new-work.md](reference/new-work.md).
+2. Announce the search and run `media search … --sheet`. Open the contact sheet, show the candidates' use grades, and choose the reference(s).
+3. Announce the selected refs and their preview use, then run `media fetch <ref>`. Keep each additional search or fetch visible with its own explanation.
+4. Keep fetched files under `.phoenix-ui/`. A `page` grade does not permit moving them into product assets, now or later. Product imagery must be separately obtained project imagery or generated replacements.
+5. After using fetched media in a preview, run `{{scripts_path}}/phoenix-ui media audit <product-paths...>` over the actual product source and shipped asset paths. Report the result before delivery.
 
 ## Setup
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-11-09T15:13:12.687Z",
+  "checkedAt": "2026-11-11T18:01:46.130Z",
   "status": "passed",
   "scope": "Locked Rust (all features/targets/build/dev), Node/Bun build dependencies and bundled fonts/JS; final package/platform acceptance is separate",
   "tools": {
@@ -15,10 +15,10 @@
     "tree": "f89220a21bd0d0b2d2fe1323a5c36f8edcedc01b",
     "commitAt": "2026-11-09T11:48:10+01:00",
     "treeListingSha256": "cf303ecc442afe56b28879739afa10d73ab23af7c40bea1d312ea4496d0cf66f",
-    "preparedAt": "2026-11-09T15:12:54.450Z"
+    "preparedAt": "2026-11-11T17:49:42.540Z"
   },
   "inputs": {
-    "cargoLockSha256": "d30090b2983f0e71fe0040729da12c5f05bd1aec5304ca0164950189bc9e4d76",
+    "cargoLockSha256": "a1bea86427fe67cd1befbe5b6126ed0f961217567814061481cd88708a6f9106",
     "bunLockSha256": "c77e9373b5193a6ee154c9c44238a042dc449e583356cb172e94ecf006875230",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
     "checkerSha256": "67d690df826d4745cc4804ffe8b348936de5b26f51ad3662a34a14bf995811ec",
@@ -28,7 +28,7 @@
     "packages": 53,
     "additionalBundledPackages": 1,
     "findings": 0,
-    "queriedAt": "2026-11-09T15:13:05.099Z",
+    "queriedAt": "2026-11-11T17:49:45.609Z",
     "endpoint": "https://registry.npmjs.org/-/npm/v1/security/advisories/bulk",
     "requestSha256": "0a8445184516d9b6dc947e1b594be8d5c7ef6928188fda59fac4784fd4811a3c",
     "responseSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",

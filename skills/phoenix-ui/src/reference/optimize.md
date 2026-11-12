@@ -33,6 +33,8 @@ Create systematic improvement plan:
 - Compress images (80-85% quality is usually imperceptible)
 - Use CDN for faster delivery
 
+Use `{{scripts_path}}/phoenix-ui prep-image <files...> --width <display-width> [--widths <pixel-widths,...>] [--crop <width:height>] [--trim]` for delivery exports. It exports at twice the display width without upscaling, writes JPEG for opaque images and lossless WebP for images with transparent pixels, leaves originals unchanged, and carries their provenance into the outputs. With two or more output widths, use its generated `srcset`/`sizes` snippet. For example, `--width 600 --widths 600,1200` produces both widths when the original is large enough. For lossy WebP or AVIF, use the project's own toolchain and carry the provenance separately.
+
 ```html
 <img 
   src="hero.webp"

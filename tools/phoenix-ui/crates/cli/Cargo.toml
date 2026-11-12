@@ -29,6 +29,10 @@ impeccable-comp-verbs = { workspace = true }
 serde_json = { workspace = true }
 base64 = "0.22"
 sha2 = "0.10"
+image = { version = "0.25", default-features = false, features = ["jpeg", "gif", "webp", "png"] }
+ureq = { version = "2", default-features = false, features = ["tls", "json"] }
+regex = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }
+tiny_http = "0.12"

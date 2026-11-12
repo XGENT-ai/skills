@@ -1,7 +1,7 @@
 ---
 name: feature-demo
-description: "用于把开发计划或 git 范围内新增的 Web 功能录成操作视频并生成模板报告；不用于验收、写测试或非 Web 界面录屏。先在运行中的系统上核对，再回放固定脚本录制。"
-when_to_use: "用户会说「这次加了什么，录个演示」「vibe coding 完不知道怎么用」「按这份计划录 demo」「UI 改了，重录一下」时。"
+description: "用于把开发计划或 git 范围内新增的 Web 功能录成操作视频并生成模板报告，用户要求时发布到 SPMS；不用于验收、写测试或非 Web 界面录屏。先在运行中的系统上核对，再回放固定脚本录制。"
+when_to_use: "用户会说「这次加了什么，录个演示」「vibe coding 完不知道怎么用」「按这份计划录 demo」「UI 改了，重录一下」「把演示发到 SPMS」时。"
 ---
 
 # Feature Demo
@@ -19,7 +19,7 @@ INTENT:
 
 RULE @boundary:
   MUST: ["输出位置按 用户指定 → 项目已有演示目录 → docs/demos/；每批放在 <演示目录>/<批次>/，批次用计划代号（计划文件名去掉日期），没有计划时用 <日期>-<短 SHA>",
-         "把 scripts/record-demo.mjs 和 scripts/render-report.mjs 复制到演示目录，生成物不依赖本 skill；同批演示共用的登录和定位器放 <批次>/shared.mjs",
+         "把 scripts/record-demo.mjs、scripts/render-report.mjs 和 scripts/publish-report.mjs 复制到演示目录，生成物不依赖本 skill；同批演示共用的登录和定位器放 <批次>/shared.mjs",
          "已有同名演示时原位更新脚本并重录，保留人工内容"]
   MUST_NOT: ["给目标项目添加依赖或修改产品代码，除非用户要求",
              "把一次录制通过说成验收通过；演示只证明这条路径在这次录制时走得通"]
@@ -91,6 +91,15 @@ RULE @report:
          "运行 render-report.mjs 生成 index.html；报错就改数据，不改生成结果",
          "做过录制前核对时，meta.environment 写明“录制前核对用了 phoenix-ui capture <capture-report.json 的 tool.version>”；precheck/ 不列进交付",
          "在浏览器打开 index.html（headless 也可以），确认每个视频有时长且能播放，图正常显示"]
+
+RULE @publish:
+  # 发布让没有本地环境的同事在 SPMS 项目报告里直接看；同一 batchId 再发布原位替换，链接不变。
+  WHEN: user_explicitly_asks_to_publish_to_spms
+  MUST: ["目标项目 id、SPMS MCP 地址与 Agent 令牌从项目登记的来源取得，没有登记时向用户要；令牌经 SPMS_TOKEN 环境变量传入，地址经 SPMS_MCP_URL，交付时只写变量名",
+         "在批次目录外运行 SPMS_MCP_URL=… SPMS_TOKEN=… node <演示目录>/publish-report.mjs <批次>/report.json --project <项目 id>；脚本先按模板与上限校验，只上传 report.json 引用的视频和图",
+         "回报报告编号、报告链接和结果；结果是替换时，转告被替换报告的原标题和上次更新时间，提醒用户同一链接已是新内容",
+         "失败时如实转述脚本给出的原因（字段错误、未上传的文件、令牌或项目权限、文件服务不可用），批次目录保持原样；上传地址过期时重新运行整个脚本"]
+  MUST_NOT: ["未经用户明确要求就发布", "改动批次目录里的文件来让发布通过，或绕过脚本手工上传"]
 
 RULE @handoff:
   MUST: ["给出 index.html 和 report.json 的路径，按三类列功能，报告录制基线、环境和数据来源",

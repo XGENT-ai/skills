@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>页面扫描新增五条中文排版规则</title>
+<style>
+  body { margin: 0; padding: 32px; font-family: sans-serif; font-size: 16px; line-height: 1.6; color: #1c1c1c; background: #ffffff; }
+  article { width: 38em; }
+  h1 { margin: 0 0 24px; font-size: 28px; line-height: 1.3; }
+  .keep { white-space: nowrap; }
+  blockquote { margin: 24px 0; font-family: "Songti SC", "Noto Serif CJK SC", serif; }
+</style>
+</head>
+<body>
+  <article>
+    <h1>页面扫描新增<br>五条中文排版规则</h1>
+    <p>过去的行高与行长检查只按拉丁文字的习惯判断，一段中文正文即使排得又密又长，也常常不会得到任何提示。汉字是方块字，每个字都占满一个字宽，同样的行高放在英文里显得疏朗，放在中文里却会让上下两行贴在一起；同样的栏宽，英文读起来刚好，中文一行却塞进了五十多个字，读者读到行尾再折回来时很容易找错行。这次更新让以汉字为主的正文改由专门的规则判断：正文行高低于一点五倍会被指出，一行超过四十个字也会被指出。除此之外，页面扫描还会留意三种只有渲染之后才看得出来的问题，分别是段落最后一行只剩一两个字、数字和它后面的单位被拆到两行，以及汉字被没有预料到的字体渲染出来。这些规则只在浏览器里打开页面之后运行，因为每一行到底排了哪些字、每个字到底用了哪个字体，只有排版完成之后才知道。</p>
+    <p class="summary">本次扫描覆盖全部页面，总共耗时 <span class="keep">38 秒</span>。</p>
+    <blockquote>排版的目标是让读者忘记排版本身。</blockquote>
+  </article>
+</body>
+</html>

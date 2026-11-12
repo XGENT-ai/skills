@@ -1,0 +1,11 @@
+{
+  "total": 7295,
+  "objectIDs": [
+    229
+  ],
+  "_recording": {
+    "url": "https://collectionapi.metmuseum.org/public/collection/v1.1/search?q=chair&hasImages=true&isPublicDomain=true&limit=1",
+    "date": "2026-11-12",
+    "note": "Real response, cropped to one result."
+  }
+}

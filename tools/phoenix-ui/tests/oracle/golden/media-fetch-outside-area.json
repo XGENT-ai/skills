@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "素材只取到 .phoenix-ui/ 下的素材区，只用于设计稿与方案预览，不进入产品：<WS>/out 在 .phoenix-ui/ 之外\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

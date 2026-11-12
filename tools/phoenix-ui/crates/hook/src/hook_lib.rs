@@ -1633,6 +1633,7 @@ impl HookScanOptions {
             design_system: self.design_system.clone(),
             viewport: None,
             rule_pack: self.rule_pack,
+            notes: None,
         }
     }
 }

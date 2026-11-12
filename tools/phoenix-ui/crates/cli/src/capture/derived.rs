@@ -289,8 +289,21 @@ pub fn frames_layout(
 }
 
 /// A screenshot with numbered 2 px boxes; `marks` are `(number, box)` in
-/// image pixels.
-pub fn mark_layout(png: &[u8], size: (f64, f64), marks: &[(usize, [f64; 4])]) -> Layout {
+/// image pixels. Too small a picture (under 4 px) cannot carry a box, so
+/// the layout is an error the caller can report, not a clamp past its own
+/// range.
+pub fn mark_layout(
+    png: &[u8],
+    size: (f64, f64),
+    marks: &[(usize, [f64; 4])],
+) -> Result<Layout, String> {
+    if size.0 < 4.0 || size.1 < 4.0 {
+        return Err(format!(
+            "图幅 {}×{} 小于 4 像素，画不下标注框",
+            size.0.round(),
+            size.1.round()
+        ));
+    }
     let mut pieces = vec![Piece::Image {
         src: png_url(png),
         natural: size,
@@ -309,11 +322,11 @@ pub fn mark_layout(png: &[u8], size: (f64, f64), marks: &[(usize, [f64; 4])]) ->
             text: number.to_string(),
         });
     }
-    Layout {
+    Ok(Layout {
         width: size.0,
         height: size.1,
         pieces,
-    }
+    })
 }
 
 /// The first viewport of each state's screenshot side by side, named.

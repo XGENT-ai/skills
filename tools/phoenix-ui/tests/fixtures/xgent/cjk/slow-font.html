@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>加载完成后才出现的字体</title>
+<style>
+  @font-face { font-family: "Slow Han"; src: url("slow-han.woff2") format("woff2"); }
+  body { margin: 0; padding: 24px; font-family: sans-serif; font-size: 16px; line-height: 1.7; }
+  .late { font-family: "Slow Han", sans-serif; }
+</style>
+</head>
+<body>
+  <p>这一段在页面加载时就已经显示，使用系统默认的无衬线字体。</p>
+  <button id="more" type="button">显示更多</button>
+  <script>
+    // ?case=2 shows other text; ?case=click shows nothing until the button.
+    const which = new URLSearchParams(location.search).get('case');
+    function reveal(text) {
+      const late = document.createElement('p');
+      late.className = 'late';
+      late.textContent = text;
+      document.body.appendChild(late);
+    }
+    if (which !== 'click') {
+      addEventListener('load', () => reveal(which === '2'
+        ? '第二个页面的这一段文字同样要等延迟的字体文件。'
+        : '这一段文字在加载事件之后才插入，它的字体文件还在路上。'));
+    }
+    document.getElementById('more').addEventListener('click', () => reveal('点击之后出现的这一段也在等同一个字体文件。'));
+  </script>
+</body>
+</html>

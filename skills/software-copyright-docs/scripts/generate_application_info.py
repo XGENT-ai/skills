@@ -608,7 +608,7 @@ def write_application_md(path: Path, fields: dict[str, str], analysis: dict[str,
             raw_name = clean_name
     recommended_suffixes = ("软件", "平台", "系统")
     if raw_name and not raw_name.endswith(recommended_suffixes):
-        warnings.append("软件全称未以「软件」「平台」或「系统」结尾，建议结合实际命名补充软件属性后缀。")
+        warnings.append("软件全称未以“软件”“平台”或“系统”结尾，建议结合实际命名补充软件属性后缀。")
 
     main_func = fields.get("软件的主要功能", "")
     if main_func and "待用户确认" not in main_func:

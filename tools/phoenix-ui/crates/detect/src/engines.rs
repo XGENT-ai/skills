@@ -3,6 +3,7 @@
 //! (crates/browser). `detect` never depends on those crates; the `cli` binary
 //! wires concrete engines in through `Engines`.
 
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use impeccable_core::findings::Finding;
@@ -24,6 +25,10 @@ pub struct ScanOptions {
     /// to the text engine and on to the HTML engine. `None` in the `impeccable`
     /// binary, which ships the built-in rules only.
     pub rule_pack: Option<&'static dyn RulePack>,
+    /// Where a page scan leaves what it could not verify (today: which fonts
+    /// rendered a passage). A note is not a finding: it never reaches the
+    /// findings list or the exit code. `None` discards them.
+    pub notes: Option<Rc<RefCell<Vec<String>>>>,
 }
 
 /// An error an engine raises; `detectCli` reports it the way the JS surfaces

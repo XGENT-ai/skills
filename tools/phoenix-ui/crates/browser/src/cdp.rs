@@ -23,6 +23,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
+use impeccable_core::browser::dom::RenderedFont;
 use serde_json::{Map, Value, json};
 use tungstenite::client::IntoClientRequest;
 use tungstenite::protocol::WebSocketConfig;
@@ -67,6 +68,13 @@ pub fn default_chrome_args(user_args: &[String], dangerous_no_sandbox: bool) -> 
         "--disable-breakpad",
         "--disable-client-side-phishing-detection",
         "--disable-component-extensions-with-background-pages",
+        "--disable-component-update",
+        "--disable-domain-reliability",
+        "--no-pings",
+        "--no-default-browser-check",
+        "--gaia-url=http://127.0.0.1:9",
+        "--google-apis-url=http://127.0.0.1:9",
+        "--lso-url=http://127.0.0.1:9",
         "--disable-crash-reporter",
         "--disable-default-apps",
         "--disable-dev-shm-usage",
@@ -86,7 +94,7 @@ pub fn default_chrome_args(user_args: &[String], dangerous_no_sandbox: bool) -> 
         "--no-first-run",
         "--password-store=basic",
         "--use-mock-keychain",
-        "--disable-features=Translate,AcceptCHFrame,MediaRouter,OptimizationHints,WebUIReloadButton,ProcessPerSiteUpToMainFrameThreshold,IsolateSandboxedIframes",
+        "--disable-features=Translate,AcceptCHFrame,MediaRouter,OptimizationHints,WebUIReloadButton,ProcessPerSiteUpToMainFrameThreshold,IsolateSandboxedIframes,NetworkTimeServiceQuerying,PreconnectToSearch,AimEnabled,AiModeOmniboxEntryPoint,AimServerEligibilityEnabled,AimEntrypointEligibility,OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,CertificateTransparencyComponentUpdater,AutofillServerCommunication,InterestFeedContentSuggestions,HashPrefixRealTimeLookups,SafeBrowsingHashPrefixRealTimeLookups,SafeBrowsingHashRealTimeOverOhttp",
         "--enable-features=PdfOopif",
     ]
     .iter()
@@ -1086,8 +1094,11 @@ impl<'a> Page<'a> {
                     }
                     _ => {}
                 }
-                // A write block must cover requests from iframes and workers
-                // too; arm it while the target is still paused.
+                // A write block must cover requests from iframes, workers and
+                // service workers too; arm it while the target is still paused.
+                // `setBypassServiceWorker` on the page only stops it from
+                // answering page requests — the worker itself can still fetch,
+                // so its own session needs interception.
                 let owner = conn
                     .intercept_owner
                     .get(session)
@@ -1097,7 +1108,12 @@ impl<'a> Page<'a> {
                     .interceptors
                     .get(&owner)
                     .is_some_and(|i| i.block.is_some());
-                if blocking && matches!(ttype, "iframe" | "worker") {
+                if blocking
+                    && matches!(
+                        ttype,
+                        "iframe" | "worker" | "shared_worker" | "service_worker"
+                    )
+                {
                     conn.intercept_owner.insert(new_session.clone(), owner);
                     let _ = conn.post(
                         Some(&new_session),
@@ -1354,9 +1370,10 @@ impl<'a> Page<'a> {
         Ok(())
     }
 
-    /// Fail every non-GET request of this page, its iframes and workers,
-    /// except `allow` paths; service workers are bypassed so they cannot
-    /// replay a write outside the interception.
+    /// Fail every non-GET request of this page, its iframes, workers and
+    /// service workers, except `allow` paths; service worker sessions get
+    /// their own interception (arming happens on auto-attach) because
+    /// `Network.setBypassServiceWorker` only covers the page's own loads.
     pub fn enable_write_block(&mut self, allow: Vec<String>) -> CdpResult<()> {
         self.send("Network.setBypassServiceWorker", json!({ "bypass": true }))?;
         self.send(
@@ -1896,6 +1913,37 @@ impl<'a> Page<'a> {
         Ok(())
     }
 
+    /// The fonts that rendered each node matching `selector`, in document
+    /// order. Reads layout results, so a node must generate boxes
+    /// (`visibility: hidden` does, `display: none` does not).
+    pub fn platform_fonts(&mut self, selector: &str) -> CdpResult<Vec<Vec<RenderedFont>>> {
+        self.send("DOM.enable", json!({}))?;
+        self.send("CSS.enable", json!({}))?;
+        let document = self.send("DOM.getDocument", json!({"depth":0}))?;
+        let root = document["root"]["nodeId"].clone();
+        let found = self.send(
+            "DOM.querySelectorAll",
+            json!({"nodeId":root,"selector":selector}),
+        )?;
+        let mut out = Vec::new();
+        for node in found["nodeIds"].as_array().into_iter().flatten() {
+            let value = self.send("CSS.getPlatformFontsForNode", json!({"nodeId":node}))?;
+            out.push(
+                value["fonts"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .map(|font| RenderedFont {
+                        family: font["familyName"].as_str().unwrap_or("").to_string(),
+                        custom: font["isCustomFont"].as_bool().unwrap_or(false),
+                        glyphs: font["glyphCount"].as_f64().unwrap_or(0.0) as u32,
+                    })
+                    .collect(),
+            );
+        }
+        Ok(out)
+    }
+
     /// Main-document generated boxes from native layout, indexed in querySelectorAll order.
     /// Do not infer pseudo geometry from its owner's rectangle.
     pub fn capture_pseudo_geometry(&mut self, world: &IsolatedWorld, retained: &[Value]) -> CdpResult<Value> {
@@ -2246,6 +2294,15 @@ mod tests {
         assert_eq!(args[0], "--allow-pre-commit-input");
         assert!(args.contains(&"--headless=new".to_string()));
         assert!(args.contains(&"--hide-scrollbars".to_string()));
+        assert!(args.contains(&"--disable-component-update".to_string()));
+        assert!(args.contains(&"--gaia-url=http://127.0.0.1:9".to_string()));
+        let disabled = args
+            .iter()
+            .find_map(|arg| arg.strip_prefix("--disable-features="))
+            .unwrap();
+        assert!(disabled
+            .split(',')
+            .any(|feature| feature == "SafeBrowsingHashPrefixRealTimeLookups"));
         assert_eq!(args.last().unwrap(), "about:blank");
         let with = default_chrome_args(&["--no-sandbox".to_string()], false);
         assert_eq!(with.last().unwrap(), "--no-sandbox");

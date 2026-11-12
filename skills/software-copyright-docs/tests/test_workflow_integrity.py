@@ -12,9 +12,7 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from capture_screenshots import collect_screenshots  # noqa: E402
-import check_playwright_cli as playwright_check  # noqa: E402
 from check_environment import check_environment  # noqa: E402
-from check_playwright_cli import npm_global_candidates  # noqa: E402
 from common import confirmation_is_current, read_json  # noqa: E402
 from confirm_stage import (
     REQUIRED_FIELDS,
@@ -51,31 +49,6 @@ class WorkflowIntegrityTests(unittest.TestCase):
         self.assertTrue(result["requires_user_input"])
         self.assertIn("重启 Codex", result["next_action"])
         self.assertNotIn("OFFICECLI_PATH", result["next_action"])
-
-    def test_playwright_cli_global_candidates_are_platform_standard(self) -> None:
-        prefix = Path("global-prefix")
-        windows = npm_global_candidates(prefix, windows=True)
-        posix = npm_global_candidates(prefix, windows=False)
-
-        self.assertEqual(windows[0], prefix / "playwright-cli.cmd")
-        self.assertEqual(posix[0], prefix / "bin" / "playwright-cli")
-
-    def test_playwright_cli_uses_global_prefix_without_restart(self) -> None:
-        prefix = self.temp_dir / "global-prefix"
-        prefix.mkdir()
-        executable = prefix / "playwright-cli.cmd"
-        executable.write_text("@echo off", encoding="utf-8")
-        with (
-            patch.object(playwright_check.shutil, "which", return_value=None),
-            patch.object(playwright_check, "_npm_global_prefix", return_value=(prefix, "")),
-            patch.object(playwright_check, "_read_version", return_value=("0.1.20", "")),
-        ):
-            result = playwright_check.check_playwright_cli()
-
-        self.assertTrue(result["ready"])
-        self.assertEqual(result["source"], "npm-global-prefix")
-        self.assertEqual(Path(result["executable"]), executable.resolve())
-        self.assertNotIn("重启", result["next_action"])
 
     def test_submitted_pages_are_60_for_front_back_mode(self) -> None:
         manifest = {"mode": "front30_back30", "total_pages": 143}

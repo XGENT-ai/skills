@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>依赖系统字体的情形</title>
+<style>
+  @font-face { font-family: "Weighted Han"; font-weight: 400; src: local("PingFang SC Regular"), local("PingFangSC-Regular"); }
+  @font-face { font-family: "Weighted Han"; font-weight: 700; src: url("missing-weighted-han-bold.woff2") format("woff2"); }
+  body { margin: 0; padding: 24px; font-family: sans-serif; font-size: 16px; }
+  p, h2 { line-height: 1.7; }
+  .two-fonts { font-family: "Hiragino Mincho ProN", "Songti SC"; }
+  .no-generic { font-family: "Helvetica Neue"; }
+  .latin-first { font-family: "Helvetica Neue", "Songti SC", sans-serif; }
+  .weighted { font-family: "Weighted Han", sans-serif; }
+  h2.weighted { font-weight: 700; }
+  p.weighted { font-weight: 400; }
+</style>
+</head>
+<body>
+  <!-- One stack, three paragraphs: the first two are each drawn whole by one font. -->
+  <p class="two-fonts">東京都知事選挙結果速報東京都知事選挙</p>
+  <p class="two-fonts">这们说时过对发还进这们说时过对发</p>
+  <p class="two-fonts">東京都知事選挙結果这们说时过对发还进</p>
+  <p class="no-generic">这一段只声明了一个没有汉字的拉丁字体。</p>
+  <p class="latin-first">拉丁字体在前，汉字落到后面声明的宋体。</p>
+  <!-- The bold face cannot load; the regular face of the same family can. -->
+  <h2 class="weighted">粗体字重的字体文件加载失败</h2>
+  <p class="weighted">常规字重的字体正常加载并渲染这一段。</p>
+</body>
+</html>

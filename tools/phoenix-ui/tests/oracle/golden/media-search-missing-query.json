@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "search 需要一个非空检索词组，多个词组用 | 分隔\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

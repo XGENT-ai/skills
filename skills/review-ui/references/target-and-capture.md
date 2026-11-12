@@ -125,7 +125,7 @@
 ```
 
 - 命名模板按上面的命名合同生成后传入：首采为 `<单元>-{state}-{width}-{scheme}.png`；同单元另有同宽但高度或 DPR 不同的视口时加确定性后缀，如 `<单元>-{state}-{width}-{scheme}-h{height}-dpr{dpr}.png`；同轮补采追加 `-a2`、`-a3` 等 attempt 后缀，原图与报告里的原条目保留、不覆盖。
-- `capture.md` 的地址、视口宽高、DPR、主题、拍摄时间与所用工具（`phoenix-ui capture <报告的 tool.version>`，附 `binarySha256` 前 12 位）从报告抄录。报告标为无效的图（`<名>.invalid.png`）按「没采到」处理：重拍或记缺证，不交评审。
+- `capture.md` 的地址、视口宽高、DPR、主题、拍摄时间与所用工具（`phoenix-ui capture <该图条目的 tool.version>`，附该条目 `binarySha256` 前 12 位；旧报告无逐张 `tool` 时回落顶层 `tool`）从报告抄录。报告标为无效的图（`<名>.invalid.png`）按「没采到」处理：重拍或记缺证，不交评审。
 - 报告里的控制台错误、失败请求、横向溢出与 `findings` 只进机器检查，不进评审材料。
 - 主 agent 仍逐张开图核对出处与画面；命令的自检不替代这一步。
 - 到达目标状态所需的交互或前置超出命令能力（应用在 iframe 内、目标在 Shadow DOM 内等）时，该单元改用现有其他采集方式，并满足上面的真实性与出处要求，`capture.md` 记实际所用工具；只有现有方式也取不到真实状态才记缺证。

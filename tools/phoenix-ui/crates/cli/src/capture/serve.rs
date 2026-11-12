@@ -143,6 +143,23 @@ fn encode_path(path: &str) -> String {
         .collect()
 }
 
+/// The file and its content a request path may read, or None when it must
+/// not be served (traversal, dot segments, NUL, backslashes, undecodable
+/// bytes, missing, or a symlink that resolves outside the root).
+fn read_within(root: &Path, target: &str) -> Option<(PathBuf, Vec<u8>)> {
+    let path = resolve(root, target)?;
+    // Symlinks must not widen the served tree: the real path of the file has
+    // to stay inside the real root (canonicalize both, so a symlinked root
+    // itself still works).
+    let real_root = std::fs::canonicalize(root).ok()?;
+    let real = std::fs::canonicalize(&path).ok()?;
+    if !real.starts_with(&real_root) {
+        return None;
+    }
+    let bytes = std::fs::read(&path).ok()?;
+    Some((path, bytes))
+}
+
 fn respond(stream: &mut TcpStream, host: &str, root: &Path) -> std::io::Result<()> {
     // Accepted sockets can inherit O_NONBLOCK from the listener on macOS.
     stream.set_nonblocking(false)?;
@@ -175,7 +192,7 @@ fn respond(stream: &mut TcpStream, host: &str, root: &Path) -> std::io::Result<(
     } else if !host_ok {
         ("400 Bad Request", "text/plain", b"Bad host".to_vec())
     } else {
-        match resolve(root, target).and_then(|p| std::fs::read(&p).ok().map(|b| (p, b))) {
+        match read_within(root, target) {
             Some((path, body)) => ("200 OK", content_type(&path), body),
             None => ("404 Not Found", "text/plain", b"Not found".to_vec()),
         }
@@ -215,5 +232,35 @@ mod tests {
         ] {
             assert_eq!(resolve(root, bad), None, "{bad}");
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn symlinks_stay_inside_the_root() {
+        let dir =
+            std::env::temp_dir().join(format!("phoenix-serve-symlinks-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let root = dir.join("app");
+        let outside = dir.join("outside");
+        std::fs::create_dir_all(root.join("sub")).unwrap();
+        std::fs::create_dir_all(&outside).unwrap();
+        // Synthetic content only: no real private files are touched.
+        std::fs::write(outside.join("secret.txt"), "synthetic-marker").unwrap();
+        std::fs::write(root.join("real.txt"), "inside").unwrap();
+        std::fs::create_dir_all(root.join("real-dir")).unwrap();
+        std::fs::write(root.join("real-dir/file.txt"), "nested").unwrap();
+        std::os::unix::fs::symlink("../outside/secret.txt", root.join("file-link.txt")).unwrap();
+        std::os::unix::fs::symlink("../outside", root.join("dir-link")).unwrap();
+        std::os::unix::fs::symlink("real.txt", root.join("inside-link.txt")).unwrap();
+
+        let read = |target: &str| {
+            read_within(&root, target).and_then(|(_, bytes)| String::from_utf8(bytes).ok())
+        };
+        assert_eq!(read("/real.txt").as_deref(), Some("inside"));
+        assert_eq!(read("/inside-link.txt").as_deref(), Some("inside"));
+        // Links out of the root are refused; the page cannot read them.
+        assert_eq!(read("/file-link.txt"), None);
+        assert_eq!(read("/dir-link/secret.txt"), None);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

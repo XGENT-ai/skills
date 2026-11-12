@@ -36,6 +36,7 @@ fn file(entry: &Value) -> &str {
 /// Replace the entries this run re-captured; keep the rest as they were.
 pub fn merge(existing: Option<Value>, run: &Run, head: Map<String, Value>) -> Value {
     let existing = existing.filter(|e| e.get("schema").and_then(Value::as_str) == Some(SCHEMA));
+    let old_tool = existing.as_ref().and_then(|e| e.get("tool")).cloned();
     let old = |k: &str| -> Vec<Value> {
         existing
             .as_ref()
@@ -49,10 +50,17 @@ pub fn merge(existing: Option<Value>, run: &Run, head: Map<String, Value>) -> Va
         run.shots.iter().chain(&run.failures).map(key).collect();
 
     let mut shots: Vec<Value> = Vec::new();
-    for entry in old("shots") {
+    for mut entry in old("shots") {
         if let Some(new) = run.shots.iter().find(|s| file(s) == file(&entry)) {
             shots.push(new.clone());
         } else if !touched_files.contains(&file(&entry)) {
+            // Before per-shot provenance existed, the old top-level tool was
+            // the capture identity; a later run must not replace it for reused shots.
+            if entry.get("tool").is_none() {
+                if let Some(tool) = &old_tool {
+                    entry["tool"] = tool.clone();
+                }
+            }
             shots.push(entry);
         }
     }
@@ -138,6 +146,15 @@ pub fn lines(run: &Run, report_path: &str) -> Vec<String> {
                 "SCAN-ERROR {state} {viewport} {}: {error}",
                 file(shot)
             ));
+        }
+        for note in shot
+            .get("findingsNotes")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+        {
+            out.push(format!("NOTE {state} {viewport} {}: {note}", file(shot)));
         }
         for problem in shot
             .pointer("/derived/problems")
@@ -239,6 +256,86 @@ mod tests {
             .map(|f| f["state"].as_str().unwrap())
             .collect();
         assert_eq!(failures, ["b"]);
+    }
+
+    #[test]
+    fn an_untouched_shot_keeps_its_own_tool_identity() {
+        let old = |file: &str, sha: &str| {
+            json!({
+                "file": file, "state": "initial", "viewport": { "label": "desktop" },
+                "valid": true, "capturedAt": "t0",
+                "tool": { "name": "phoenix-ui capture", "version": "0.1.0", "binarySha256": sha }
+            })
+        };
+        let existing = json!({
+            "schema": SCHEMA,
+            "tool": { "name": "phoenix-ui capture", "version": "0.1.0", "binarySha256": "b0" },
+            "shots": [old("kept.png", "b0"), old("retaken.png", "b0")],
+            "failures": [],
+            "sheets": [],
+        });
+        let run = Run {
+            shots: vec![json!({
+                "file": "retaken.png", "state": "initial", "viewport": { "label": "desktop" },
+                "valid": true, "capturedAt": "t1",
+                "tool": { "name": "phoenix-ui capture", "version": "0.2.0", "binarySha256": "b1" }
+            })],
+            failures: vec![],
+            sheets: vec![],
+        };
+        let mut head = Map::new();
+        head.insert(
+            "tool".into(),
+            json!({ "name": "phoenix-ui capture", "version": "0.2.0", "binarySha256": "b1" }),
+        );
+        let merged = merge(Some(existing), &run, head);
+        let get = |file: &str| {
+            merged["shots"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|s| s["file"] == file)
+                .cloned()
+                .unwrap()
+        };
+        // A partial re-capture by another engine must not rewrite the kept
+        // shot's provenance: only entries re-taken this run get the new tool.
+        assert_eq!(get("kept.png")["tool"]["binarySha256"], "b0");
+        assert_eq!(get("retaken.png")["tool"]["binarySha256"], "b1");
+        assert_eq!(merged["tool"]["binarySha256"], "b1");
+    }
+
+    #[test]
+    fn an_untouched_legacy_shot_inherits_the_old_report_tool() {
+        let existing = json!({
+            "schema": SCHEMA,
+            "tool": { "name": "phoenix-ui capture", "version": "0.1.0", "binarySha256": "b0" },
+            "shots": [
+                { "file": "kept.png", "state": "initial", "viewport": { "label": "desktop" }, "valid": true, "capturedAt": "t0" },
+                { "file": "retaken.png", "state": "again", "viewport": { "label": "desktop" }, "valid": true, "capturedAt": "t0" }
+            ],
+            "failures": [],
+            "sheets": [],
+        });
+        let run = Run {
+            shots: vec![json!({
+                "file": "retaken.png", "state": "again", "viewport": { "label": "desktop" },
+                "valid": true, "capturedAt": "t1",
+                "tool": { "name": "phoenix-ui capture", "version": "0.2.0", "binarySha256": "b1" }
+            })],
+            failures: vec![],
+            sheets: vec![],
+        };
+        let mut head = Map::new();
+        head.insert(
+            "tool".into(),
+            json!({ "name": "phoenix-ui capture", "version": "0.2.0", "binarySha256": "b1" }),
+        );
+        let merged = merge(Some(existing), &run, head);
+        assert_eq!(merged["shots"][0]["tool"]["binarySha256"], "b0");
+        assert_eq!(merged["shots"][0]["capturedAt"], "t0");
+        assert_eq!(merged["shots"][1]["tool"]["binarySha256"], "b1");
+        assert_eq!(merged["tool"]["binarySha256"], "b1");
     }
 
     #[test]

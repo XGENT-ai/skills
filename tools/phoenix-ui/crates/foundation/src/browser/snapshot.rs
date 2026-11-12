@@ -34,7 +34,7 @@
 //! Unknown computed-style properties (a rule reading a property the capture
 //! did not record) answer `""`.
 
-use super::dom::{Dom, ElId, KeyframeFrame, Rect, SelectorError};
+use super::dom::{Dom, ElId, HanFontFacts, KeyframeFrame, Rect, SelectorError};
 
 use super::selector::Selector;
 
@@ -546,6 +546,8 @@ pub struct SnapshotDom {
     selectors: RefCell<HashMap<String, Option<Selector>>>,
     closest_cache: RefCell<HashMap<(ElId, String), Result<Option<ElId>, SelectorError>>>,
     text_cache: RefCell<HashMap<ElId, String>>,
+    line_texts: RefCell<HashMap<ElId, Vec<String>>>,
+    han_fonts: RefCell<HashMap<ElId, HanFontFacts>>,
 }
 
 impl SnapshotDom {
@@ -558,6 +560,8 @@ impl SnapshotDom {
             selectors: RefCell::new(HashMap::new()),
             closest_cache: RefCell::new(HashMap::new()),
             text_cache: RefCell::new(HashMap::new()),
+            line_texts: RefCell::new(HashMap::new()),
+            han_fonts: RefCell::new(HashMap::new()),
         };
         let inline: Vec<HitTest> = dom.snap.hits.clone();
         dom.add_hits(&inline);
@@ -586,6 +590,17 @@ impl SnapshotDom {
         // Answers may change what a later run asks; forget the misses.
         self.misses.borrow_mut().clear();
         self.missed_keys.borrow_mut().clear();
+    }
+
+    /// Supply what a typography probe measured on the live page: the text of
+    /// each rendered line and the fonts that rendered Han, per element id.
+    pub fn set_typography(
+        &self,
+        line_texts: HashMap<ElId, Vec<String>>,
+        han_fonts: HashMap<ElId, HanFontFacts>,
+    ) {
+        *self.line_texts.borrow_mut() = line_texts;
+        *self.han_fonts.borrow_mut() = han_fonts;
     }
 
     /// The questions the runs so far could not answer (drained).
@@ -921,6 +936,12 @@ impl Dom for SnapshotDom {
         let mut rects = Vec::new();
         walk(&self.snap, el, &mut rects);
         Some(super::dom::merge_text_rects_into_lines(rects))
+    }
+    fn text_line_texts(&self, el: ElId) -> Option<Vec<String>> {
+        self.line_texts.borrow().get(&el).cloned()
+    }
+    fn han_font_facts(&self, el: ElId) -> Option<HanFontFacts> {
+        self.han_fonts.borrow().get(&el).cloned()
     }
 }
 

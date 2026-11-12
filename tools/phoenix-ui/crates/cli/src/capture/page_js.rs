@@ -24,6 +24,53 @@ pub const LOCATE: &str = r#"function (args, ...nodes) {
     return null;
   };
   const textOf = (e) => norm(e.innerText || e.getAttribute('aria-label') || e.value || '');
+  const disabledBy = (e) => {
+    const why = [];
+    if (e.matches(':disabled')) why.push('disabled');
+    if ((e.getAttribute('aria-disabled') || '').toLowerCase() === 'true') why.push('aria-disabled="true"');
+    if (getComputedStyle(e).pointerEvents === 'none') why.push('pointer-events:none');
+    return why;
+  };
+  const cssOf = (e) => e.localName + (e.id ? '#' + CSS.escape(e.id) : '') + [...e.classList].slice(0, 2).map((c) => '.' + CSS.escape(c)).join('');
+  // Up to 3 state-file locators near `wanted`. With `like`, also fill with
+  // usable elements of the same kind, and only emit `text` when the text
+  // locator (which matches innerText) can find the element again.
+  const suggest = (wanted, like, exclude) => {
+    const words = wanted.split(' ').filter(Boolean);
+    const related = (t) => t.includes(wanted) || wanted.includes(t) || words.some((w) => t.includes(w) || w.includes(t));
+    const usable = (e) => !skip(e) && !hidden(e) && e !== exclude && !(like && disabledBy(e).length);
+    const write = (e) => {
+      if (!like) return JSON.stringify({ text: textOf(e) });
+      const t = norm(e.innerText);
+      return JSON.stringify(t && t.length <= 60 ? { text: t } : { css: cssOf(e) });
+    };
+    const pool = [...document.body.querySelectorAll(INTERACTIVE)];
+    const out = [], seen = new Set(), picked = new Set();
+    const add = (e) => {
+      const w = write(e);
+      if (out.includes(w)) return;
+      out.push(w);
+      picked.add(e);
+    };
+    // An empty `wanted` would make every element "related".
+    for (const e of wanted ? pool : []) {
+      if (out.length >= 3) break;
+      if (!usable(e)) continue;
+      const t = textOf(e);
+      if (!t || t.length > 60 || seen.has(t) || !related(t)) continue;
+      seen.add(t);
+      add(e);
+    }
+    if (like) {
+      const role = like.getAttribute('role');
+      const kin = (e) => (role !== null ? e.getAttribute('role') === role : e.localName === like.localName);
+      for (const e of pool) {
+        if (out.length >= 3) break;
+        if (!picked.has(e) && kin(e) && usable(e)) add(e);
+      }
+    }
+    return out;
+  };
   let all;
   if (loc.css !== undefined) {
     try { all = [...document.querySelectorAll(loc.css)]; }
@@ -48,28 +95,15 @@ pub const LOCATE: &str = r#"function (args, ...nodes) {
     all = nodes.filter((e) => e instanceof Element && e.getRootNode() === document);
   }
   const visible = all.filter((e) => !hidden(e));
+  const wantedOf = (e) => (loc.text !== undefined ? norm(loc.text) : textOf(e));
   const nth = loc.nth || 1;
   if (visible.length < nth) {
     if (all.length) {
-      return { status: 'hidden', count: all.length, reason: visible.length
+      return { status: 'hidden', count: all.length, hints: suggest(wantedOf(all[0]), all[0], all[0]), reason: visible.length
         ? '只有 ' + visible.length + ' 个可见匹配，没有第 ' + nth + ' 个'
         : '找到 ' + all.length + ' 个匹配，但都不可见：' + hidden(all[0]) };
     }
-    const hints = [];
-    if (loc.text !== undefined) {
-      const wanted = norm(loc.text);
-      const words = wanted.split(' ').filter(Boolean);
-      const related = (t) => t.includes(wanted) || wanted.includes(t) || words.some((w) => t.includes(w) || w.includes(t));
-      const seen = new Set();
-      for (const e of document.body.querySelectorAll(INTERACTIVE)) {
-        if (skip(e) || hidden(e)) continue;
-        const t = textOf(e);
-        if (!t || t.length > 60 || seen.has(t) || !related(t)) continue;
-        seen.add(t);
-        hints.push(JSON.stringify({ text: t }));
-        if (hints.length >= 3) break;
-      }
-    }
+    const hints = loc.text !== undefined ? suggest(norm(loc.text), null, null) : [];
     let iframes = 0, shadowRoots = 0;
     const roots = [document];
     for (let i = 0; i < roots.length && i < 200; i++) {
@@ -89,24 +123,26 @@ pub const LOCATE: &str = r#"function (args, ...nodes) {
   }
   const r = el.getBoundingClientRect();
   if (args.scroll && (r.bottom <= 0 || r.right <= 0 || r.top >= innerHeight || r.left >= innerWidth)) {
-    return { status: 'hidden', count: all.length, reason: '在视口外，滚动后仍不在视口内' };
+    return { status: 'hidden', count: all.length, hints: suggest(wantedOf(el), el, el), reason: '在视口外，滚动后仍不在视口内' };
   }
   const x = Math.max(1, Math.min(innerWidth - 1, r.left + r.width / 2));
   const y = Math.max(1, Math.min(innerHeight - 1, r.top + r.height / 2));
   const warnings = [];
+  let alt;
+  const others = () => {
+    if (alt === undefined) alt = suggest(textOf(el), el, el);
+    return alt.length ? '；可用的可见元素：' + alt.join('、') : '';
+  };
   if (args.pointer) {
     const top = document.elementFromPoint(x, y);
     if (top && top !== el && !el.contains(top)) {
-      const name = top.localName + (top.id ? '#' + top.id : '') + [...top.classList].slice(0, 2).map((c) => '.' + c).join('');
-      warnings.push('目标中心被 ' + name + ' 遮挡，动作照常执行');
+      const sel = cssOf(top);
+      warnings.push('目标中心被 ' + sel + ' 遮挡，动作照常执行；遮挡物：' + JSON.stringify({ css: sel }) + others());
     }
   }
   if (args.op) {
-    const disabled = [];
-    if (el.matches(':disabled')) disabled.push('disabled');
-    if ((el.getAttribute('aria-disabled') || '').toLowerCase() === 'true') disabled.push('aria-disabled="true"');
-    if (getComputedStyle(el).pointerEvents === 'none') disabled.push('pointer-events:none');
-    if (disabled.length) warnings.push('目标处于禁用状态（' + disabled.join('、') + '），动作照常执行');
+    const disabled = disabledBy(el);
+    if (disabled.length) warnings.push('目标处于禁用状态（' + disabled.join('、') + '），动作照常执行' + others());
   }
   let observed = null;
   if (args.op === 'fill') {

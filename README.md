@@ -56,6 +56,7 @@ Phoenix UI 是 XGENT 自主维护的设计工具,版本、规则与发布由本�
 Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 可独立完成产品上下文初始化,不依赖其他初始化 skill。subagent 与并行策略由 coding agent 自主安排,Phoenix 不额外要求询问或等待授权。
 
 - **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`(`PHOENIX_UI_HOME` 可改),新旧项目的引擎可共存,支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64;不支持 Windows。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
+- **素材与图片**:`phoenix-ui media` 检索并取用开放授权素材（只进 `.phoenix-ui/media/`，仅用于设计稿与方案预览），`phoenix-ui prep-image` 批量导出交付图片；参数与来源保留说明见 [使用文档](docs/phoenix-ui.md#素材命令media)。
 - **已有工具**:Phoenix UI 和 Diagram 都是可重新安装的工具：安装直接覆盖工具文件，不备份旧版、不创建安装事务目录，不提供普通安装回滚。中断后重跑安装即可；成功安装会清理旧安装记录和备份。业务源码、工具生成的业务数据及其他 hooks 保留。发现旧 impeccable 时默认删除，可用 `--keep-impeccable` 保留。
 
 安装、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。
@@ -171,7 +172,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | [debugging](skills/debugging/SKILL.md) | 按四阶段流程调查根因、定位问题并验证修复 |
 | [tdd](skills/tdd/SKILL.md) | 先用失败测试复现缺陷再改实现，适用于有明确廉价测试路径的 TDD 与回归测试 |
 | [create-e2e-verification-skill](skills/create-e2e-verification-skill/SKILL.md) | 为用户选定的旅程（未指定时提名代价高、测试碰不到的候选）创建、维护 ODC 写成的 e2e-*：先按提交核查已有覆盖，可用 phoenix-diagram 的 statechart 建模推出场景，从真实入口运行并证明能发现故障；可供 agi-mode 复用 |
-| [feature-demo](skills/feature-demo/SKILL.md) | 从开发计划或 git 范围找出新增的 Web 功能，在运行中的系统上回放固定脚本录成带字幕的视频，可配流程图或状态图，按统一模板生成功能、用法与限制的报告；检测到 Phoenix UI 时录制前用 `phoenix-ui capture` 开写拦截核对每个待录功能 |
+| [feature-demo](skills/feature-demo/SKILL.md) | 从开发计划或 git 范围找出新增的 Web 功能，在运行中的系统上回放固定脚本录成带字幕的视频，可配流程图或状态图，按统一模板生成功能、用法与限制的报告，用户要求时发布为 SPMS 模板报告；检测到 Phoenix UI 时录制前用 `phoenix-ui capture` 开写拦截核对每个待录功能 |
 | [mcp-release-qa](skills/mcp-release-qa/SKILL.md) | 发布前验证 MCP server：用真实协议会话对照源码与文档核能力，测失败路径并留下可复现证据 |
 | [clean-artifacts](skills/clean-artifacts/SKILL.md) | 清理评审、测试日志和截图等过程文件，处理误入 Git 的文件并补齐忽略规则；保留必要记录，按单独授权执行历史瘦身 |
 | [react](skills/react/SKILL.md) | 编写和评审 React 组件，处理 Hooks、Effects、渲染性能、数据请求与 React 19 迁移 |

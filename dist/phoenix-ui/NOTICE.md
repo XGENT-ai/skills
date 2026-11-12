@@ -20,6 +20,8 @@ The `skill/reference/ios.md` and `skill/reference/android.md` platform reference
 
 The `phoenix-ui capture` command (`crates/cli/src/capture/`) adapts oil-ui's screenshot workflow: the step model, text locating and failure hints, animation settling, and the mask, mark, sheet, stitch, and sequence-frame methods, rewritten in Rust over Phoenix's CDP layer with JSON state files. The `phoenix-ui-ux-walker` subagent (`skills/phoenix-ui/src/subagents/phoenix-ui-ux-walker.md`) adapts oil-ui's lightweight UX walkthrough handoff and report format.
 
+The `phoenix-ui media` command (`crates/cli/src/media/`) adapts its media source mappings, license grading, relevance filtering, stable references, and visual analysis algorithms. The `phoenix-ui prep-image` command (`crates/cli/src/prep_image.rs`) adapts its processing order and image snippet format. Both are rewritten in Rust.
+
 **Original work:** oil-ui 0.33.2 (local copy; upstream repository address not verified from that copy)
 **Original license:** MIT
 **Author:** oil-oil

@@ -1,0 +1,76 @@
+{
+  "collection": {
+    "version": "1.1",
+    "href": "http://images-api.nasa.gov/search?q=earth&media_type=image&page_size=1",
+    "items": [
+      {
+        "href": "https://images-assets.nasa.gov/image/PIA00342/collection.json",
+        "data": [
+          {
+            "center": "JPL",
+            "date_created": "1998-06-04T18:10:28Z",
+            "description": "During its flight, NASA’s Galileo spacecraft returned images of the Earth and Moon. Separate images of the Earth and Moon were combined to generate this view.  http://photojournal.jpl.nasa.gov/catalog/PIA00342",
+            "description_508": "During its flight, NASA’s Galileo spacecraft returned images of the Earth and Moon. Separate images of the Earth and Moon were combined to generate this view. ",
+            "keywords": [
+              "Earth",
+              "Galileo"
+            ],
+            "media_type": "image",
+            "nasa_id": "PIA00342",
+            "secondary_creator": "NASA/JPL/USGS",
+            "title": "The Earth & Moon"
+          }
+        ],
+        "links": [
+          {
+            "href": "https://images-assets.nasa.gov/image/PIA00342/PIA00342~medium.jpg",
+            "rel": "alternate",
+            "render": "image",
+            "width": 1005,
+            "size": 123000,
+            "height": 1280
+          },
+          {
+            "href": "https://images-assets.nasa.gov/image/PIA00342/PIA00342~small.jpg",
+            "rel": "alternate",
+            "render": "image",
+            "width": 502,
+            "size": 42000,
+            "height": 640
+          },
+          {
+            "href": "https://images-assets.nasa.gov/image/PIA00342/PIA00342~thumb.jpg",
+            "rel": "preview",
+            "render": "image",
+            "width": 502,
+            "size": 42000,
+            "height": 640
+          },
+          {
+            "href": "https://images-assets.nasa.gov/image/PIA00342/PIA00342~orig.jpg",
+            "rel": "canonical",
+            "render": "image",
+            "height": 2164,
+            "width": 1700,
+            "size": 261000
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "total_hits": 41182
+    },
+    "links": [
+      {
+        "rel": "next",
+        "prompt": "Next",
+        "href": "http://images-api.nasa.gov/search?q=earth&media_type=image&page_size=1&page=2"
+      }
+    ]
+  },
+  "_recording": {
+    "url": "https://images-api.nasa.gov/search?q=earth&media_type=image&page_size=1",
+    "date": "2026-11-12",
+    "note": "Real response, cropped to one result."
+  }
+}

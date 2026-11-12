@@ -52,6 +52,8 @@ fn run(args: &[String], io: &mut Io) -> i32 {
         }
         "detect" => impeccable_detect::run_detect(rest, io, &engines()),
         "capture" => impeccable::capture::run(rest, io),
+        "media" => impeccable::media::run(rest, io),
+        "prep-image" => impeccable::prep_image::run(rest, io),
         "ignores" | "ignore" => impeccable_detect::run_ignores(rest, io),
         // Project installs overwrite tool files; the inherited installer handles user-level installs.
         "install" | "update" if !user_level_or_help(rest) => {

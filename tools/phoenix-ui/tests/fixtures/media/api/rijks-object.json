@@ -1,0 +1,835 @@
+{
+  "id": "https://id.rijksmuseum.nl/200107779",
+  "identified_by": [
+    {
+      "type": "Identifier",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300312355",
+          "type": "Type"
+        },
+        {
+          "id": "https://id.rijksmuseum.nl/22015218",
+          "type": "Type",
+          "notation": [
+            {
+              "@language": "en",
+              "@value": "object number"
+            },
+            {
+              "@language": "nl",
+              "@value": "objectnummer"
+            }
+          ]
+        }
+      ],
+      "content": "SK-C-1586"
+    },
+    {
+      "id": "_:bnode0",
+      "type": "Name",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300404670",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        },
+        {
+          "id": "http://vocab.getty.edu/aat/300417207",
+          "type": "Type"
+        }
+      ],
+      "content": "Portrait of Aernout van Beeftingh, his Wife Jacoba Maria Boon and their Children",
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388277",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "id": "_:bnode1",
+      "type": "Name",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300404670",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        },
+        {
+          "id": "http://vocab.getty.edu/aat/300417207",
+          "type": "Type"
+        }
+      ],
+      "content": "Portret van Aernout van Beeftingh, zijn echtgenote Jacoba Maria Boon en hun kinderen",
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "id": "_:bnode2",
+      "type": "Name",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300417200",
+          "type": "Type"
+        }
+      ],
+      "content": "Aernout van Beeftingh (1759-1831) met zijn eerste vrouw Jacoba Maria Boon (1760-1800) en hun kinderen",
+      "identified_by": [
+        {
+          "id": "_:bnode3",
+          "type": "Identifier",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300456575",
+              "type": "Type"
+            }
+          ],
+          "content": "1"
+        }
+      ],
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "Name",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300417200",
+          "type": "Type"
+        }
+      ],
+      "content": "Aernout van Beeftingh (1759-1831) with his first Wife Jacoba Maria Boon (1760-1800) and their Children",
+      "identified_by": [
+        {
+          "type": "Identifier",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300456575",
+              "type": "Type"
+            }
+          ],
+          "content": "1"
+        }
+      ],
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388277",
+          "type": "Language"
+        }
+      ],
+      "translation_of": [
+        {
+          "id": "_:bnode2",
+          "type": "Name",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300417200",
+              "type": "Type"
+            }
+          ],
+          "content": "Aernout van Beeftingh (1759-1831) met zijn eerste vrouw Jacoba Maria Boon (1760-1800) en hun kinderen",
+          "identified_by": [
+            {
+              "id": "_:bnode3",
+              "type": "Identifier",
+              "classified_as": [
+                {
+                  "id": "http://vocab.getty.edu/aat/300456575",
+                  "type": "Type"
+                }
+              ],
+              "content": "1"
+            }
+          ],
+          "language": [
+            {
+              "id": "http://vocab.getty.edu/aat/300388256",
+              "type": "Language"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Name",
+      "classified_as": [
+        {
+          "id": "https://id.rijksmuseum.nl/22015528",
+          "type": "Type",
+          "notation": [
+            {
+              "@language": "en",
+              "@value": "former title"
+            },
+            {
+              "@language": "nl",
+              "@value": "voormalige titel"
+            }
+          ]
+        }
+      ],
+      "content": "Portret van Aernout van Beeftingh, zijn echtgenote Jacoba Maria Boon en hun kinderen",
+      "identified_by": [
+        {
+          "type": "Identifier",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300456575",
+              "type": "Type"
+            }
+          ],
+          "content": "2"
+        }
+      ],
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ]
+    }
+  ],
+  "referred_to_by": [
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300026687",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "Bruikleen van een particulier",
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300026687",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "On loan from a private collector",
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388277",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300404670",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        },
+        {
+          "id": "http://vocab.getty.edu/aat/300435452",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "Familieportret van Aernout van Beeftingh (1759-1831) met zijn eerste vrouw Jacoba Maria Boon (1760-1800) en hun kinderen in een interieur. De moeder zit met de jongste zoon Nicolaas Marinus (geb. 1796) op schoot. Links van haar staat Johanna Adriana (1787-1828), met een sokbeurs in haar rechter- en een hoed in haar linkerhand.   Op de grond ligt Jozua (1789-1835), op één arm leunend en met een zweep in de hand. Aernout van Beeftingh zit aan een ronde tafel met een prent in de hand. Nicolaas (1783-1858) loopt rechts met een portefeuille naar een geopende kunstkast, Pieter (1794-1875) zit met een valhoedje op in een kinderstoel.",
+      "created_by": {
+        "type": "Creation",
+        "timespan": {
+          "type": "TimeSpan",
+          "begin_of_the_begin": "2020-05-01T00:00:00Z",
+          "end_of_the_end": "2020-05-31T23:59:59Z",
+          "identified_by": [
+            {
+              "type": "Name",
+              "content": "2020-05",
+              "language": [
+                {
+                  "id": "http://vocab.getty.edu/aat/300388256",
+                  "type": "Language"
+                }
+              ]
+            },
+            {
+              "type": "Name",
+              "content": "2020-05",
+              "language": [
+                {
+                  "id": "http://vocab.getty.edu/aat/300388277",
+                  "type": "Language"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300435414",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "signature and date: ‘N. Muijs Aº 1797’",
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388277",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300435414",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "signatuur en datum, linksonder: ‘N. Muijs Aº 1797’",
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300435429",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "oil on panel",
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388277",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300435429",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "olieverf op paneel",
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300435430",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "height 107 cm x width 84.4 cm",
+      "identified_by": [
+        {
+          "type": "Identifier",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300456575",
+              "type": "Type"
+            }
+          ],
+          "content": "1"
+        }
+      ],
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388277",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300435430",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "hoogte 107 cm x breedte 84,4 cm",
+      "identified_by": [
+        {
+          "type": "Identifier",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300456575",
+              "type": "Type"
+            }
+          ],
+          "content": "1"
+        }
+      ],
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300435452",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "Familieportret van Aernout van Beeftingh met zijn eerste vrouw Jacoba Maria Boon en hun kinderen in een interieur. De moeder zit met de jongste zoon Nicolaas Marinus op schoot. Voor haar ligt op de grond Jozua, op één arm leunend en met een zweep in de hand. Aernout van Beeftingh zit aan een ronde tafel met een prent in de hand. Nicolaas loopt rechts met een portefeuille naar een geopende kunstkast, Pieter zit met een valhoedje op in een kinderstoel.",
+      "created_by": {
+        "type": "Creation",
+        "timespan": {
+          "type": "TimeSpan",
+          "begin_of_the_begin": "2001-02-22T00:00:00Z",
+          "end_of_the_end": "2001-02-22T23:59:59Z",
+          "identified_by": [
+            {
+              "type": "Name",
+              "content": "2001-02-22",
+              "language": [
+                {
+                  "id": "http://vocab.getty.edu/aat/300388256",
+                  "type": "Language"
+                }
+              ]
+            },
+            {
+              "type": "Name",
+              "content": "2001-02-22",
+              "language": [
+                {
+                  "id": "http://vocab.getty.edu/aat/300388277",
+                  "type": "Language"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300444174",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        }
+      ],
+      "content": "Collection of the sitter; by descent through the families Van Beeftingh and Pit to a private collector; by whom on loan to the museum, 1978;{Provenance till 1978 reconstructed in RMA Archive, letter 6 February 1978.} his son; from whom on loan to the museum, since 2009",
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388277",
+          "type": "Language"
+        }
+      ],
+      "referred_to_by": [
+        {
+          "type": "LinguisticObject",
+          "content": "Deze herkomstzin is geformuleerd met een speciale focus op de periode 1933-45 en zou daarom nog onvolledig kunnen zijn. Er kan aanvullende herkomstinformatie in het museum aanwezig zijn.\nIndien het object een mogelijk niet-heldere of incomplete herkomst heeft voor de periode 1933-45, ontvangt het museum graag aanvullende informatie met betrekking tot de Tweede Wereldoorlog-periode.",
+          "language": [
+            {
+              "id": "http://vocab.getty.edu/aat/300388256",
+              "type": "Language"
+            }
+          ]
+        },
+        {
+          "type": "LinguisticObject",
+          "content": "Please note that this provenance was formulated with a special focus on provenance research for the years 1933-45 and could therefore be incomplete. There may be more (mostly earlier) provenance information known in the museum.\nIn case this item has an uncertain or incomplete provenance for the years 1933-45, the Rijksmuseum welcomes information and assistance in the investigation and clarification of the provenance of all works during that era.",
+          "language": [
+            {
+              "id": "http://vocab.getty.edu/aat/300388277",
+              "type": "Language"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "shows": [
+    {
+      "id": "https://id.rijksmuseum.nl/202107779",
+      "type": "VisualItem"
+    }
+  ],
+  "subject_of": [
+    {
+      "type": "LinguisticObject",
+      "digitally_carried_by": [
+        {
+          "type": "DigitalObject",
+          "access_point": [
+            {
+              "id": "https://iiif.micr.io/NXvPP/full/max/0/default.jpg",
+              "type": "DigitalObject"
+            }
+          ],
+          "referred_to_by": [
+            {
+              "type": "LinguisticObject",
+              "_label": "Public Domain",
+              "classified_as": [
+                {
+                  "id": "https://vocab.getty.edu/aat/300460240",
+                  "type": "Type"
+                }
+              ],
+              "content": "https://creativecommons.org/publicdomain/mark/1.0/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "digitally_carried_by": [
+        {
+          "type": "DigitalObject",
+          "access_point": [
+            {
+              "id": "https://www.rijksmuseum.nl/nl/collectie/object/SK-C-1586--7efc39ed200920ad5986da36126640f3",
+              "type": "DigitalObject"
+            }
+          ],
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300264578",
+              "type": "Type"
+            }
+          ],
+          "format": "text/html"
+        }
+      ],
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300404670",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        },
+        {
+          "id": "http://vocab.getty.edu/aat/300417268",
+          "type": "Type"
+        }
+      ],
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388256",
+          "type": "Language"
+        }
+      ],
+      "part": [
+        {
+          "type": "LinguisticObject",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300048722",
+              "type": "Type"
+            }
+          ],
+          "content": "In dit ongedwongen familieportret geeft de moeder haar baby zelf de borst, wat heel vooruitstrevend was. De vader bekijkt een prent uit zijn verzameling, terwijl de oudste zoon een portefeuille met tekeningen of prenten in de kunstkast opbergt. Zoon Jozua speelt met een zweep en een speelgoedpaard, terwijl peuter Pieter in de kinderstoel zijn koekje eet. Mocht hij vallen, dan dient zijn valhoedje als hoofdbescherming."
+        },
+        {
+          "type": "LinguisticObject",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300312075",
+              "type": "Type"
+            }
+          ],
+          "part": [
+            {
+              "type": "LinguisticObject",
+              "content": "Nicolaes Muys (1740-1808), olieverf op paneel, 1797"
+            },
+            {
+              "id": "_:bnode1",
+              "type": "Name",
+              "classified_as": [
+                {
+                  "id": "http://vocab.getty.edu/aat/300404670",
+                  "type": "Type",
+                  "classified_as": [
+                    {
+                      "id": "http://vocab.getty.edu/aat/300418049",
+                      "type": "Type",
+                      "_label": "brief text"
+                    }
+                  ]
+                },
+                {
+                  "id": "http://vocab.getty.edu/aat/300417207",
+                  "type": "Type"
+                }
+              ],
+              "content": "Portret van Aernout van Beeftingh, zijn echtgenote Jacoba Maria Boon en hun kinderen",
+              "language": [
+                {
+                  "id": "http://vocab.getty.edu/aat/300388256",
+                  "type": "Language"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300404670",
+          "type": "Type",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300418049",
+              "type": "Type",
+              "_label": "brief text"
+            }
+          ]
+        },
+        {
+          "id": "http://vocab.getty.edu/aat/300417268",
+          "type": "Type"
+        }
+      ],
+      "language": [
+        {
+          "id": "http://vocab.getty.edu/aat/300388277",
+          "type": "Language"
+        }
+      ],
+      "part": [
+        {
+          "type": "LinguisticObject",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300048722",
+              "type": "Type"
+            }
+          ],
+          "content": "In this informal family portrait, a mother nurses her baby, a very advanced image for the time. The father studies a print in his collection, while the eldest son puts a portfolio with drawings or prints away in the collector’s cabinet. Van Beeftingh’s son Jozua plays with a whip and toy horse, while toddler Pieter, in his high chair, eats a biscuit. Should he fall, he will be protected by his padded head covering."
+        },
+        {
+          "type": "LinguisticObject",
+          "classified_as": [
+            {
+              "id": "http://vocab.getty.edu/aat/300312075",
+              "type": "Type"
+            }
+          ],
+          "part": [
+            {
+              "type": "LinguisticObject",
+              "content": "Nicolaes Muys (1740-1808), oil on panel, 1797"
+            },
+            {
+              "id": "_:bnode0",
+              "type": "Name",
+              "classified_as": [
+                {
+                  "id": "http://vocab.getty.edu/aat/300404670",
+                  "type": "Type",
+                  "classified_as": [
+                    {
+                      "id": "http://vocab.getty.edu/aat/300418049",
+                      "type": "Type",
+                      "_label": "brief text"
+                    }
+                  ]
+                },
+                {
+                  "id": "http://vocab.getty.edu/aat/300417207",
+                  "type": "Type"
+                }
+              ],
+              "content": "Portrait of Aernout van Beeftingh, his Wife Jacoba Maria Boon and their Children",
+              "language": [
+                {
+                  "id": "http://vocab.getty.edu/aat/300388277",
+                  "type": "Language"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "https://data.rijksmuseum.nl/200107779",
+      "type": "LinguisticObject",
+      "classified_as": [
+        {
+          "id": "http://vocab.getty.edu/aat/300379475",
+          "type": "Type"
+        }
+      ],
+      "subject_to": [
+        {
+          "type": "Right",
+          "classified_as": [
+            {
+              "id": "https://creativecommons.org/publicdomain/zero/1.0/",
+              "type": "Type"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "_recording": {
+    "url": "https://id.rijksmuseum.nl/200107779",
+    "date": "2026-11-12",
+    "note": "Real response; unrelated fields omitted."
+  }
+}

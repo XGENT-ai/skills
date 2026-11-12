@@ -1,0 +1,72 @@
+{
+  "query": {
+    "pages": [
+      {
+        "pageid": 1417142,
+        "ns": 6,
+        "title": "File:World Map 1689.JPG",
+        "index": 1,
+        "imagerepository": "local",
+        "imageinfo": [
+          {
+            "size": 9006916,
+            "width": 4560,
+            "height": 3936,
+            "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/World_Map_1689.JPG/1920px-World_Map_1689.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+            "thumbwidth": 1920,
+            "thumbheight": 1657,
+            "responsiveUrls": {
+              "2": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/World_Map_1689.JPG/3840px-World_Map_1689.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+            },
+            "thumbattribs": {
+              "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/World_Map_1689.JPG/1920px-World_Map_1689.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+              "decoding": "async",
+              "loading": "lazy",
+              "width": 1920,
+              "height": 1657,
+              "srcset": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3b/World_Map_1689.JPG/3840px-World_Map_1689.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail 2x"
+            },
+            "url": "https://upload.wikimedia.org/wikipedia/commons/3/3b/World_Map_1689.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+            "descriptionurl": "https://commons.wikimedia.org/wiki/File:World_Map_1689.JPG",
+            "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=1417142",
+            "extmetadata": {
+              "ObjectName": {
+                "value": "World Map 1689",
+                "source": "mediawiki-metadata"
+              },
+              "ImageDescription": {
+                "value": "<b>World map - Produced in Amsterdam</b><br>\nFirst edition : 1689. Original size : 48.3 x 56.0 cm. Produced using copper engraving. Extremely rare set of maps, only known in one other example in the Amsterdam University. No copies in American libraries. In original hand color.",
+                "source": "commons-desc-page"
+              },
+              "Artist": {
+                "value": "<bdi><a href=\"https://en.wikipedia.org/wiki/en:Gerard_van_Schagen\" class=\"extiw\" title=\"w:en:Gerard van Schagen\"><span title=\"Dutch cartographer\">Gerard van Schagen</span></a></bdi>",
+                "source": "commons-desc-page"
+              },
+              "LicenseShortName": {
+                "value": "Public domain",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "AttributionRequired": {
+                "value": "false",
+                "source": "commons-desc-page",
+                "hidden": ""
+              },
+              "License": {
+                "value": "pd",
+                "source": "commons-templates",
+                "hidden": ""
+              }
+            },
+            "mime": "image/jpeg"
+          }
+        ]
+      }
+    ]
+  },
+  "_recording": {
+    "url": "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&generator=search&gsrsearch=old+world+map+filetype%3Abitmap&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url%7Csize%7Cmime%7Cextmetadata&iiurlwidth=1920&iiextmetadatafilter=LicenseShortName%7CLicense%7CLicenseUrl%7CArtist%7CObjectName%7CImageDescription%7CAttributionRequired",
+    "date": "2026-11-12",
+    "note": "Real response; unrelated fields omitted."
+  }
+}

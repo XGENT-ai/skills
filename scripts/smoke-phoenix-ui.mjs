@@ -97,21 +97,50 @@ export function runSmoke(releaseDir, target, { fallback = false, stage = false }
     call('hook-session-start', file, ['hook'], 0, JSON.stringify({ cwd: project, session_id: 'phoenix-ci', hook_event_name: 'SessionStart' }));
     const launcher = path.join(runtime, 'bin/phoenix-ui.js');
     const node = (name, args, expected) => call(name, process.execPath, [launcher, ...args], expected);
-    // capture needs stderr and tolerates a host without a browser, so it gets its own runner.
-    const capture = (name, args) => {
+    // Browser and missing-engine checks need stderr as well as the exit code.
+    const nodeResult = (name, args) => {
       const result = spawnSync(process.execPath, [launcher, ...args], { cwd: project, env, encoding: 'utf8', timeout: 120000, maxBuffer: 16 * 1024 * 1024, windowsHide: true });
       record.checks.push({ name, argv: args, exitCode: result.status, error: result.error?.message });
       assert(!result.error, `${name} failed: ${result.error?.message}`);
       return result;
     };
     assert.equal(JSON.parse(node('node-missing-engine', ['context', '--json'], 4)).status, 'unavailable');
-    const missing = capture('node-missing-engine-capture', ['capture', '--help']);
+    const missing = nodeResult('node-missing-engine-capture', ['capture', '--help']);
     assert(missing.status === 4 && /phoenix-ui engine install --project/.test(missing.stderr), `capture without an engine must exit 4 with the install command (exit ${missing.status})`);
+    const missingMedia = nodeResult('node-missing-engine-media', ['media', '--help']);
+    assert(missingMedia.status === 4 && /phoenix-ui engine install --project/.test(missingMedia.stderr), `media without an engine must exit 4 with the install command (exit ${missingMedia.status})`);
     assert.equal(JSON.parse(node('node-explicit-offline-install', ['engine', 'install', '--project', project, '--release-dir', releaseDir, '--json'], 0)).status, 'installed');
     assert.equal(node('node-engine-version', ['--version'], 0).trim(), manifest.data.toolVersion);
     assert.match(node('node-context', ['context', '--target', project], 0), /Phoenix CI local fixture/);
     assert.match(node('node-capture-help', ['capture', '--help'], 0), /phoenix-ui capture/);
-    const shot = capture('node-capture-shot', ['capture', 'page.html', '--viewport', '390x844', '--out', 'capture']);
+    assert.match(node('node-media-help', ['media', '--help'], 0), /phoenix-ui media/);
+    assert.match(node('node-prep-image-help', ['prep-image', '--help'], 0), /phoenix-ui prep-image/);
+    const media = JSON.parse(node('node-media-offline', ['media', 'search', 'map', '--timeout-ms', '1000', '--json'], 1));
+    assert.equal(media.count, 0);
+    assert.match(media.message, /网络不可用/);
+    assert(!fs.existsSync(path.join(project, '.phoenix-ui/media/index.json')), 'Offline media search must not write an index');
+    record.media = 'network-unavailable';
+    const outside = nodeResult('node-media-outside-area', ['media', 'fetch', 'T1', '--dir', 'out']);
+    assert(outside.status === 1 && /素材只取到 \.phoenix-ui\//.test(outside.stderr), `media must refuse a product directory (exit ${outside.status}): ${outside.stderr}`);
+    assert(!fs.existsSync(path.join(project, 'out')), 'Rejected media destination must not be created');
+    const imagePath = path.join(project, 'small.png');
+    fs.writeFileSync(imagePath, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC', 'base64'));
+    const provenance = 'Phoenix CI smoke: generated one-pixel red fixture.';
+    node('node-prep-image-provenance', ['embed-prompt', 'small.png', '--prompt', provenance], 0);
+    const originalImage = fs.readFileSync(imagePath);
+    const prepared = JSON.parse(node('node-prep-image-process', ['prep-image', 'small.png', '--width', '100', '--json'], 0));
+    assert.equal(prepared.errors.length, 0);
+    assert.equal(prepared.files.length, 1);
+    assert.equal(prepared.files[0].outputs.length, 1);
+    const output = prepared.files[0].outputs[0];
+    assert.equal(output.format, 'jpeg');
+    assert.equal(output.width, 1); assert.equal(output.height, 1);
+    assert(prepared.files[0].notes.some(note => note.includes('未放大')), 'Small input must report that it was not enlarged');
+    assert(fs.readFileSync(path.join(project, output.file)).subarray(0, 2).equals(Buffer.from([0xff, 0xd8])), 'prep-image must produce a JPEG');
+    assert(fs.readFileSync(imagePath).equals(originalImage), 'prep-image must preserve its input bytes');
+    assert.equal(node('node-prep-image-read-provenance', ['embed-prompt', output.file, '--read'], 0).trim(), provenance);
+    record.prepImage = 'processed';
+    const shot = nodeResult('node-capture-shot', ['capture', 'page.html', '--viewport', '390x844', '--out', 'capture']);
     if (shot.status === 0) {
       const report = JSON.parse(fs.readFileSync(path.join(project, 'capture/capture-report.json'), 'utf8'));
       const entry = report.shots.find(item => item.file === '390x844.png');

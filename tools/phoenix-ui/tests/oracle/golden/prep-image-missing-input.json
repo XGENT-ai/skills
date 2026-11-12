@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "prep-image: 至少需要一张图片或一个目录\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

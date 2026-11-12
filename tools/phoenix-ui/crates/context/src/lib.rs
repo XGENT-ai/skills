@@ -27,7 +27,7 @@ pub mod surface_brief_cli;
 pub use critique_storage::run as run_critique_storage;
 pub use surface_brief_cli::run as run_surface_brief;
 pub mod embed_prompt;
-pub use embed_prompt::run as run_embed_prompt;
+pub use embed_prompt::{read_provenance, run as run_embed_prompt, write_provenance, Carried};
 pub mod signals;
 pub use signals::run as run_signals;
 pub mod design_parser;

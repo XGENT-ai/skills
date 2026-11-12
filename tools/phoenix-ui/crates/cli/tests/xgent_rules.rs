@@ -295,7 +295,62 @@ const URL_EXPECTATIONS: &[(&str, &[&str])] = &[
     ("hidden-visuals.html", &[]),
     ("fonts.html", &["xgent/font-family-count"]),
     ("clean.html", &[]),
+    // Chinese typography. Every row holds on a machine with no Chinese font:
+    // lines break only at spaces (`min-content` + `keep-all`) or at a <br>,
+    // widths are in em, and the font findings come from a web font that
+    // cannot load.
+    ("cjk/tight.html", &["xgent/cjk-tight-leading"]),
+    ("cjk/long.html", &["xgent/cjk-line-length"]),
+    // Good leading and measure, text hidden three ways (display, visibility,
+    // opacity), a nested list.
+    ("cjk/clean.html", &[]),
+    // Two paragraphs that wrap, a heading and a paragraph broken by hand, a
+    // number made visible inside a hidden inline, then three paragraphs in
+    // two columns: a last line alone in the second column, a number and its
+    // unit either side of the column break, and a number that only sits
+    // beside a unit in the next column. Last, columns of one line each, the
+    // second holding a single character, including scaling on the container
+    // or its ancestor and right-to-left column progression.
+    (
+        "cjk/breaks.html",
+        &[
+            "xgent/cjk-orphan",
+            "xgent/cjk-split-unit",
+            "xgent/cjk-orphan",
+            "xgent/cjk-split-unit",
+            "xgent/cjk-split-unit",
+            "xgent/cjk-orphan",
+            "xgent/cjk-split-unit",
+            "xgent/cjk-orphan",
+            "xgent/cjk-orphan",
+            "xgent/cjk-orphan",
+            "xgent/cjk-orphan",
+        ],
+    ),
+    // The second paragraph's Han sits in a <strong>; the third lists a
+    // generic family before the broken font and is not charged.
+    (
+        "cjk/webfont.html",
+        &[
+            "xgent/cjk-split-unit",
+            "xgent/cjk-font-fallback",
+            "xgent/cjk-font-fallback",
+        ],
+    ),
+    ("cjk/mixed.html", &[]),
+    ("cjk/latin.html", &[]),
 ];
+
+/// Depends on PingFang SC, Songti SC and Hiragino Mincho ProN being
+/// installed, which only macOS guarantees.
+const MACOS_FONT_EXPECTATIONS: &[(&str, &[&str])] = &[(
+    "cjk/fonts-macos.html",
+    &[
+        "xgent/cjk-font-fallback",
+        "xgent/cjk-font-fallback",
+        "xgent/cjk-font-fallback",
+    ],
+)];
 
 #[test]
 fn url_scan_matches_the_fixture_expectations() {
@@ -305,7 +360,12 @@ fn url_scan_matches_the_fixture_expectations() {
         return;
     }
     let dir = fixture("");
-    for (file, expected) in URL_EXPECTATIONS {
+    let macos: &[(&str, &[&str])] = if cfg!(target_os = "macos") {
+        MACOS_FONT_EXPECTATIONS
+    } else {
+        &[]
+    };
+    for (file, expected) in URL_EXPECTATIONS.iter().chain(macos) {
         let url = format!("file://{}", dir.join(file).display());
         for viewport in ["375x812", "1280x800"] {
             let findings = detect_json_url(&url, &dir, &["--viewport", viewport]);
@@ -315,5 +375,102 @@ fn url_scan_matches_the_fixture_expectations() {
                 .collect();
             assert_eq!(expected.to_vec(), actual, "{file} at {viewport}");
         }
+    }
+}
+
+fn browser_available() -> bool {
+    let env = std::env::vars().collect();
+    if impeccable_browser::discovery::find_browser(&env).is_err() {
+        eprintln!("skip: browser unavailable");
+        return false;
+    }
+    true
+}
+
+fn rule_ids(findings: &[Value]) -> Vec<&str> {
+    findings
+        .iter()
+        .map(|finding| finding["antipattern"].as_str().unwrap_or(""))
+        .collect()
+}
+
+#[test]
+fn chinese_body_text_is_judged_by_the_chinese_rules_and_latin_text_is_not() {
+    if !browser_available() {
+        return;
+    }
+    let dir = fixture("cjk");
+    let scan = |file: &str| {
+        let url = format!("file://{}", dir.join(file).display());
+        detect_json_url(&url, &dir, &["--viewport", "1280x800"])
+    };
+    let findings = scan("article.html");
+    let ids = rule_ids(&findings);
+    assert!(
+        !ids.contains(&"line-length") && !ids.contains(&"tight-leading"),
+        "article.html: {ids:?}"
+    );
+    assert!(
+        ids.contains(&"xgent/cjk-line-length") && ids.contains(&"xgent/cjk-tight-leading"),
+        "article.html: {ids:?}"
+    );
+    let findings = scan("latin.html");
+    let ids = rule_ids(&findings);
+    assert!(
+        ids.contains(&"line-length") && ids.contains(&"tight-leading"),
+        "latin.html: {ids:?}"
+    );
+}
+
+/// A font the scan could not establish is a `note:` on stderr and never a
+/// finding. With a plain generic stack there is nothing to be unsure about,
+/// so a note here means the browser gave no rendered font at all.
+#[test]
+fn a_generic_font_stack_is_verified_without_notes() {
+    if !browser_available() {
+        return;
+    }
+    let dir = fixture("cjk");
+    let url = format!("file://{}", dir.join("clean.html").display());
+    let (code, stdout, stderr) = run(&["detect", "--json", "--viewport", "1280x800", &url], &dir);
+    // The column fixtures deliberately overflow; unrelated warnings exit 2.
+    assert!(
+        code == 0 || code == 2,
+        "detect failed ({code}): {stdout}\n{stderr}"
+    );
+    assert!(!stderr.contains("note:"), "{stderr}");
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn font_findings_name_the_passage_that_fell_back_and_no_other() {
+    if !browser_available() {
+        return;
+    }
+    let dir = fixture("cjk");
+    let url = format!("file://{}", dir.join("fonts-macos.html").display());
+    let details: Vec<String> = detect_json_url(&url, &dir, &["--viewport", "1280x800"])
+        .iter()
+        .filter(|finding| finding["antipattern"] == "xgent/cjk-font-fallback")
+        .map(|finding| finding["snippet"].as_str().unwrap_or("").to_string())
+        .collect();
+    // The fallback font's own name is whatever the system calls it (PingFang
+    // SC reads as its localized name under some system languages), so only
+    // the fonts the fixture names are pinned.
+    let fallback = "Han text renders in ";
+    let expected = [
+        // Three paragraphs share this stack; two are drawn whole by one font
+        // each and only the third is a mix.
+        "Han text renders in 2 fonts: Hiragino Mincho ProN (9 glyphs), Songti SC (9 glyphs)"
+            .to_string(),
+        format!("no listed font renders Han and the list has no generic family; {fallback}"),
+        // The bold face failed; the regular face loaded, so the paragraph set
+        // in it is not counted here.
+        format!("web font \"Weighted Han\" failed to load; {fallback}"),
+    ];
+    assert_eq!(details.len(), expected.len(), "{details:#?}");
+    for (detail, expected) in details.iter().zip(&expected) {
+        assert!(detail.starts_with(expected.as_str()), "{detail}");
+        assert!(!detail.contains("more element"), "{detail}");
     }
 }
