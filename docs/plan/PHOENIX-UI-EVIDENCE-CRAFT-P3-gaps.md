@@ -218,7 +218,7 @@ REVIEW @progress_consistency:
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 进行中 | 2026-11-12 17:10 | §5.1 print_result 条目行分级旁括注许可原文（空许可不带括号）＋既有用例新增不带 --json 断言；docs「素材命令」补结果行字段说明；§5.3 PRD 四处与 v1.4。批内 media::tests 绿；批末 V-1–V-3 未运行 | [M1.md](PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.records/M1.md) | c2e6e241 |
-| M2 | 进行中 | 2026-11-12 17:17 | §5.2 第一步候选：default_chrome_args 增 --component-updater=url-source=http://127.0.0.1:9/ 与 --gcm-checkin-url=http://127.0.0.1:9/（D2）；default_args_shape 增两条包含断言；network_boundary.rs 未动（D3）。批内 default_args_shape 绿；V-1–V-4 待运行 | [M2.md](PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.records/M2.md) | 待提交 |
+| M2 | 进行中 | 2026-11-12 17:17 | §5.2 第一步候选：default_chrome_args 增 --component-updater=url-source=http://127.0.0.1:9/ 与 --gcm-checkin-url=http://127.0.0.1:9/（D2）；default_args_shape 增两条包含断言；network_boundary.rs 未动（D3）。批内 default_args_shape 绿；V-1–V-4 待运行 | [M2.md](PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.records/M2.md) | ed35605c |
 
 ## 0. 需求、范围与决策
 
