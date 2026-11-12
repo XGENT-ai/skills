@@ -47,6 +47,23 @@ Do not stack techniques for spectacle. One strong material idea, carried through
 
 Sibling stagger is appropriate when a list appears as a list. Cap the total delay, and never reinterpret every scrolled section as a staggered list.
 
+## Choreograph the change
+
+These rules shape motion that already has a job; they never ask for more of it. When one action changes several things, the changes read as one event passed along a path, not as parts that each animate on their own.
+
+- **Start from the operated element.** The change leaves from the control or item the user acted on: a removed row collapses toward its delete control and the rows below close the gap; an added item travels from the button that added it.
+- **One direction per change.** Everything in a single transition moves the same way. A card leaving to the left takes its title, index, and backdrop left with it; mixed directions read as unrelated animations.
+- **The lead moves first.** Elements affected by the change start 40–80 ms after the lead and travel a smaller distance, as if pulled along. Everything starting together at the same amplitude reads as a flash.
+- **Hand the shape over.** An element of the previous state becomes an element of the next one: the button opens into the panel, the search icon stretches into the input. The user sees one object changing, not one vanishing while another appears.
+
+## Transitions that keep the same content
+
+- **Shape-only changes do not crossfade.** When only size or position changes (expanding, filtering, switching viewport, zooming), the frame morphs directly and the content shows its new state at once. A crossfade lays the old and new content over each other at two scales and ghosts. Fade only when the content itself is replaced.
+- **Leaving, entering, and staying are three treatments.** What leaves fades out, what enters fades in, what stays slides to its new position. One shared fade makes the whole list blink.
+- **A selection indicator is one sliding block.** Segmented controls, tabs, and the current list item move the same block to the new position instead of dimming one and lighting another; when options differ in width, the width transitions with it. On first display, on window resize, and after fonts finish loading, place it directly with no animation.
+- **Prepare the destination first.** Load or pre-render what the destination needs before the transition starts, so the motion never ends on a blank frame.
+- **Acknowledge the end of the range.** At the first or last item, a 10–15 px nudge and return says there is nothing further; no response reads as a broken control.
+
 ## Timing and easing
 
 Timing should express distance and consequence:
@@ -59,6 +76,29 @@ Timing should express distance and consequence:
 | 500–800 ms | a deliberately authored focal entrance |
 
 Exit faster than entrance. Use natural deceleration such as `cubic-bezier(0.16, 1, 0.3, 1)` for confident arrivals; do not use bounce or elastic curves by reflex. Long feedback feels like latency.
+
+### Feel
+
+Name the feel of each state-changing motion as an action plus a real object, and give it spring parameters (stiffness / damping) or an easing. The name is what the delivery reports and what a reader can check against the motion.
+
+| Action | Real-object reference | Stiffness / damping | Fits |
+|---|---|---|---|
+| Snap (咔嗒) | a magnetic catch, a latch, a toggle switch | 350–400 / 10–15 | buttons, switches, dropdowns opening |
+| Slide in (滑入) | a pneumatic door closer, a damped drawer | 250–300 / 20–25 | bottom sheets, drawers, collapsing sections |
+| Flow (流淌) | poured honey, drifting mist | 150–200 / 30–40 | view transitions, a lead visual arriving |
+| Slam (砸落) | a hammer strike, a weight set on a table | 400–500 / 5–10 | confirming a choice, completion feedback |
+| Rebound (回弹) | a rubber ball, a trampoline | 300 / 8 | celebration, children's and game surfaces |
+| Float (漂浮) | a helium balloon, drifting fluff | 100 / 25 | calm or dreamlike scenes, idle loops |
+
+The rebound row applies only when the committed direction or the brief supports it; the rule above against bounce or elastic curves by reflex stands.
+
+Overshoot follows area. A whole page, a panel, or any other large element overshoots by no more than 1–2%, or the whole picture wobbles; a small object such as a badge or a check mark may overshoot 10–20%. The low-damping rows belong on small objects.
+
+On the web a spring can be written as an easing: integrate the displacement for the stiffness and damping, sample 20–30 points over the time it takes to settle, and write them into `linear()`. Fall back to a close `cubic-bezier` where `linear()` is unsupported. The duration still comes from the timing table above: a spring that would ring past its row gets more damping, not more time.
+
+## Say the invisible result
+
+When an action finishes with nothing visible to show for it (copying to the clipboard, a background save, sending), a brief message states the result itself: "Copied: " followed by the text that was copied, the name of what was saved, who it was sent to. "Success" alone leaves the user to guess what happened.
 
 ## Implement to the runtime
 
@@ -74,7 +114,7 @@ Keep content visible in the default state so failed scripts do not hide the page
 
 Respect autoplay and sound preferences. Any nonessential loop must stop when offscreen or hidden.
 
-Every web animation needs a `prefers-reduced-motion` path with an intentional alternative. Remove or reduce spatial movement while preserving opacity, color, and state transitions that carry meaning. Reduced motion means fewer and gentler animations, not disabling all motion; feedback that confirms an action should remain legible.
+Every web animation needs a `prefers-reduced-motion` path with an intentional alternative. Remove or reduce spatial movement while preserving opacity, color, and state transitions that carry meaning. Reduced motion means fewer and gentler animations, not disabling all motion; feedback that confirms an action should remain legible. A state change that travels lands directly in place under reduced motion, with no positional movement, and its confirming feedback stays recognizable.
 
 ## Verify
 
@@ -85,5 +125,14 @@ Every web animation needs a `prefers-reduced-motion` path with an intentional al
 - The `prefers-reduced-motion` path reduces movement without erasing meaningful feedback or state changes.
 - Expensive effects stay smooth on the target device.
 - Removing an animation would lose meaning or authored character, not merely decoration.
+- On the web, give the state that interaction produces `"frames": 8` in the `<skill-base-dir>/scripts/phoenix-ui capture` states file and read the sequence sheet: affected elements start after the lead and move in the same direction, and a shape-only transition never shows old and new content layered over each other.
+- Sequence frames show only how the state changes. Feel is judged by operating it: once at normal speed, once in reverse, and a few rapid repeated presses.
+- When that hands-on check did not happen, the delivery says `normal-speed feel not checked` (`正常速度手感未核对` in a Chinese session).
+
+These checks run inside the existing two inspection rounds; they add no capture or detector round.
+
+## Report
+
+For every motion that changes state, the delivery states its origin (the operated element), its direction, and the order in which other elements follow, plus the feel as its action-plus-object name with the spring parameters or easing used.
 
 When motion earns its place, hand off to `$phoenix-ui polish` for the final pass.

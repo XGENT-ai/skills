@@ -22,3 +22,23 @@ Reason over the signals; there is no score to obey:
 **If `scan.targets` is non-empty and `setup.platform` is not `ios`/`android`/`adaptive`, run `{{scripts_path}}/phoenix-ui detect --json <scan.targets joined by spaces>` once** (the bundled detector over local files: no network, no npx; it reads HTML/CSS, so skip it for native projects). `scan.via` tells you what they are: `git-changes` (the markup/style files in your dirty tree, the most relevant set), `source-dir` (e.g. `src`, `app`), `html`, or `root`. Fold the hits into your picks: many quality / contrast hits → `audit` or `polish`; a specific slop family → the matching command (gradient text or eyebrows → `quieter` / `typeset`, flat or gray palette → `colorize`, and so on). It's a real, current signal that beats guessing. If detect errors or the tree is large and slow, skip it and recommend the user run `audit` themselves; never block the suggestion on it.
 
 Keep it to 2-3 pointed picks with the exact command to type. The menu stays the fallback; the recommendation is the lede.
+
+## Next steps after a delivery
+
+Read this when a reply delivers a new surface, a redesign, or the result of a command run. End that reply with a short numbered list of what the user could do next, so they can continue without knowing the command set.
+
+Leave the list out in four cases: the change was small (a copy edit, a single style tweak); the reply stops at a point that waits for the user's confirmation; the user has already said what comes next; or the run is unattended.
+
+- **At most three, numbered.** Mark the first one "Recommended" (`推荐` in a Chinese session). Write in the session language and in the user's own words for the surface, not in command jargon.
+- **One sentence each: the gain and the cost.** Say what the user gets when it is done, and what it costs: extra time or tokens, which files it creates or modifies, whether it uses image generation. When the cost has not been measured, describe it roughly; never invent a number.
+- **Only what can run now and has not been done.** Pick from Phoenix commands and flows that are executable in this project at this moment and that this session has not already run: critique, polish, animate, adapt, extending this page's system to other pages, building another proposal and putting both on the comparison page ([compare.md](compare.md)). The signals reasoning above applies here too, including its web-only limits; run `{{scripts_path}}/phoenix-ui signals` once when the picks need it, and do not run a detector pass for this list. Engineering work such as wiring a backend or a real service is not a next step here.
+- **A reply with a number enters that flow.** Follow that command's reference from its start. The list itself never runs anything: nothing on it starts until the user picks.
+
+```text
+Next steps
+1. Polish this page (Recommended): tightens spacing, states, and alignment on what was just built; edits the existing files and takes a little more time.
+2. Add motion to the filter panel: the open and close get an authored transition; edits the page's styles and script.
+3. Build a second proposal and compare: a different composition beside this one on the comparison page; creates new files and takes noticeably more time and tokens.
+
+Reply with a number, or say what to change.
+```
