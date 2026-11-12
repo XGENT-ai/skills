@@ -5,8 +5,8 @@
   "files": [
     {
       "path": "SKILL.md",
-      "size": 18744,
-      "sha256": "f0790da2800a6ac83e49f87f8d1b922aa512e00c020e1f33e0f6c2a7207e2edf",
+      "size": 20531,
+      "sha256": "9d971822cf491585520a7937df374c4fbe1385464c766674453988945eec0004",
       "mode": 420
     },
     {
@@ -77,8 +77,8 @@
     },
     {
       "path": "references/architecture-compare.md",
-      "size": 4358,
-      "sha256": "50df778723653079c43f74ee3e619aa0f868971d2dffa418b1f62f5cbba68dff",
+      "size": 4343,
+      "sha256": "2512385fbd6c3fb4ee3141f5782c5a218d38ed925d11ea93d25c8b3b120b0e5d",
       "mode": 420
     },
     {
@@ -95,8 +95,8 @@
     },
     {
       "path": "references/delivery-contract.md",
-      "size": 5938,
-      "sha256": "cb7d532049765463693ee90ea707b9e3562513b62eade6ecc7e158ace9993c5e",
+      "size": 8849,
+      "sha256": "af54ac1db5dbd83b870ee7df68456179f76f1e7c144785aee037e560d487ba9e",
       "mode": 420
     },
     {
@@ -108,7 +108,7 @@
     {
       "path": "references/preview.md",
       "size": 4121,
-      "sha256": "4434634595bb8d074a41e383d4ee1f0aa101096cd7ec19977838dd756ea99a7e",
+      "sha256": "3906b5068295b6d282bc6efd2bd55c86152b17b90957760bf77ddb31bf5665a3",
       "mode": 420
     },
     {
@@ -124,9 +124,15 @@
       "mode": 420
     },
     {
+      "path": "references/static-figure.md",
+      "size": 2737,
+      "sha256": "0cfc90e880d7c730b638a7676a3558fc76e886412a61e479f8fe970512b2839d",
+      "mode": 420
+    },
+    {
       "path": "references/viewer-runtime.md",
-      "size": 3197,
-      "sha256": "9a0f8f19c703d6d3a2111b5651e03a8dd25eef76f678fc02a99b0d48c5310b96",
+      "size": 3348,
+      "sha256": "9328b152a42d10b1046520067cd17ce078173db02b93ff88c7006ac847018360",
       "mode": 420
     },
     {

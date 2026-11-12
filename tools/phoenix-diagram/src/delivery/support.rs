@@ -88,9 +88,13 @@ pub(super) fn artifact_quality(bytes: &[u8]) -> crate::input::Quality {
     }
 }
 
-/// `diagram.html` keeps its summary at `diagram.finalize-summary.json`.
+/// `diagram.html` keeps `diagram.finalize-summary.json`; a static figure's
+/// `diagram.svg` keeps `diagram.static-summary.json`.
 pub(super) fn summary_path(output: &Path) -> PathBuf {
     let name = output.file_name().unwrap_or_default().to_string_lossy();
+    if let Some(stem) = name.strip_suffix(".svg") {
+        return output.with_file_name(format!("{stem}.static-summary.json"));
+    }
     let stem = name.strip_suffix(".html").unwrap_or(&name);
     output.with_file_name(format!("{stem}.finalize-summary.json"))
 }

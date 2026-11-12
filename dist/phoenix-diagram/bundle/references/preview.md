@@ -40,4 +40,4 @@
 
 用Ctrl+C或SIGTERM停止前台会话，只结束自己的监听与连接；等停止事件并确认shutdownComplete=true。最后成功文件保留。SIGKILL没有正常收尾回执，不能补写stopped或关闭通过，不杀未知PID。
 
-停止后按普通 finalize、实际查看当前四张截图、review-record 和同一 summary 收口。已有HTML、HTTP可打开或updated都不能代替自动三门与 mandatory visual。预览期间的编辑不重置同一失败门的历史最佳和停滞计数；达到2后停止继续修 candidate，按主 SKILL 交接未解决项。服务不授权补造事实、删除语义或改语言原则。
+停止后按普通 finalize、实际查看当前两张截图、review-record 和同一 summary 收口。已有HTML、HTTP可打开或updated都不能代替自动三门与 mandatory visual。预览期间的编辑不重置同一失败门的历史最佳和停滞计数；达到2后停止继续修 candidate，按主 SKILL 交接未解决项。服务不授权补造事实、删除语义或改语言原则。

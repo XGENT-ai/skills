@@ -613,7 +613,12 @@ impl Browser {
         Ok(())
     }
 
-    fn navigate(&mut self, artifact: &Path, viewport: Viewport, theme: Theme) -> Result<url::Url> {
+    pub(super) fn navigate(
+        &mut self,
+        artifact: &Path,
+        viewport: Viewport,
+        theme: Theme,
+    ) -> Result<url::Url> {
         self.conn.events.retain(|event| {
             event["method"].as_str().is_some_and(|method| {
                 method.starts_with("Network.")
@@ -642,7 +647,7 @@ impl Browser {
         Ok(url)
     }
 
-    fn verify_navigation(&mut self, url: &url::Url) -> Result<()> {
+    pub(super) fn verify_navigation(&mut self, url: &url::Url) -> Result<()> {
         let frame = self.send_page("Page.getFrameTree", json!({}))?;
         if frame
             .pointer("/frameTree/frame/url")
@@ -656,6 +661,18 @@ impl Browser {
             ));
         }
         Ok(())
+    }
+
+    pub(super) fn inspect_static(
+        &mut self,
+        host: &Path,
+        viewport: Viewport,
+        theme: Theme,
+    ) -> Result<(Value, Vec<Value>)> {
+        let url = self.navigate(host, viewport, theme)?;
+        let metrics = self.evaluate(include_str!("static-probe.js"))?;
+        self.verify_navigation(&url)?;
+        Ok((metrics, self.conn.events.drain(..).collect()))
     }
 
     pub fn inspect(
@@ -725,6 +742,17 @@ impl Browser {
           return true;
         })()"#;
         self.screenshot_with_layout(viewport, full_page, STABLE_LAYOUT)
+    }
+
+    pub(super) fn screenshot_static(&mut self, viewport: Viewport) -> Result<String> {
+        const STABLE: &str = r#"(async function () {
+          if (document.fonts) await document.fonts.ready;
+          await new Promise(function (resolve) {
+            requestAnimationFrame(function () { requestAnimationFrame(resolve); });
+          });
+          return true;
+        })()"#;
+        self.screenshot_with_layout(viewport, true, STABLE)
     }
 
     pub fn screenshot_comparison(&mut self, viewport: Viewport, full_page: bool) -> Result<String> {

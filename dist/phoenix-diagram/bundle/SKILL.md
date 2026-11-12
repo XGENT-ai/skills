@@ -1,6 +1,6 @@
 ---
 name: phoenix-diagram
-description: "用于架构、工作流、时序、数据流、状态、状态机模型检查、ER、类、树、时间线、耗时瀑布图及 Mermaid 转换；不用于数值图表、仪表盘或其他 infographic。缺必需事实时仅提必要问题；齐备后交付经 Rust、浏览器与实际看图核对的独立 HTML。品牌采集、本地预览和架构比较仅在明确请求时启用。"
+description: "用于架构、工作流、时序、数据流、状态、状态机模型检查、ER、类、树、时间线、耗时瀑布图及 Mermaid 转换；不用于数值图表、仪表盘或其他 infographic。缺必需事实时仅提必要问题；齐备后交付经 Rust、浏览器与实际看图核对的独立 HTML，可另取可内联的静态 SVG。品牌采集、本地预览和架构比较仅在明确请求时启用。"
 license: MIT
 metadata:
   internal: true
@@ -46,6 +46,7 @@ Mermaid 作为语义材料处理：`flowchart` / `graph` 转为 workflow，组�
 - 明确要求品牌标识时读[品牌资源](references/brand-marks.md)。固定目录可离线查询；只有明确采集请求才访问用户给出的公共站点，普通生成只消费已固定的本地资源。不从组件名称猜品牌或 URL。
 - 明确要求本地预览时读[预览会话](references/preview.md)。服务与正式成果分离，只有 `--open` 才打开系统浏览器；停止服务后仍按正式交付流程验收。
 - 明确要求比较两份架构输入时读[架构比较](references/architecture-compare.md)，使用 Before/Delta/After 及比较专用审核合同。不能用下方单图 finalize 流程替代比较交付，也不推断风险、原因或可合并性。
+- 明确要求可内联的静态图时读[静态图](references/static-figure.md)；默认仍交付独立 HTML，不因普通作图自动另取静态图。
 - 维护者增加图型时读[扩展约定](references/extending-types.md)。
 
 ## 最短创作路径
@@ -84,9 +85,24 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
    第二种用于带来源的仓库图。退出码 0 不代表来源已核对：读回执 `evidence.status`（`verified`、`partial`、`unverified` 或 `none`）及 `evidence.unverified`、`evidence.unsourced`。
 
 3. 每轮失败后，在可回读的进度或本次项目记录中写明实际失败门、诊断阶段、客观 error 数、历史最佳值和停滞计数；首次失败的停滞计数为0。同一门每次修复后，只有 error 低于该门历史最佳才更新最佳并清零，否则停滞计数加1。修改 candidate 或修复前先核对该门计数：达到2立即停止并列出未解决项；即使不再运行命令，也不能继续修改 candidate 或将它回退到历史较好版本。错误种类变化不能重置计数，也不允许再试一次。修复前实际读到失败 diagnostic 的 `subject`、`evidence`、`supportedFixes`；宿主返回截断或提取遗漏时先补齐，不能把原有实测或字符串修法筛掉、转成空对象后视为已读。只修相关邻域。修复后重新 finalize；必要时用 `validate <type> candidate.json --layout-json --json` 定向诊断。重建 candidate 或交付、调整布局或卡片、返回已记录门时，沿用该门历史，不因新回执重新初始化；对最小示例的只读对照或验证不计修复，也不重置历史。环境失败也不允许无限重试。已通过前门而首次进入后门属于实际进展，按新门初始化记录；同一 validate 门内诊断 `stage` 首次由 `input` 变为 `layout` 也算进入后门。`supportedFixes` 写明经整图验证时，选定的一项修法所列全部路径是同一整组方案，须一次完整应用，不挑单个路径先试；保留每轮全部门的真实状态，不把不同门的顶层 error 数拼成同一停滞序列。不能删语义、降低质量、缩字或隐藏溢出来换通过。
-4. 按[交付合同](references/delivery-contract.md)实际打开 summary 列出的四张暗/亮截图，检查主图、标签、卡片、关系遮挡、层级和控件。默认必须做实际图像审核；DOM 数值、截图存在或测试通过不能替代看图。随后写审核记录并 `review-record` 登记，再回读同一 summary。只为登记审核或取得完整状态不得再次 finalize。
+4. 按[交付合同](references/delivery-contract.md)实际打开 summary 列出的 1440×900 亮、暗两张截图，检查主图、标签、卡片、关系遮挡、层级和控件。默认必须做实际图像审核；DOM 数值、截图存在或测试通过不能替代看图。随后写审核记录并 `review-record` 登记，再回读同一 summary。只为登记审核或取得完整状态不得再次 finalize。
 
 自动三门（validate、deliver、browser-check）通过后，视觉状态仍是 `required-pending`；只有三门 `pass`、`automatedStatus: "pass"`、`visualReview.status: "passed"`、`deliveryStatus: "complete"` 时，才能报告完整交付。修改 candidate 后须重新 finalize 并重新看图审核。
+
+## 可内联的静态图
+
+用户明确要求可内联的静态图时，用完整 candidate 运行：
+
+```sh
+"$PD" static <type> CANDIDATE OUTPUT.svg --json
+"$PD" static <type> CANDIDATE OUTPUT.svg --font-policy system --json
+```
+
+`--font-policy embedded|system` 默认为 `embedded`，内嵌 JetBrains Mono；调用方明确要求系统字体时必须选 `system`，不内嵌字体、不含 JetBrains Mono 或 `@font-face`，只使用 `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`。两种策略都须在实际输出字体下通过浏览器检查与看图；同一 candidate 的静态 SVG 字节数不得超过其 Reader HTML 的 50%。
+
+`static` 依次执行 validate、static、browser-check，写出 SVG、旁边的 `NAME.static-summary.json` 及 `NAME.static.1440x900.light.png`、`NAME.static.1440x900.dark.png` 两张截图。静态 SVG 只有主图、关系、标签与图内图例，不含 Reader 页面标题、摘要卡片、节点索引或交互控件；无脚本、无外部资源。宿主 `<html data-theme="light|dark">` 优先控制亮暗，没有有效属性时跟随系统偏好，打印使用亮色。
+
+实际打开 summary 列出的两张截图，按[交付合同](references/delivery-contract.md#静态图)逐张写观察并用 `review-record OUTPUT.svg --record review.json --json` 登记。只有自动门通过、实际看图完成且 summary 显示 `deliveryStatus: "complete"` 才算完成。静态图与同名 Reader HTML、finalize summary 及截图相互独立；`static` 不存在或失败时如实报告，不能冒称静态交付完成。
 
 ## 环境与停止
 

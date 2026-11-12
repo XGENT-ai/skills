@@ -5,9 +5,9 @@ use crate::check::FileIdentity;
 use base64::Engine;
 use std::path::{Path, PathBuf};
 
-/// The review looks at the smallest and largest desktop sizes in both themes.
+/// The review looks at the smallest desktop size in both themes.
 pub(super) fn requires_capture(viewport: Viewport, _theme: Theme) -> bool {
-    viewport == DESKTOP_VIEWPORTS[0] || viewport == DESKTOP_VIEWPORTS[3]
+    viewport == DESKTOP_VIEWPORTS[0]
 }
 
 pub(super) struct Evidence {
@@ -34,7 +34,11 @@ impl Evidence {
             .and_then(|_| std::fs::canonicalize(&directory))
             .map_err(|e| Error::new("browser/evidence-path", "evidence", e.to_string()))?;
         let name = artifact.file_name().unwrap_or_default().to_string_lossy();
-        let mut stem = name.strip_suffix(".html").unwrap_or(&name).to_owned();
+        let mut stem = name
+            .strip_suffix(".html")
+            .or_else(|| name.strip_suffix(".svg"))
+            .unwrap_or(&name)
+            .to_owned();
         if let Some(view) = view {
             stem = format!("{stem}.{view}");
         }

@@ -31,13 +31,13 @@ Before、Delta、After 分别展示原版、变化和新版。Delta 保留完整
 "$PD" visual-check comparison.html --out-dir compare-evidence-01 --json
 ```
 
-`check` 重跑比较 artifact 检查，只输出 stdout。`visual-check` 对三个视图分别测量四个桌面窗口及窄屏、暗亮主题，写出截图，并把浏览器回执、`browserStatus` 和 `screenshots` 写回比较 summary（返回的 `summary` 为其路径）。HTML 与 summary 记录不一致时会要求重新 compare。实际看图使用 summary `screenshots` 的 12 张图：每个视图的 1440×900、2048×1320 各 light/dark。逐张打开，核对主图、标签、卡片、关系遮挡、层级和控件；Delta 还须核旧位置、删除标记和变化定位与输入相符。DOM 数值、截图存在或自动测试不能替代观察。
+`check` 重跑比较 artifact 检查，只输出 stdout。`visual-check` 对三个视图分别测量四个桌面窗口及窄屏、暗亮主题，写出截图，并把浏览器回执、`browserStatus` 和 `screenshots` 写回比较 summary（返回的 `summary` 为其路径）。HTML 与 summary 记录不一致时会要求重新 compare。实际看图使用 summary `screenshots` 的 6 张图：每个视图的 1440×900 各 light/dark。逐张打开，核对主图、标签、卡片、关系遮挡、层级和控件；Delta 还须核旧位置、删除标记和变化定位与输入相符。DOM 数值、截图存在或自动测试不能替代观察。
 
 visual-check 通过后视觉仍是 `required-pending`、交付仍为 `incomplete`。缺工具、浏览器失败、某视图缺测或尚未实际看图分别报告，不沿用普通单图或另一次比较的审核。
 
 ## 审核记录
 
-按[交付合同的审核记录](delivery-contract.md#审核记录)写同样格式的 JSON，`screenshots` 逐项列出比较 summary 中的 12 个路径，每张写实际观察。没有缺陷才能用 `verdict: passed`、`findings: []`；有缺陷用 `failed` 并写具体 findings；无法看图用 `unavailable` 并写实际限制。
+按[交付合同的审核记录](delivery-contract.md#审核记录)写同样格式的 JSON，`screenshots` 逐项列出比较 summary 中的 6 个路径，每张写实际观察。没有缺陷才能用 `verdict: passed`、`findings: []`；有缺陷用 `failed` 并写具体 findings；无法看图用 `unavailable` 并写实际限制。
 
 ```sh
 "$PD" review-record comparison.html --record comparison-review-01.json --json

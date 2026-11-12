@@ -1,6 +1,6 @@
 # Phoenix Diagram
 
-Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall、statechart 十一类的原生生成、独立 HTML 阅读与导出，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。输入按各类型 schema 校验，`meta` 中未列出的字段直接拒绝。statechart 从有限模型穷举状态、判定规则并画出最短出错路径。仓库以 phoenix-diagram 为唯一活跃图解入口。数值图表、仪表盘及其他 infographic 不在范围内。
+Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall、statechart 十一类的原生生成、独立 HTML 阅读与导出、可内联静态 SVG，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。输入按各类型 schema 校验，`meta` 中未列出的字段直接拒绝。statechart 从有限模型穷举状态、判定规则并画出最短出错路径。仓库以 phoenix-diagram 为唯一活跃图解入口。数值图表、仪表盘及其他 infographic 不在范围内。
 
 UI 与 Diagram 共用 [Phoenix CI](../.github/workflows/phoenix.yml)：同一次运行完成两个工具的检查，发布仍使用同一个 `@xgent-ai/skills` npm 包。
 
@@ -64,7 +64,8 @@ check <output.html> --json
 browser-check <output.html> [--out-dir DIR] --json
 visual-check <output.html> [--out-dir DIR] --json
 finalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json
-review-record <output.html> --record <review.json> --json
+static <type> <candidate.json> <output.svg> [--font-policy embedded|system] [compile options] [--repo-root DIR] [--brand-cache DIR] [--out-dir DIR] --json
+review-record <output.html|output.svg> --record <review.json> --json
 install --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json
 ```
 
@@ -78,21 +79,36 @@ install --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] -
 
 `finalize` 顺序执行 validate、deliver、browser-check 三道自动门，首个失败后其余 `not-run`。它写出 HTML、截图（默认在 HTML 旁，`--out-dir` 可指定）和 HTML 旁唯一的 `<名称>.finalize-summary.json`；重跑会覆盖它们。浏览器默认隔离验收并采图，不打开用户当前浏览器；工具缺失、执行失败、自动通过与视觉待审分别报告。HTML 写出后浏览器失败会保留新 HTML。
 
-自动三门通过后仍为 `visualReview.status: required-pending`、`deliveryStatus: incomplete`。实际查看 summary `screenshots` 列出的 1440×900、2048×1320 四张暗亮截图，检查主图、全部标签/notes、卡片、关系遮挡、层级和控件，按[交付合同](../skills/phoenix-diagram/references/delivery-contract.md)写审核记录；未看图不得设置 passed。
+自动三门通过后仍为 `visualReview.status: required-pending`、`deliveryStatus: incomplete`。实际查看 summary `screenshots` 列出的两张 1440×900 截图，light/dark 各一张，检查主图、全部标签/notes、卡片、关系遮挡、层级和控件，按[交付合同](../skills/phoenix-diagram/references/delivery-contract.md)写审核记录；未看图不得设置 passed。
 
 ```sh
 "$PD" review-record diagram.html --record review-01.json --json
 ```
 
-review-record 只接受自动三门已通过、且 HTML 仍与 summary 记录一致的交付，并把审核写回同一 summary。三门 pass、`visualReview.status: passed`、`deliveryStatus: complete` 才是完整交付。答复中的 HTML、candidate 和 summary 路径优先原样复制回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。只为登记审核不得再次 finalize；修改 candidate 则重新 finalize 并重新看图审核。
+review-record 只接受自动三门已通过、产物仍与 summary 记录一致、且审核记录逐一列出 summary 当前全部截图的交付，并把审核写回同一 summary。旧 summary 不迁移：已有交付若列四张截图，新引擎仍按这四张的实际观察登记；新生成的 Reader 交付列两张。三门 pass、`visualReview.status: passed`、`deliveryStatus: complete` 才是完整交付。答复中的 HTML、candidate 和 summary 路径优先原样复制回执给出的真实值。若转为相对路径，先以宿主实际报告的本次工作目录逐条核对它们仍指向相同文件，再输出这些已核对的字符串；不能拿上级目录或消息中出现的其他目录作相对基准。简短回复也要保留定位所需的目录，不能用 `...` 代替路径或裁去前缀冒充绝对路径。只为登记审核不得再次 finalize；修改 candidate 则重新 finalize 并重新看图审核。自动门未过或 HTML 已变化时按诊断重跑 `finalize`；静态 SVG 的对应恢复命令是 `static`。
+
+## 静态图
+
+明确要求可内联的静态图时，运行：
+
+```sh
+"$PD" static <type> CANDIDATE OUTPUT.svg --json
+"$PD" static <type> CANDIDATE OUTPUT.svg --font-policy system --json
+```
+
+`--font-policy embedded|system` 默认为 `embedded`，内嵌 JetBrains Mono；明确要求系统字体时选 `system`，不内嵌字体、不含 JetBrains Mono 或 `@font-face`，只使用 `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`。两种策略均须按实际输出字体通过浏览器检查与看图，静态 SVG 字节数不得超过同一 candidate Reader HTML 的 50%。
+
+`static` 依次执行 validate、static、browser-check，写出静态 SVG、SVG 旁的 `NAME.static-summary.json` 和 `NAME.static.1440x900.light.png`、`NAME.static.1440x900.dark.png` 两张截图。SVG 无脚本、无外部资源，只含主图、关系、标签与图内图例，不含 Reader 页面标题、摘要卡片、节点索引或交互控件。宿主 `<html data-theme="light|dark">` 优先控制亮暗，没有有效属性时跟随系统偏好，打印为亮色。取静态图不改变同名 Reader HTML 及其 finalize summary 或截图。
+
+实际打开 static summary 列出的两张截图，逐张写实际观察，再用 `review-record OUTPUT.svg --record review.json --json` 登记。审核记录必须与 summary 的截图一一对应；自动门未过或 SVG 已变化时重跑 `static`，然后重新看图登记。只有自动门通过、视觉审核 passed 且 `deliveryStatus: complete` 才完成。完整边界与失败语义见[交付合同](../skills/phoenix-diagram/references/delivery-contract.md#静态图)与[静态图参考](../skills/phoenix-diagram/references/static-figure.md)。
 
 ## 按请求启用的作者工具
 
 - [品牌资源](../skills/phoenix-diagram/references/brand-marks.md)：明确要求品牌标识时查询固定目录，只有明确采集请求才访问用户提供的公共 URL。普通编译只读本地固定资源，不因节点名称猜品牌或联网。
 - [本地预览](../skills/phoenix-diagram/references/preview.md)：明确请求才启动，`--open` 才打开系统浏览器；保留 last-good 并报告新尝试错误。服务停止和页面可用不等于正式交付通过。
-- [架构比较](../skills/phoenix-diagram/references/architecture-compare.md)：明确请求比较两份 architecture 时执行，提供 Before/Delta/After，走 visual-check、12 张截图实际审核，结果记在比较 summary，不推断原因、风险或可合并性。
+- [架构比较](../skills/phoenix-diagram/references/architecture-compare.md)：明确请求比较两份 architecture 时执行，提供 Before/Delta/After，走 visual-check、六张截图实际审核（三个视图各一张 1440×900 light、一张 dark），结果记在比较 summary，不推断原因、风险或可合并性。
 
-普通作图继续使用单图 finalize 与四图审核，不自动附带上述操作。维护者增加类型时遵守[扩展约定](../skills/phoenix-diagram/references/extending-types.md)。
+普通作图继续使用单图 finalize 与两图审核，不自动附带上述操作。维护者增加类型时遵守[扩展约定](../skills/phoenix-diagram/references/extending-types.md)。
 
 ## 阅读与导出
 

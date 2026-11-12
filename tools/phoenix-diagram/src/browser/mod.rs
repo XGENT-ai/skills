@@ -5,6 +5,7 @@ pub mod comparison;
 mod discovery;
 mod evidence;
 mod observation;
+mod static_figure;
 
 use crate::check::FileIdentity;
 use crate::diagnostic::{Diagnostic, Diagnostics};
@@ -197,6 +198,8 @@ impl BrowserReceipt {
     }
 }
 
+pub use static_figure::check as check_static;
+
 pub fn check_browser(artifact: &Path, options: &BrowserOptions) -> BrowserReceipt {
     let mut receipt = BrowserReceipt {
         schema_version: 1,
@@ -340,8 +343,8 @@ pub fn check_browser(artifact: &Path, options: &BrowserOptions) -> BrowserReceip
     });
     if let Some(evidence) = evidence {
         receipt.screenshots = evidence.screenshots;
-        let captured = receipt.screenshots.len() == 4;
-        receipt.checks.push(BrowserCheck{name:"screenshot-capture".into(),status:if captured{CheckStatus::Pass}else{CheckStatus::Failed},scope:json!({"required":4,"themes":["light","dark"],"viewports":[DESKTOP_VIEWPORTS[0],DESKTOP_VIEWPORTS[3]],"longDiagrams":"full-page"}),evidence:json!({"captured":receipt.screenshots.len()})});
+        let captured = receipt.screenshots.len() == 2;
+        receipt.checks.push(BrowserCheck{name:"screenshot-capture".into(),status:if captured{CheckStatus::Pass}else{CheckStatus::Failed},scope:json!({"required":2,"themes":["light","dark"],"viewports":[DESKTOP_VIEWPORTS[0]],"longDiagrams":"full-page"}),evidence:json!({"captured":receipt.screenshots.len()})});
     }
     for coverage in &receipt.coverage {
         for check in &coverage.checks {

@@ -199,8 +199,8 @@ fn a_failed_capture_can_be_retried_in_an_independent_new_directory() {
         },
     );
     assert_eq!(retry.status, BrowserStatus::Pass, "{:?}", retry.diagnostics);
-    assert_eq!(retry.screenshots.len(), 4);
-    assert_eq!(fs::read_dir(retry_dir).unwrap().count(), 4);
+    assert_eq!(retry.screenshots.len(), 2);
+    assert_eq!(fs::read_dir(retry_dir).unwrap().count(), 2);
     assert_eq!(fs::read_dir(failed_dir).unwrap().count(), 1);
     assert_owned_browser_cleaned(&temp.0);
 }
@@ -355,7 +355,7 @@ fn protocol_fixture_records_all_scopes_and_writes_four_long_captures() {
     );
     assert_eq!(receipt.exit_code(), 0);
     assert_eq!(receipt.coverage.len(), 10);
-    assert_eq!(receipt.screenshots.len(), 4);
+    assert_eq!(receipt.screenshots.len(), 2);
     for screenshot in &receipt.screenshots {
         assert_eq!(
             FileIdentity::of(&fs::read(&screenshot.path).unwrap()),
@@ -363,7 +363,7 @@ fn protocol_fixture_records_all_scopes_and_writes_four_long_captures() {
         );
         assert!(screenshot.full_page);
     }
-    assert_eq!(fs::read_dir(&out_dir).unwrap().count(), 4);
+    assert_eq!(fs::read_dir(&out_dir).unwrap().count(), 2);
     assert_owned_browser_cleaned(&temp.0);
     let commands = fixture.commands.lock().unwrap();
     assert_eq!(
@@ -378,7 +378,7 @@ fn protocol_fixture_records_all_scopes_and_writes_four_long_captures() {
             .iter()
             .filter(|request| request["method"] == "Page.captureScreenshot")
             .count(),
-        4
+        2
     );
     assert!(commands
         .iter()
@@ -408,7 +408,7 @@ fn full_page_capture_preserves_the_stable_reader_and_restores_script_execution()
         "{:?}",
         receipt.diagnostics
     );
-    assert_eq!(receipt.screenshots.len(), 4);
+    assert_eq!(receipt.screenshots.len(), 2);
     assert_owned_browser_cleaned(&temp.0);
     let commands = fixture.commands.lock().unwrap();
     for (index, command) in commands.iter().enumerate() {

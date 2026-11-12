@@ -304,11 +304,19 @@ fn unexpected_resource(resource: &str, document: Option<&str>) -> bool {
 }
 
 pub(super) fn summarize(coverage: &[BrowserCoverage]) -> Vec<BrowserCheck> {
-    BROWSER_MEASUREMENT_CHECKS.iter().map(|name| {
+    summarize_named(coverage, &BROWSER_MEASUREMENT_CHECKS, 10)
+}
+
+pub(super) fn summarize_named(
+    coverage: &[BrowserCoverage],
+    names: &[&str],
+    expected: usize,
+) -> Vec<BrowserCheck> {
+    names.iter().map(|name| {
         let entries:Vec<_> = coverage.iter().filter_map(|entry| entry.checks.iter().find(|check| check.name==*name).map(|check|json!({"viewport":entry.viewport,"theme":entry.theme,"status":check.status}))).collect();
-        let complete = entries.len()==10;
+        let complete = entries.len()==expected;
         let failed = coverage.iter().flat_map(|entry|&entry.checks).any(|entry|entry.name==*name && entry.status==CheckStatus::Failed);
-        BrowserCheck {name:(*name).into(),status:if failed {CheckStatus::Failed} else if complete {CheckStatus::Pass} else {CheckStatus::NotRun},scope:json!({"requiredViewports":10,"executedViewports":entries.len()}),evidence:json!(entries)}
+        BrowserCheck {name:(*name).into(),status:if failed {CheckStatus::Failed} else if complete {CheckStatus::Pass} else {CheckStatus::NotRun},scope:json!({"requiredViewports":expected,"executedViewports":entries.len()}),evidence:json!(entries)}
     }).collect()
 }
 

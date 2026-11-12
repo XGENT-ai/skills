@@ -187,7 +187,7 @@ fn protocol_visual_check_updates_the_summary_and_review_covers_twelve_images() {
         || -> CompareReceipt { serde_json::from_slice(&fs::read(&summary_path).unwrap()).unwrap() };
     let summary = read_summary();
     assert_eq!(summary.browser_status, Status::Pass);
-    assert_eq!(summary.screenshots.len(), 12);
+    assert_eq!(summary.screenshots.len(), 6);
     assert_eq!(summary.visual_review.status, VisualStatus::RequiredPending);
     let draft = root.path("review.json");
     let write = |screenshots: &[std::path::PathBuf]| {

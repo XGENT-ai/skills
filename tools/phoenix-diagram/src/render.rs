@@ -12,9 +12,25 @@ use std::fmt::Write;
 mod class;
 mod erd;
 mod statechart;
+mod static_style;
 mod timeline;
 mod tree;
 mod waterfall;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FontPolicy {
+    Embedded,
+    System,
+}
+
+impl FontPolicy {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Embedded => "embedded",
+            Self::System => "system",
+        }
+    }
+}
 
 type LegendGlyph = fn(&CompiledDiagram, &Card, f64, &mut String);
 
@@ -1387,6 +1403,15 @@ fn write_legends(scene: &CompiledDiagram, svg: &mut String, glyph: Option<Legend
         svg.push_str("</g>");
     }
     svg.push_str("</g></svg>");
+}
+
+pub fn render_static(
+    scene: &CompiledDiagram,
+    id_prefix: &str,
+    policy: FontPolicy,
+) -> Result<Vec<u8>, Diagnostics> {
+    validate_geometry(scene)?;
+    static_style::render(scene, id_prefix, policy)
 }
 
 pub fn render(

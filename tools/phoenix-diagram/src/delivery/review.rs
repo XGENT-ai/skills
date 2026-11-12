@@ -25,11 +25,16 @@ pub(super) fn record(output: &Path, record_path: &Path) -> ReviewReceipt {
         )?)
         .map_err(|e| fail("review-record", "review/summary-format", e.to_string(), 1))?;
         result.automated_status = summary.automated_status;
+        let static_delivery = summary.command == "static";
         if summary.automated_status != Status::Pass {
             return Err(fail(
                 "review-record",
                 "review/automated-gates",
-                "Run finalize until its automated gates pass before recording a review",
+                if static_delivery {
+                    "Run static until its automated gates pass before recording a review"
+                } else {
+                    "Run finalize until its automated gates pass before recording a review"
+                },
                 1,
             ));
         }
@@ -38,7 +43,11 @@ pub(super) fn record(output: &Path, record_path: &Path) -> ReviewReceipt {
             return Err(fail(
                 "review-record",
                 "review/artifact-changed",
-                "The HTML differs from the finalized one; run finalize again",
+                if static_delivery {
+                    "The SVG differs from the static one; run static again"
+                } else {
+                    "The artifact differs from the finalized one; run finalize again"
+                },
                 1,
             ));
         }

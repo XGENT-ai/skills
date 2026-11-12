@@ -148,7 +148,7 @@ python3 "$SKILL_DIR/scripts/check_doc.py" <文档路径...> --repo-root <仓库�
 
 **图里的文字**和文档同语言，中文文档设 `meta.locale: "zh-CN"`。节点名、接口路径、命令等标识符保持原样。
 
-**在 Markdown 里怎么放**：按 phoenix-diagram 流程执行 `finalize`（需要本机有 Chrome / Chromium），实际打开当前四张暗亮截图并填写审核，再用 `review-record` 登记，回读同一 summary。三门 pass、视觉 passed、delivery complete 才能说明完整交付；只为登记不得再次 finalize。从该 summary 中名为 `browser-check` 的阶段回执读取 `receipt.screenshots`，按其中的 `theme: "light"` 与 `viewport` 选择实际正文图，使用其真实 `path`，不猜文件名。复制正文图为稳定的文档文件名，再给出交互版链接：
+**在 Markdown 里怎么放**：按 phoenix-diagram 流程执行 `finalize`（需要本机有 Chrome / Chromium），实际打开当前两张 1440×900 暗亮截图并填写审核，再用 `review-record` 登记，回读同一 summary。三门 pass、视觉 passed、delivery complete 才能说明完整交付；只为登记不得再次 finalize。从该 summary 中名为 `browser-check` 的阶段回执读取 `receipt.screenshots`，按其中的 `theme: "light"` 与 `viewport` 选择实际正文图，使用其真实 `path`，不猜文件名。复制正文图为稳定的文档文件名，再给出交互版链接：
 
 ```markdown
 ![系统上下文图](diagrams/system-context.light.png)
@@ -158,7 +158,7 @@ python3 "$SKILL_DIR/scripts/check_doc.py" <文档路径...> --repo-root <仓库�
 
 截图未生成、浏览器不可用或审核未完成时，只链接实际存在的 HTML，在交付说明中逐项保留真实的失败、未运行或待审状态，不称完整交付。同一张图不再另画一份 Mermaid，两份会各改各的，最后对不上。最后还须检查 Markdown 实际渲染的正文图与链接；独立图检查不能代替文档检查。
 
-**仓库只留三个成果文件**：每张图保留 `<名字>.json`（源）、`<名字>.html`（交互版）和正文嵌入的 `<名字>.light.png`。生成时将原生 HTML 输出到本次独立的本机证据目录，并用 `--out-dir` 将浏览器/审核证据放在该目录；源 JSON 仍用仓库文件。delivery/summary 固定在原生 HTML 旁，`--out-dir` 不会移动它们。完成当前身份链后，把已审核 HTML 和选中的亮色截图按原字节复制到仓库的成果路径；保留本机原 HTML、summary、回执、四图及审核记录至交接，不删除当前成功声明依赖的证据。说明原生验收路径、本机证据位置、复制关系与同步限制；仓库副本是发布用的同字节成果，不冒称在新物理路径取得 strict-provenance 或审核绑定。需要在另一台机器重新核验时，同步完整证据并按实际新路径重新取得适用证据。
+**仓库只留三个成果文件**：每张图保留 `<名字>.json`（源）、`<名字>.html`（交互版）和正文嵌入的 `<名字>.light.png`。生成时将原生 HTML 输出到本次独立的本机证据目录，并用 `--out-dir` 将浏览器/审核证据放在该目录；源 JSON 仍用仓库文件。delivery/summary 固定在原生 HTML 旁，`--out-dir` 不会移动它们。完成当前身份链后，把已审核 HTML 和选中的亮色截图按原字节复制到仓库的成果路径；保留本机原 HTML、summary、回执、两图及审核记录至交接，不删除当前成功声明依赖的证据。说明原生验收路径、本机证据位置、复制关系与同步限制；仓库副本是发布用的同字节成果，不冒称在新物理路径取得 strict-provenance 或审核绑定。需要在另一台机器重新核验时，同步完整证据并按实际新路径重新取得适用证据。
 
 **修不好就退回**：按 phoenix-diagram 的同门历史最佳值与停滞计数执行，到2立即停止该图的修复；这一张改用 Mermaid，交付说明里写清楚原因和 phoenix-diagram 的报错。
 

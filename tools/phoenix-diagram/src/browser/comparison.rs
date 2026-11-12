@@ -673,7 +673,7 @@ fn terminal_checks(cleanup: bool, capture: Option<usize>) -> Vec<BrowserCheck> {
         evidence: Value::Null,
     }];
     if let Some(count) = capture {
-        checks.push(BrowserCheck{name:"screenshot-capture".into(),status:if count==12 {CheckStatus::Pass}else{CheckStatus::Failed},scope:json!({"required":12,"views":VIEWS,"themes":["light","dark"],"viewports":[DESKTOP_VIEWPORTS[0],DESKTOP_VIEWPORTS[3]],"longDiagrams":"full-page"}),evidence:json!({"captured":count})});
+        checks.push(BrowserCheck{name:"screenshot-capture".into(),status:if count==6 {CheckStatus::Pass}else{CheckStatus::Failed},scope:json!({"required":6,"views":VIEWS,"themes":["light","dark"],"viewports":[DESKTOP_VIEWPORTS[0]],"longDiagrams":"full-page"}),evidence:json!({"captured":count})});
     }
     checks
 }

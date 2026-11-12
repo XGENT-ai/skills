@@ -24,6 +24,7 @@
 | 2fc34df8-6142-4b7a-9484-8bee4fa7a248 | [ELINTP-VISUALS P2 gaps R1代码评审](../../../../docs/plan/ELINTP-VISUALS-P2-gaps.code-review.md) | [状态](2fc34df8-6142-4b7a-9484-8bee4fa7a248.md) | 活动 |
 | 3833fbb3-87bd-4e75-8a81-e2e3d7622a90 | [Phoenix UI R2代码复审](../../../../docs/plan/phoenix-ui.code-review.r2.md) | [状态](3833fbb3-87bd-4e75-8a81-e2e3d7622a90.md) | 活动 |
 | 3918db31-0c92-4464-94d0-4480c071981b | [Codex guard 开发计划评审及文档处置](../../../../docs/plan/codex-context-goal-guard.review.md) | [状态](3918db31-0c92-4464-94d0-4480c071981b.md) | 活动 |
+| 3d94f0f4-d8d2-49e2-abf1-601f909d6521 | [ELINTP-VISUALS P3 开发计划评审](../../../../docs/plan/ELINTP-VISUALS-P3.review.md) | [状态](3d94f0f4-d8d2-49e2-abf1-601f909d6521.md) | 活动 |
 | 3ef8c873-3eea-4f92-8c8c-c8e78c12f0ae | [Phoenix Diagram P2 gaps 当前版本完整重审](../../../../docs/plan/PHOENIX-DIAGRAM-P2-gaps.review.2026-10-26.md) | [状态](3ef8c873-3eea-4f92-8c8c-c8e78c12f0ae.md) | 活动 |
 | 3f8b12ca-8093-471e-b9c8-fb6a1a2b507b | [Phoenix Diagram P1 R2代码修复效果复审](../../../../docs/plan/PHOENIX-DIAGRAM-P1.code-review.r2.md) | [状态](3f8b12ca-8093-471e-b9c8-fb6a1a2b507b.md) | 活动 |
 | 432f3b5e-45fd-41c8-a55f-8f76add076d8 | [ELINTP-VISUALS P2 PRD交付覆盖核查](../../../../docs/plan/ELINTP-VISUALS-P2.prd-dev-gaps.md) | [状态](432f3b5e-45fd-41c8-a55f-8f76add076d8.md) | 活动 |

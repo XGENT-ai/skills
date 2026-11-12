@@ -23,6 +23,7 @@
 | a2287695-163a-4569-ba21-0fff8bf83af5 | [Phoenix Diagram P2](../../../../docs/plan/PHOENIX-DIAGRAM-P2.md) | [状态](a2287695-163a-4569-ba21-0fff8bf83af5.md) | 活动 |
 | ec8cc07f-20e5-4d64-8b77-406df2820e71 | [ELINTP-VISUALS P1](../../../../docs/plan/ELINTP-VISUALS-P1.md) | [状态](ec8cc07f-20e5-4d64-8b77-406df2820e71.md) | 活动 |
 | e2fd7621-6529-41cf-8bce-db18e451cadf | [ELINTP-VISUALS P2](../../../../docs/plan/ELINTP-VISUALS-P2.md) | [状态](e2fd7621-6529-41cf-8bce-db18e451cadf.md) | 活动 |
+| fe520dbf-8382-43e6-b26f-765b0735dc14 | [ELINTP-VISUALS P3](../../../../docs/plan/ELINTP-VISUALS-P3.md) | [状态](fe520dbf-8382-43e6-b26f-765b0735dc14.md) | 活动 |
 
 ## 维护约定
 

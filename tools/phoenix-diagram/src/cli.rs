@@ -6,7 +6,7 @@ use phoenix_diagram::{
     input::{CompileOptions, DiagramType, Quality},
     install::{self, InstallRequest},
     preview::{self, PreviewRequest},
-    render::EmbeddedAssets,
+    render::{EmbeddedAssets, FontPolicy},
 };
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -18,7 +18,7 @@ use std::{
     process::ExitCode,
 };
 
-const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\ncheck <output.html> --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html> --record <review.json> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
+const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\nstatic <type> <candidate.json> <output.svg> [--quality standard|showcase] [--font-policy embedded|system] [--out-dir DIR] [--repo-root DIR] [--brand-cache DIR] --json\ncheck <output.html> --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html|output.svg> --record <review.json> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
 
 struct Arguments {
     positional: Vec<OsString>,
@@ -58,7 +58,7 @@ impl Arguments {
                         None
                     }
                     "quality" | "out-dir" | "record" | "project" | "bundle-root" | "providers"
-                    | "repo-root" | "brand-cache" | "receipt" | "port" => Some(
+                    | "repo-root" | "brand-cache" | "receipt" | "port" | "font-policy" => Some(
                         inline
                             .or_else(|| args.next())
                             .ok_or_else(|| format!("--{key} needs a value"))?,
@@ -368,6 +368,7 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
             | "compare"
             | "validate"
             | "deliver"
+            | "static"
             | "finalize"
             | "check"
             | "browser-check"
@@ -457,11 +458,19 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
         });
         return Ok(encoded(&receipt, receipt.exit_code()));
     }
-    if matches!(command, "validate" | "deliver" | "finalize") {
+    if matches!(command, "validate" | "deliver" | "static" | "finalize") {
         args.allow(if command == "validate" {
             &["quality", "layout-json", "repo-root", "brand-cache"][..]
         } else if command == "finalize" {
             &["quality", "out-dir", "repo-root", "brand-cache"][..]
+        } else if command == "static" {
+            &[
+                "quality",
+                "out-dir",
+                "repo-root",
+                "brand-cache",
+                "font-policy",
+            ][..]
         } else {
             &["quality", "repo-root", "brand-cache"][..]
         })?;
@@ -501,6 +510,20 @@ fn dispatch(args: &Arguments) -> Result<(Value, u8), String> {
                     value["layout"] = layout.unwrap_or(Value::Null);
                 }
                 (value, code)
+            }
+            "static" => {
+                let font = match args.value("font-policy").and_then(OsStr::to_str) {
+                    None | Some("embedded") => FontPolicy::Embedded,
+                    Some("system") => FontPolicy::System,
+                    _ => return Err("--font-policy must be embedded or system".into()),
+                };
+                let receipt = delivery::static_figure(
+                    &request,
+                    Path::new(&positional[2]),
+                    &browser_options(args, true),
+                    font,
+                );
+                encoded(&receipt, receipt.exit_code())
             }
             "deliver" => {
                 let receipt = delivery::deliver(&request, Path::new(&positional[2]));

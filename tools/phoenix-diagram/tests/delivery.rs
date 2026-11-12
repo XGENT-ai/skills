@@ -238,7 +238,7 @@ fn a_recorded_review_completes_only_the_finalized_html() {
         finalized.visual_review.status,
         VisualStatus::RequiredPending
     );
-    assert_eq!(finalized.screenshots.len(), 4);
+    assert_eq!(finalized.screenshots.len(), 2);
     assert!(finalized
         .screenshots
         .iter()

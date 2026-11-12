@@ -10,7 +10,7 @@ pub use receipts::*;
 
 use crate::browser::{BrowserOptions, BrowserReceipt};
 use crate::input::{CompileOptions, DiagramType};
-use crate::render::EmbeddedAssets;
+use crate::render::{EmbeddedAssets, FontPolicy};
 use std::path::{Path, PathBuf};
 
 pub struct CompileRequest<'a> {
@@ -29,6 +29,15 @@ pub fn validate(request: &CompileRequest<'_>) -> ValidationReceipt {
 
 pub fn deliver(request: &CompileRequest<'_>, output: &Path) -> DeliveryReceipt {
     finalize::deliver(request, output)
+}
+
+pub fn static_figure(
+    request: &CompileRequest<'_>,
+    output: &Path,
+    browser: &BrowserOptions,
+    font: FontPolicy,
+) -> FinalizeReceipt {
+    finalize::static_figure(request, output, browser, font)
 }
 
 pub fn check(output: &Path) -> CheckReceipt {

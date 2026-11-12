@@ -3,6 +3,7 @@ use super::support::*;
 use super::*;
 use crate::browser::{self, BrowserReceipt, BrowserStatus};
 use crate::check::check_html;
+use crate::diagnostic::Diagnostic;
 use serde_json::json;
 
 fn delivery_receipt(validation: &ValidationReceipt) -> DeliveryReceipt {
@@ -37,6 +38,172 @@ pub(super) fn deliver(request: &CompileRequest<'_>, output: &Path) -> DeliveryRe
         }
     }
     receipt
+}
+
+pub(super) fn static_figure(
+    request: &CompileRequest<'_>,
+    output: &Path,
+    browser_options: &BrowserOptions,
+    font: crate::render::FontPolicy,
+) -> FinalizeReceipt {
+    if output
+        .extension()
+        .is_none_or(|extension| extension != "svg")
+    {
+        let failure = fail(
+            "static",
+            "static/output-extension",
+            "The output path must end with .svg",
+            2,
+        );
+        return FinalizeReceipt {
+            schema_version: 1,
+            tool: "phoenix-diagram".into(),
+            tool_version: crate::TOOL_VERSION.into(),
+            command: "static".into(),
+            status: Status::Failed,
+            exit: failure.exit,
+            diagnostics: vec![failure.diagnostic],
+            stages: ["validate", "static", "browser-check"]
+                .into_iter()
+                .map(|name| Stage {
+                    name: name.into(),
+                    status: Status::NotRun,
+                    receipt: None,
+                })
+                .collect(),
+            candidate: None,
+            artifact: None,
+            config_sha256: None,
+            engine: EngineIdentity::current(),
+            automated_status: Status::Failed,
+            screenshots: vec![],
+            visual_review: VisualReview::pending(),
+            delivery_status: "incomplete".into(),
+            evidence: serde_json::json!({}),
+            model: serde_json::Value::Null,
+            locale: serde_json::json!({}),
+        };
+    }
+    let prepared = prepare::prepare(request);
+    let mut summary = FinalizeReceipt {
+        schema_version: 1,
+        tool: "phoenix-diagram".into(),
+        tool_version: crate::TOOL_VERSION.into(),
+        command: "static".into(),
+        status: Status::Failed,
+        diagnostics: prepared.receipt.diagnostics.clone(),
+        stages: ["validate", "static", "browser-check"]
+            .into_iter()
+            .map(|name| Stage {
+                name: name.into(),
+                status: Status::NotRun,
+                receipt: None,
+            })
+            .collect(),
+        candidate: prepared.receipt.candidate.clone(),
+        artifact: None,
+        config_sha256: prepared.receipt.config_sha256.clone(),
+        engine: prepared.receipt.engine.clone(),
+        automated_status: Status::Failed,
+        screenshots: vec![],
+        visual_review: VisualReview::pending(),
+        delivery_status: "incomplete".into(),
+        evidence: evidence_summary(&prepared.receipt.evidence),
+        model: prepared.receipt.model.clone(),
+        locale: prepared.locale.clone(),
+        exit: prepared.receipt.exit_code(),
+    };
+    stage(&mut summary, 0, prepared.receipt.status, &prepared.receipt);
+    let path = summary_path(output);
+    let run = (|| -> Result<()> {
+        summary.evidence["summaryPath"] = json!(absolute(&path)?);
+        let Some(compiled) = prepared.compiled.as_ref() else {
+            return Ok(());
+        };
+        let mut delivery = delivery_receipt(&prepared.receipt);
+        delivery.command = "static".into();
+        delivery.status = Status::Failed;
+        delivery.exit = 1;
+        let published = (|| -> Result<()> {
+            if let (Ok(input), Ok(target)) = (
+                std::fs::canonicalize(request.candidate),
+                std::fs::canonicalize(output),
+            ) {
+                if input == target {
+                    return Err(fail(
+                        "static",
+                        "output/input-alias",
+                        "The output path names the candidate input",
+                        2,
+                    ));
+                }
+            }
+            let candidate = prepared.receipt.candidate.as_ref().ok_or_else(|| {
+                fail(
+                    "static",
+                    "static/candidate-missing",
+                    "The candidate identity is unavailable",
+                    1,
+                )
+            })?;
+            let sha = candidate.identity.sha256.as_str();
+            let prefix = format!("pd{}-{}", &sha[..8], font.as_str());
+            let svg = crate::render::render_static(&compiled.scene, &prefix, font).map_err(
+                |diagnostics| {
+                    let mut diagnostic = diagnostics.into_iter().next().unwrap_or_else(|| {
+                        Diagnostic::error(None, "static/render", "", "Static rendering failed")
+                    });
+                    diagnostic.stage = "static".into();
+                    Box::new(Failure {
+                        diagnostic,
+                        exit: 1,
+                    })
+                },
+            )?;
+            write("static", output, &svg)?;
+            delivery.artifact = Some(reference(output, &svg)?);
+            delivery.status = Status::Pass;
+            delivery.exit = 0;
+            Ok(())
+        })();
+        if let Err(failure) = &published {
+            delivery.exit = failure.exit;
+        }
+        stage(&mut summary, 1, delivery.status, &delivery);
+        published?;
+        summary.artifact = delivery.artifact.clone();
+        let mut options = browser_options.clone();
+        options.capture = true;
+        let browser = browser::check_static(output, &options);
+        stage(&mut summary, 2, browser_status(browser.status), &browser);
+        summary.diagnostics.extend(browser.diagnostics.clone());
+        summary.screenshots = browser.screenshots.iter().map(|s| s.path.clone()).collect();
+        summary.exit = browser.exit_code();
+        match browser.status {
+            BrowserStatus::Pass => {
+                summary.status = Status::Pass;
+                summary.automated_status = Status::Pass;
+            }
+            BrowserStatus::Unavailable => {
+                summary.status = Status::Unavailable;
+                summary.automated_status = Status::Unavailable;
+            }
+            BrowserStatus::Failed => {}
+        }
+        Ok(())
+    })();
+    if let Err(failure) = run {
+        summary.exit = failure.exit;
+        summary.diagnostics.push(failure.diagnostic);
+    }
+    if let Err(failure) = write("static", &path, &json_bytes(&summary)) {
+        summary.status = Status::Failed;
+        summary.automated_status = Status::Failed;
+        summary.exit = failure.exit;
+        summary.diagnostics.push(failure.diagnostic);
+    }
+    summary
 }
 
 fn publish(
@@ -196,7 +363,14 @@ pub(super) fn browser_check(
 ) -> BrowserReceipt {
     let mut options = options.clone();
     options.capture = visual || options.capture;
-    let mut receipt = browser::check_browser(output, &options);
+    let mut receipt = if output
+        .extension()
+        .is_some_and(|extension| extension == "svg")
+    {
+        browser::check_static(output, &options)
+    } else {
+        browser::check_browser(output, &options)
+    };
     receipt.command = if visual {
         "visual-check"
     } else {

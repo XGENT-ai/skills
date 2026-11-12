@@ -62,7 +62,7 @@ fn protocol_measurements_cover_each_view_on_the_same_bound_parent_file() {
         receipt.diagnostics
     );
     assert_eq!(receipt.coverage.len(), 30);
-    assert_eq!(receipt.screenshots.len(), 12);
+    assert_eq!(receipt.screenshots.len(), 6);
     for view in ["before", "delta", "after"] {
         assert_eq!(
             receipt
@@ -78,7 +78,7 @@ fn protocol_measurements_cover_each_view_on_the_same_bound_parent_file() {
                 .iter()
                 .filter(|entry| entry.view_id == view)
                 .count(),
-            4
+            2
         );
     }
     let commands = fixture.commands();
