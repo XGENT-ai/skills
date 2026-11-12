@@ -129,6 +129,7 @@ figcaption p { margin: 8px 0 0; }
   aside { padding: 20px; }
   /* A wide screenshot shrunk to a phone column is unreadable; keep its own size and let .image-scroll scroll. */
   figure img { max-width: none; }
+  figure svg[data-phoenix-static] { width: auto; max-width: none; }
 }
 @media print {
   :root, :root[data-theme] { color-scheme: light; --paper: white; --surface: #f1f3f2; --fg: #172124; --muted: #445355; --line: #b8c3c1; --accent: #125b63; --ok: #226247; --warn: #79501c; --no: #a03535; --notice: #f5eddc; }
@@ -139,6 +140,7 @@ figcaption p { margin: 8px 0 0; }
   .column-notes dl[hidden] { display: block !important; }
   .table-scroll, .image-scroll, pre { overflow: visible; }
   figure img { max-width: 100%; }
+  figure svg[data-phoenix-static] { width: 100%; max-width: 100%; }
   table { table-layout: fixed; font-size: 9pt; }
   th, td { min-width: 0; padding: 6px; }
   pre { white-space: pre-wrap; overflow-wrap: anywhere; }

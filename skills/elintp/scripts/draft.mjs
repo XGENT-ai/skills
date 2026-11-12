@@ -6,9 +6,302 @@ export const escapeHTML = text => String(text).replace(/[&<>"']/g, char => ({ '&
 
 const SVG_ELEMENTS = new Set('svg g defs title desc path rect circle ellipse line polyline polygon text tspan marker linearGradient radialGradient stop clipPath use'.split(' '));
 const SVG_ATTRIBUTES = new Set(('id class role aria-label aria-labelledby aria-describedby xmlns xmlns:xlink viewBox width height x y x1 x2 y1 y2 cx cy r rx ry d points transform fill fill-opacity fill-rule stroke stroke-width stroke-opacity stroke-linecap stroke-linejoin stroke-dasharray stroke-dashoffset stroke-miterlimit opacity color font-family font-size font-weight font-style text-anchor dominant-baseline alignment-baseline dx dy textLength lengthAdjust letter-spacing word-spacing marker-start marker-mid marker-end markerWidth markerHeight refX refY orient markerUnits gradientUnits gradientTransform offset stop-color stop-opacity fx fy fr spreadMethod clip-path clip-rule clipPathUnits mask filter href xlink:href preserveAspectRatio vector-effect').split(' '));
+const STATIC_SVG_ELEMENTS = new Set([...SVG_ELEMENTS, ...'style image pattern mask filter feBlend feColorMatrix feComponentTransfer feComposite feConvolveMatrix feDiffuseLighting feDisplacementMap feDistantLight feDropShadow feFlood feFuncA feFuncB feFuncG feFuncR feGaussianBlur feMerge feMergeNode feMorphology feOffset fePointLight feSpecularLighting feSpotLight feTile feTurbulence'.split(' ')]);
+const STATIC_SVG_ATTRIBUTES = new Set([...SVG_ATTRIBUTES, ...'style lang aria-hidden patternUnits patternTransform primitiveUnits filterUnits in in2 result stdDeviation mode type values operator k1 k2 k3 k4 radius edgeMode kernelMatrix order targetX targetY divisor bias preserveAlpha surfaceScale diffuseConstant specularConstant specularExponent scale xChannelSelector yChannelSelector baseFrequency numOctaves seed stitchTiles tableValues slope intercept amplitude exponent flood-color flood-opacity lighting-color azimuth elevation pointsAtX pointsAtY pointsAtZ limitingConeAngle kernelUnitLength color-interpolation-filters'.split(' ')]);
+const STATIC_CSS_PROPERTIES = new Set(('color color-scheme fill fill-opacity fill-rule stroke stroke-width stroke-opacity stroke-linecap stroke-linejoin stroke-dasharray stroke-dashoffset stroke-miterlimit opacity display visibility overflow font font-family font-size font-weight font-style line-height letter-spacing word-spacing font-variant-numeric text-anchor dominant-baseline alignment-baseline text-transform text-rendering white-space paint-order shape-rendering vector-effect filter clip-path clip-rule mask marker marker-start marker-mid marker-end rx ry transform transform-origin width height min-width max-width flex flex-direction flex-wrap align-items justify-content gap pointer-events transform-box').split(' '));
+const STATIC_CSS_FUNCTIONS = new Set('var color-mix calc min max clamp rgb rgba hsl hsla hwb lab lch oklab oklch color drop-shadow blur brightness contrast grayscale hue-rotate invert opacity saturate sepia matrix translate translatex translatey scale scalex scaley rotate skew skewx skewy'.split(' '));
+const FONT_FACE_PROPERTIES = new Set('font-family font-style font-weight font-display src unicode-range'.split(' '));
+const PAINT_URL_ATTRIBUTES = new Set('fill stroke marker marker-start marker-mid marker-end filter clip-path mask'.split(' '));
 
-function inlineSVG(source, title, prefix, report) {
-  let failed = false;
+function decodeDataURL(value, allowed, signature) {
+  const match = value.match(/^data:([^;,]+);base64,([A-Za-z0-9+/]+={0,2})$/i);
+  if (!match || !allowed.has(match[1].toLowerCase()) || match[2].length % 4) return false;
+  const bytes = Buffer.from(match[2], 'base64');
+  return bytes.toString('base64') === match[2] && signature(bytes, match[1].toLowerCase());
+}
+const imageBytes = (bytes, mime) => mime === 'image/png'
+  ? bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  : mime === 'image/jpeg' ? bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+  : mime === 'image/webp' ? bytes.length >= 12 && bytes.subarray(0, 4).toString() === 'RIFF' && bytes.subarray(8, 12).toString() === 'WEBP'
+  : bytes.length >= 4 && bytes.subarray(0, 4).equals(Buffer.from([0, 0, 1, 0]));
+const IMAGE_MIMES = new Set('image/png image/jpeg image/webp image/x-icon image/vnd.microsoft.icon'.split(' '));
+
+function cssParts(text, delimiter, fail) {
+  const parts = [];
+  let start = 0, quote = '', parentheses = 0, brackets = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (quote) { if (char === quote) quote = ''; continue; }
+    if (char === '"' || char === "'") { quote = char; continue; }
+    if (char === '(') parentheses++;
+    else if (char === ')') { if (!parentheses) { fail(i, 'CSS 括号不匹配'); return []; } parentheses--; }
+    else if (char === '[') brackets++;
+    else if (char === ']') { if (!brackets) { fail(i, 'CSS 属性选择器括号不匹配'); return []; } brackets--; }
+    else if (char === delimiter && !parentheses && !brackets) { parts.push({ value: text.slice(start, i), at: start }); start = i + 1; }
+  }
+  if (quote || parentheses || brackets) { fail(text.length, 'CSS 字符串或括号未闭合'); return []; }
+  parts.push({ value: text.slice(start), at: start });
+  return parts;
+}
+
+function validateCSSValue(value, fail, { fontSource = false } = {}) {
+  if (fontSource) {
+    const match = value.match(/^url\(\s*(['"]?)(data:[^)]+)\1\s*\)(?:\s*format\(\s*(['"]?)woff2\3\s*\))?$/i);
+    if (!match || !decodeDataURL(match[2], new Set(['font/woff2']), bytes => bytes.length >= 4 && bytes.subarray(0, 4).toString() === 'wOF2')) {
+      fail(0, '@font-face src 只允许 base64 data:font/woff2');
+      return false;
+    }
+    return true;
+  }
+  let quote = '', depth = 0;
+  for (let i = 0; i < value.length;) {
+    const char = value[i];
+    if (quote) { if (char === quote) quote = ''; i++; continue; }
+    if (char === '"' || char === "'") { quote = char; i++; continue; }
+    if (/[A-Za-z_-]/.test(char)) {
+      const match = value.slice(i).match(/^[A-Za-z_-][\w-]*/);
+      const name = match[0], open = i + name.length;
+      let cursor = open;
+      while (/\s/.test(value[cursor] || '')) cursor++;
+      if (value[cursor] !== '(') { i = open; continue; }
+      const lower = name.toLowerCase();
+      if (lower === 'url') {
+        const url = value.slice(cursor).match(/^\(\s*(['"]?)#([A-Za-z_][\w:.-]*)\1\s*\)/);
+        if (!url) { fail(i, 'CSS url() 只允许本文件 #片段'); return false; }
+        i = cursor + url[0].length;
+        continue;
+      }
+      if (!STATIC_CSS_FUNCTIONS.has(lower)) { fail(i, `CSS 函数 ${name} 不允许`); return false; }
+      depth++;
+      i = cursor + 1;
+      continue;
+    }
+    if (char === ')') { if (!depth) { fail(i, 'CSS 函数括号不匹配'); return false; } depth--; }
+    else if (char === '(') { fail(i, 'CSS 值只支持白名单函数'); return false; }
+    i++;
+  }
+  if (quote || depth) { fail(value.length, 'CSS 字符串或函数括号未闭合'); return false; }
+  return true;
+}
+
+function cssDeclarations(text, fail, { policy, fontFace = false, inline = false }) {
+  const output = [];
+  let hasSource = false, hasFamily = false;
+  for (const part of cssParts(text, ';', fail)) {
+    if (!part.value.trim()) continue;
+    const pair = cssParts(part.value, ':', fail);
+    if (pair.length !== 2) { fail(part.at, 'CSS 声明须为属性:值'); return ''; }
+    const property = pair[0].value.trim(), value = pair[1].value.trim();
+    if ((!fontFace && !STATIC_CSS_PROPERTIES.has(property) && !/^--[a-z][\w-]*$/.test(property))
+      || (fontFace && !FONT_FACE_PROPERTIES.has(property)) || (inline && property.startsWith('--'))) {
+      fail(part.at, `CSS 属性 ${property || '(空)'} 不允许`); return '';
+    }
+    if (!property || !value || /[{}]/.test(value)) { fail(part.at, 'CSS 声明不完整'); return ''; }
+    if (policy === 'system' && /jetbrains|data:font/i.test(value)) { fail(part.at, 'system 策略不允许 JetBrains 或字体 data'); return ''; }
+    if (!validateCSSValue(value, (offset, problem) => fail(part.at + pair[1].at + offset, problem), { fontSource: fontFace && property === 'src' })) return '';
+    if (fontFace && property === 'font-family' && value.replace(/^(['"])|(['"])$/g, '') !== 'JetBrains Mono') { fail(part.at, '@font-face 只允许引擎的 JetBrains Mono 字体族'); return ''; }
+    hasSource ||= fontFace && property === 'src';
+    hasFamily ||= fontFace && property === 'font-family';
+    output.push(`${property}:${value}`);
+  }
+  if (fontFace && (!hasSource || !hasFamily)) { fail(0, '@font-face 缺少 font-family 或 src'); return ''; }
+  return output.join(';');
+}
+
+function selectorChain(selector, fail) {
+  const parts = [], combinators = [];
+  let i = 0;
+  while (i < selector.length) {
+    while (/\s/.test(selector[i] || '')) i++;
+    const start = i;
+    let quote = '', parentheses = 0, brackets = 0;
+    for (; i < selector.length; i++) {
+      const char = selector[i];
+      if (quote) { if (char === quote) quote = ''; continue; }
+      if (char === '"' || char === "'") { quote = char; continue; }
+      if (char === '(') parentheses++;
+      else if (char === ')') parentheses--;
+      else if (char === '[') brackets++;
+      else if (char === ']') brackets--;
+      if (!quote && !parentheses && !brackets && (/\s/.test(char) || /[+~>]/.test(char))) break;
+      if (parentheses < 0 || brackets < 0) { fail(start + i, 'CSS 选择器括号不匹配'); return null; }
+    }
+    if (start === i) { fail(i, 'CSS 选择器组合器无效'); return null; }
+    parts.push({ value: selector.slice(start, i), at: start });
+    const spaced = /\s/.test(selector[i] || '');
+    while (/\s/.test(selector[i] || '')) i++;
+    if (i >= selector.length) break;
+    if (/[+~]/.test(selector[i])) { fail(i, 'CSS 选择器不能用兄弟组合器跳出静态 SVG'); return null; }
+    combinators.push(selector[i] === '>' ? (i++, '>') : spaced ? ' ' : '');
+    if (!combinators.at(-1)) { fail(i, 'CSS 选择器组合器无效'); return null; }
+  }
+  return { parts, combinators };
+}
+
+function selectorCompound(compound, rootId, fail, role = 'drawing') {
+  let rest = compound, type = '', root = false, anchor = false;
+  const attrs = [];
+  const typeMatch = rest.match(/^(\*|[A-Za-z][\w-]*)/);
+  if (typeMatch) { type = typeMatch[0]; rest = rest.slice(type.length); }
+  if (type && type !== '*' && !STATIC_SVG_ELEMENTS.has(type)) { fail(0, `CSS 选择器元素 ${type} 不在静态 SVG 内`); return null; }
+  if (role === 'ancestor' && type) { fail(0, '祖先条件只允许 :root[data-theme]'); return null; }
+  while (rest) {
+    if (rest.startsWith('#') || rest.startsWith('.')) {
+      const match = rest.match(/^[#.]([A-Za-z_][\w-]*)/);
+      if (!match) { fail(0, 'CSS 选择器 ID 或类名无效'); return null; }
+      if (role === 'ancestor') { fail(0, '祖先条件只允许 :root[data-theme]'); return null; }
+      if (rest[0] === '#' && match[1] === rootId) anchor = true;
+      rest = rest.slice(match[0].length);
+      continue;
+    }
+    if (rest.startsWith('[')) {
+      const match = rest.match(/^\[\s*([A-Za-z_][\w:.-]*)(?:\s*(?:=|[~|^$*]=)\s*(?:"[^"]*"|'[^']*'|[^\]\s]+))?\s*\]/);
+      if (!match || !(/^(?:id|class|data-[a-z][a-z0-9-]*)$/.test(match[1]))) { fail(0, 'CSS 属性选择器只允许 id、class 与 data-*'); return null; }
+      attrs.push(match[1]);
+      if (match[1] === 'data-phoenix-static') anchor = type === 'svg' || root;
+      rest = rest.slice(match[0].length);
+      continue;
+    }
+    if (rest.startsWith(':')) {
+      const match = rest.match(/^:([A-Za-z-]+)/);
+      if (!match) { fail(0, 'CSS 伪元素或无效伪类不允许'); return null; }
+      const name = match[1];
+      rest = rest.slice(match[0].length);
+      if (name === 'root') {
+        if (role === 'drawing') { fail(0, ':root 只能作为静态根或只读主题祖先条件'); return null; }
+        root = true;
+        continue;
+      }
+      if (!['is', 'where', 'not'].includes(name) || !rest.startsWith('(')) { fail(0, `CSS 伪类 :${name} 不允许`); return null; }
+      let depth = 1, quote = '', end = 0;
+      for (end = 1; end < rest.length && depth; end++) {
+        const char = rest[end];
+        if (quote) { if (char === quote) quote = ''; continue; }
+        if (char === '"' || char === "'") quote = char;
+        else if (char === '(') depth++;
+        else if (char === ')') depth--;
+      }
+      if (depth || quote) { fail(0, 'CSS 伪类括号未闭合'); return null; }
+      const inside = rest.slice(1, end - 1);
+      for (const part of cssParts(inside, ',', fail)) {
+        if (!part.value.trim() || selectorChain(part.value.trim(), fail)?.parts.length !== 1
+          || !selectorCompound(part.value.trim(), rootId, fail, role === 'ancestor' ? 'ancestor-condition' : 'condition')) return null;
+      }
+      rest = rest.slice(end);
+      continue;
+    }
+    fail(0, 'CSS 选择器含不支持的语法'); return null;
+  }
+  if (role === 'ancestor') {
+    if (!root) { fail(0, '祖先条件必须显式使用 :root'); return null; }
+    // 引擎的自承载形态允许独立 SVG 自身作为 :root；宿主页的 html 不携带
+    // 这些属性，相关条件在宿主中保持惰性。
+    const allowed = attrs.includes('data-phoenix-static')
+      ? ['data-theme', 'data-phoenix-static', 'data-preset', 'data-node-ui']
+      : ['data-theme', 'data-phoenix-static'];
+    if (attrs.some(name => !allowed.includes(name))) { fail(0, '祖先条件只允许 data-theme 与 data-phoenix-static（自承载形态另可 data-preset、data-node-ui）'); return null; }
+  }
+  if (role === 'ancestor-condition' && !root && !compound.includes('data-theme')) { fail(0, '祖先伪类只允许 data-theme 条件'); return null; }
+  return { root, anchor };
+}
+
+function validateSelectors(text, rootId, fail) {
+  for (const part of cssParts(text, ',', fail)) {
+    const selector = part.value.trim();
+    if (!selector) { fail(part.at, 'CSS 选择器为空'); return false; }
+    const chain = selectorChain(selector, (offset, problem) => fail(part.at + offset, problem));
+    if (!chain) return false;
+    let rootIndex = 0;
+    const first = selectorCompound(chain.parts[0].value, rootId, fail, 'ancestor-or-root');
+    if (!first) return false;
+    if (first.root && !first.anchor) {
+      if (!selectorCompound(chain.parts[0].value, rootId, fail, 'ancestor')) return false;
+      if (chain.parts.length < 2) { fail(part.at, 'CSS 选择器没有限定静态 SVG'); return false; }
+      rootIndex = 1;
+    } else if (!first.anchor) { fail(part.at, 'CSS 选择器必须锚定静态 SVG 根'); return false; }
+    const rootPart = selectorCompound(chain.parts[rootIndex].value, rootId, fail, 'root');
+    if (!rootPart?.anchor) { fail(part.at + chain.parts[rootIndex].at, 'CSS 选择器必须锚定静态 SVG 根'); return false; }
+    for (let i = rootIndex + 1; i < chain.parts.length; i++) {
+      if (!selectorCompound(chain.parts[i].value, rootId, fail, 'drawing')) return false;
+    }
+  }
+  return true;
+}
+
+function parseStaticCSS(css, policy, rootId, fail) {
+  if (/[\\\0<]/.test(css)) { fail(0, 'CSS 含不支持的转义、 NUL 或标记'); return ''; }
+  let cleaned = '', quote = '';
+  for (let i = 0; i < css.length;) {
+    if (quote) { cleaned += css[i]; if (css[i++] === quote) quote = ''; continue; }
+    if (css[i] === '"' || css[i] === "'") { quote = css[i]; cleaned += css[i++]; continue; }
+    if (css.startsWith('/*', i)) {
+      const end = css.indexOf('*/', i + 2);
+      if (end < 0) { fail(i, 'CSS 注释未闭合'); return ''; }
+      cleaned += css.slice(i, end + 2).replace(/[^\n]/g, ' ');
+      i = end + 2;
+      continue;
+    }
+    cleaned += css[i++];
+  }
+  function rules(start, end, allowFont) {
+    const output = [];
+    let i = start;
+    while (i < end) {
+      while (/\s/.test(cleaned[i] || '')) i++;
+      if (i >= end) break;
+      const headerStart = i;
+      let open = -1, quote = '', parentheses = 0, brackets = 0;
+      for (; i < end; i++) {
+        const char = cleaned[i];
+        if (quote) { if (char === quote) quote = ''; continue; }
+        if (char === '"' || char === "'") { quote = char; continue; }
+        if (char === '(') parentheses++;
+        else if (char === ')') parentheses--;
+        else if (char === '[') brackets++;
+        else if (char === ']') brackets--;
+        else if (!parentheses && !brackets && char === ';') { fail(i, '不允许独立的 CSS at 规则或声明'); return ''; }
+        else if (!parentheses && !brackets && char === '{') { open = i; break; }
+        else if (!parentheses && !brackets && char === '}') { fail(i, 'CSS 块闭合不匹配'); return ''; }
+      }
+      if (open < 0 || quote || parentheses || brackets) { fail(headerStart, 'CSS 规则缺少完整块'); return ''; }
+      const header = cleaned.slice(headerStart, open).trim();
+      let depth = 1, close = -1;
+      quote = '';
+      for (i = open + 1; i < end; i++) {
+        const char = cleaned[i];
+        if (quote) { if (char === quote) quote = ''; continue; }
+        if (char === '"' || char === "'") { quote = char; continue; }
+        if (char === '{') depth++;
+        else if (char === '}' && !--depth) { close = i; break; }
+      }
+      if (close < 0) { fail(open, 'CSS 块未闭合'); return ''; }
+      const body = cleaned.slice(open + 1, close), bodyAt = open + 1;
+      if (header.startsWith('@')) {
+        const at = header.match(/^@([A-Za-z-]+)([\s\S]*)$/);
+        const name = at?.[1].toLowerCase(), prelude = at?.[2].trim() || '';
+        if (name === 'font-face' && allowFont && !prelude) {
+          if (policy === 'system') { fail(headerStart, 'system 策略不允许 @font-face'); return ''; }
+          const declarations = cssDeclarations(body, (offset, problem) => fail(bodyAt + offset, problem), { policy, fontFace: true });
+          output.push(`@font-face{${declarations}}`);
+        } else if (name === 'media' && /^(?:print|screen|(?:screen and )?\(prefers-color-scheme:\s*(?:light|dark)\))$/i.test(prelude)) {
+          const nested = rules(bodyAt, close, false);
+          output.push(`@media ${prelude}{${nested}}`);
+        } else { fail(headerStart, `CSS at 规则 @${name || '(无效)'} 或媒体条件不允许`); return ''; }
+      } else {
+        if (!validateSelectors(header, rootId, (offset, problem) => fail(headerStart + offset, problem))) return '';
+        const declarations = cssDeclarations(body, (offset, problem) => fail(bodyAt + offset, problem), { policy });
+        output.push(`${header}{${declarations}}`);
+      }
+      i = close + 1;
+    }
+    return output.join('');
+  }
+  return rules(0, cleaned.length, true);
+}
+
+function inlineSVG(source, title, prefix, report, staticMode = false) {
+  if (staticMode) source = source.replace(/^\uFEFF/, '');
+  let failed = false, staticPolicy = 'embedded', staticRootId = '';
   const bad = (at, tag, problem) => {
     failed = true;
     report(`SVG L${source.slice(0, at).split('\n').length} ${tag}：${problem}`);
@@ -35,18 +328,23 @@ function inlineSVG(source, title, prefix, report) {
     if (token.startsWith('<!--') || token.startsWith('<?xml ')) continue;
     if (!token.startsWith('<')) {
       if (!stack.length && token.trim()) bad(at, 'svg', '根元素外有文字');
-      output += escapeHTML(decode(token, at, 'text'));
+      if (staticMode && stack.at(-1) === 'style') {
+        const css = decode(token, at, 'style');
+        output += parseStaticCSS(css, staticPolicy, staticRootId, (offset, problem) => bad(at + offset, 'style', problem));
+      } else output += escapeHTML(decode(token, at, 'text'));
       continue;
     }
     const tag = token.match(/^<(\/)?([A-Za-z][\w:-]*)([\s\S]*?)(\/?)>$/);
     if (!tag) { bad(at, token.slice(0, 24), '不允许声明或无效标签'); continue; }
     const [, closing, name, raw, selfClosing] = tag;
-    if (!SVG_ELEMENTS.has(name)) { bad(at, name, '元素不在白名单'); continue; }
+    if (!(staticMode ? STATIC_SVG_ELEMENTS : SVG_ELEMENTS).has(name)) { bad(at, name, '元素不在白名单'); continue; }
     if (closing) {
       if (raw.trim() || selfClosing || stack.pop() !== name) bad(at, name, '闭合标签不匹配');
       output += `</${name}>`;
       continue;
     }
+    if (staticMode && name === 'svg' && stack.length) bad(at, name, '静态图不允许嵌套 svg');
+    if (staticMode && name === 'style' && !['svg', 'defs'].includes(stack.at(-1))) bad(at, name, 'style 只能位于静态根或 defs 内');
     const attrs = new Map();
     let consumed = 0;
     const pattern = /\s+([A-Za-z_:][\w:.-]*)\s*=\s*("[^"]*"|'[^']*')/g;
@@ -54,27 +352,54 @@ function inlineSVG(source, title, prefix, report) {
       if (attribute.index !== consumed) bad(at, name, '属性语法不完整');
       consumed = attribute.index + attribute[0].length;
       const key = attribute[1], value = decode(attribute[2].slice(1, -1), at, name);
-      if (!SVG_ATTRIBUTES.has(key) || /^on/i.test(key) || key === 'style') bad(at, name, `属性 ${key} 不允许`);
       if (attrs.has(key)) bad(at, name, `属性 ${key} 重复`);
       if ((key === 'xmlns' && value !== 'http://www.w3.org/2000/svg') || (key === 'xmlns:xlink' && value !== 'http://www.w3.org/1999/xlink')) bad(at, name, '命名空间不允许');
-      if (['href', 'xlink:href'].includes(key) && !/^#[^\s]+$/.test(value)) bad(at, name, 'href 只允许 #片段');
-      if (/url\s*\(/i.test(value)) {
-        const rest = value.replace(/url\(\s*(['"]?)#[\w:.-]+\1\s*\)/gi, '');
-        if (rest.trim()) bad(at, name, 'url() 只允许本文件 #片段');
-      }
       if (/[\\<>]/.test(value)) bad(at, name, '属性含不支持的转义或标记');
-      // Inlined figures share the page's ID space; unprefixed, a #reference resolves to another figure or a page anchor.
-      attrs.set(key, key === 'id' ? prefix + value
-        : ['href', 'xlink:href'].includes(key) ? value.replace(/^#/, `#${prefix}`)
-        : ['aria-labelledby', 'aria-describedby'].includes(key) ? value.replace(/\S+/g, id => prefix + id)
-        : value.replace(/url\(\s*(['"]?)#([\w:.-]+)\1\s*\)/gi, (whole, quote, id) => `url(#${prefix}${id})`));
+      if (staticMode) {
+        const dataAttribute = /^data-[a-z][a-z0-9-]*$/.test(key);
+        if ((!STATIC_SVG_ATTRIBUTES.has(key) && !dataAttribute) || /^on/i.test(key)) bad(at, name, `属性 ${key} 不允许`);
+        if (/^(?:tabindex|aria-pressed|aria-expanded|aria-controls)$/.test(key)
+          || /^data-(?:animate|animation|motion(?:-|$)|reader-|tree-toggle|tree-expand-all)/.test(key)) bad(at, name, `属性 ${key} 是交互或阅读器钩子`);
+        if (key === 'role' && value !== 'img') bad(at, name, '静态图只允许 role="img"');
+        if (['href', 'xlink:href'].includes(key)) {
+          if (name === 'image') {
+            if (!decodeDataURL(value, IMAGE_MIMES, imageBytes)) bad(at, name, 'image href 只允许内容匹配的 base64 PNG、JPEG、WebP 或 ICO');
+          } else if (!/^#[A-Za-z_][\w:.-]*$/.test(value)) bad(at, name, 'href 只允许 #片段');
+        }
+        if (PAINT_URL_ATTRIBUTES.has(key)) validateCSSValue(value, (offset, problem) => bad(at + offset, name, problem));
+        attrs.set(key, value);
+      } else {
+        if (!SVG_ATTRIBUTES.has(key) || /^on/i.test(key) || key === 'style') bad(at, name, `属性 ${key} 不允许`);
+        if (['href', 'xlink:href'].includes(key) && !/^#[^\s]+$/.test(value)) bad(at, name, 'href 只允许 #片段');
+        if (/url\s*\(/i.test(value)) {
+          const rest = value.replace(/url\(\s*(['"]?)#[\w:.-]+\1\s*\)/gi, '');
+          if (rest.trim()) bad(at, name, 'url() 只允许本文件 #片段');
+        }
+        // Inlined figures share the page's ID space; unprefixed, a #reference resolves to another figure or a page anchor.
+        attrs.set(key, key === 'id' ? prefix + value
+          : ['href', 'xlink:href'].includes(key) ? value.replace(/^#/, `#${prefix}`)
+          : ['aria-labelledby', 'aria-describedby'].includes(key) ? value.replace(/\S+/g, id => prefix + id)
+          : value.replace(/url\(\s*(['"]?)#([\w:.-]+)\1\s*\)/gi, (whole, quote, id) => `url(#${prefix}${id})`));
+      }
     }
     if (raw.slice(consumed).trim()) bad(at, name, '属性须为带引号的键值');
     if (!stack.length) {
       roots++;
       if (name !== 'svg' || roots !== 1) bad(at, name, '必须只有一个 svg 根元素');
       if (!attrs.has('viewBox')) bad(at, name, '根元素缺少 viewBox');
-      attrs.set('role', 'img'); attrs.set('aria-label', title);
+      if (staticMode) {
+        if (attrs.get('data-phoenix-static') !== '') bad(at, name, '不是 phoenix-diagram 静态图：根缺少空的 data-phoenix-static 标记');
+        staticPolicy = attrs.get('data-font-policy') || '';
+        if (!['embedded', 'system'].includes(staticPolicy)) bad(at, name, '根 data-font-policy 须为 embedded 或 system');
+        staticRootId = attrs.get('id') || '';
+        if (!new RegExp(`^pd[0-9a-f]{8}-${staticPolicy}-figure$`).test(staticRootId)) bad(at, name, '根 ID 不符合静态图命名空间');
+        for (const key of ['width', 'height', 'data-diagram-type', 'data-preset', 'lang']) if (!attrs.get(key)) bad(at, name, `根元素缺少 ${key}`);
+        if (attrs.get('role') !== 'img' || (!attrs.get('aria-label') && !attrs.get('aria-labelledby'))) bad(at, name, '根元素须保留 role="img" 与可访问名称');
+      } else { attrs.set('role', 'img'); attrs.set('aria-label', title); }
+    }
+    if (staticMode && attrs.has('style')) {
+      const declarations = cssDeclarations(attrs.get('style'), (offset, problem) => bad(at + offset, name, `style ${problem}`), { policy: staticPolicy, inline: true });
+      attrs.set('style', declarations);
     }
     output += `<${name}${[...attrs].map(([key, value]) => ` ${key}="${escapeHTML(value)}"`).join('')}${selfClosing ? '/>' : '>'}`;
     if (!selfClosing) stack.push(name);
@@ -262,9 +587,9 @@ export function parseDraft(text, { cwd, assets = null }) {
           }).join('')}</div>`);
         } else if (kind === 'figure') {
           if (!title.trim()) error(line, '图缺少标题', '在 :::figure 后填写标题');
-          const sources = content.filter(row => /^(reader|svg):/.test(row.value));
-          const source = content[0]?.value.match(/^(reader|svg):\s*(\S.*)$/);
-          if (sources.length !== 1 || !source) { error(line, '图须恰好一行来源且放在图注之前', '首行写 reader: 路径.html 或 svg: 路径.svg，其后只写图注'); continue; }
+          const sources = content.filter(row => /^(reader|svg|static):/.test(row.value));
+          const source = content[0]?.value.match(/^(reader|svg|static):\s*(\S.*)$/);
+          if (sources.length !== 1 || !source) { error(line, '图须恰好一行来源且放在图注之前', '首行写 reader: 路径.html、svg: 路径.svg 或 static: 路径.svg，其后只写图注'); continue; }
           const [, type, file] = source;
           let data;
           try { data = resource(file).toString('utf8'); }
@@ -273,7 +598,9 @@ export function parseDraft(text, { cwd, assets = null }) {
           if (type === 'reader') data = data.replace(/<\/head>/i, '<noscript><style>#btn-theme{display:none!important}</style></noscript></head>');
           const graphic = type === 'reader'
             ? `<div class="reader-frame"><iframe srcdoc="${escapeHTML(data)}" title="${escapeHTML(title)}" loading="lazy"></iframe></div>`
-            : inlineSVG(data, title, `fig${++svgNumber}-`, problem => error(content[0].line, problem, '按 SVG 元素、属性与本地片段白名单修正源文件'));
+            : type === 'static'
+              ? `<div class="image-scroll" role="region" tabindex="0" aria-label="${escapeHTML(title)}">${inlineSVG(data, title, '', problem => error(content[0].line, problem, '按 phoenix-diagram 静态 SVG/CSS、作用域与资源白名单修正源文件，或重新用 static 命令生成'), true)}</div>`
+              : inlineSVG(data, title, `fig${++svgNumber}-`, problem => error(content[0].line, problem, '按 SVG 元素、属性与本地片段白名单修正源文件'));
           result.push(`<figure class="diagram">${graphic}<figcaption><strong>${escapeHTML(title)}</strong>${content.slice(1).map(row => `<p>${inline(row.value, row.line)}</p>`).join('')}</figcaption></figure>`);
         } else {
           const body = blocks(rows.slice(start + 1, i - 1), false, true);

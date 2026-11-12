@@ -1053,7 +1053,10 @@ fn extract_fonts() -> Result<String, String> {
     if raw.to_ascii_lowercase().contains("</style") {
         return Err("unsafe bundled font style content".into());
     }
-    Ok(format!("<style>{raw}</style>"))
+    // The bundled block carries license comments whose text (for example
+    // "PERMISSION & CONDITIONS") would be a raw ampersand inside standalone
+    // SVG; emit the same comment-free text the parser validated.
+    Ok(format!("<style>{stripped}</style>"))
 }
 
 fn validate_font_face(block: &str) -> Result<(), String> {

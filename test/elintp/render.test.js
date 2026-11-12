@@ -7,6 +7,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { spawnSync } = require('node:child_process');
 const script = path.resolve(__dirname, '../../skills/elintp/scripts/render.mjs');
+const reviewScript = path.resolve(__dirname, '../../skills/elintp/scripts/review.mjs');
 const draft = (body, meta = '') => `---\ntemplate: general\ntitle: Queue\nlang: en\n${meta}---\nOrders wait in a queue.\n\n## why | Work continues after submission\n${body}\n`;
 function workspace(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'elintp-'));
@@ -66,6 +67,84 @@ test('SVG rejects executable elements, handlers, style and external resources', 
     assert.equal(result.status, 2, attack + result.stderr);
     assert.match(result.stderr, /L10:.*SVG.*L2.*改法/);
     assert.equal(fs.existsSync(w.output), false);
+  }
+});
+
+const staticFigure = (body, policy = 'embedded') => `<svg xmlns="http://www.w3.org/2000/svg" id="pd12345678-${policy}-figure" data-phoenix-static="" data-font-policy="${policy}" data-diagram-type="workflow" data-preset="classic" lang="en" viewBox="0 0 20 20" width="20" height="20" role="img" aria-label="Queue">\n${body}\n</svg>`;
+
+test('static SVG rejects unmarked and forged-marker inputs without replacing an old page', t => {
+  const w = workspace(t);
+  assert.equal(w.run(draft('Delivered.')).status, 0);
+  const before = fs.readFileSync(w.output);
+  const attacks = [
+    ['unmarked', '<svg viewBox="0 0 20 20" width="20" height="20"><rect width="20" height="20"/></svg>', /不是 phoenix-diagram 静态图/],
+    ['script', staticFigure('<script>alert(1)</script>'), /script.*白名单/],
+    ['event', staticFigure('<g onload="alert(1)"/>'), /onload.*不允许/],
+    ['foreign content', staticFigure('<foreignObject/>'), /foreignObject.*白名单/],
+    ['nested browsing context', staticFigure('<iframe src="https://example.com"/>'), /iframe.*白名单/],
+    ['interaction', staticFigure('<g role="button" tabindex="0" data-animate="node"/>'), /role|tabindex|data-animate/],
+    ['external use', staticFigure('<use href="https://example.com/a.svg#x"/>'), /href.*#片段/],
+    ['external paint', staticFigure('<rect fill="url(https://example.com/a.svg#x)"/>'), /url.*#片段/],
+    ['entity-encoded URL', staticFigure('<rect fill="url(&#104;ttps://example.com/a.svg)"/>'), /url.*#片段/],
+    ['escaped CSS URL', staticFigure('<style>svg[data-phoenix-static] rect { fill: u\\72l(https://example.com/a); }</style>'), /转义/],
+    ['external CSS URL', staticFigure('<style>svg[data-phoenix-static] rect { fill: url(https://example.com/a); }</style>'), /url.*#片段/],
+    ['CSS import', staticFigure('<style>@import url(https://example.com/a.css);</style>'), /@import|at 规则/],
+    ['host selector', staticFigure('<style>:root { --fg: red; } body { display: none; }</style>'), /选择器/],
+    ['escaping sibling selector', staticFigure('<style>svg[data-phoenix-static] + svg { display: none; }</style>'), /选择器/],
+    ['SVG image data', staticFigure('<image href="data:image/svg+xml;base64,PHN2Zy8+"/>'), /image href/],
+    ['invalid image base64', staticFigure('<image href="data:image/png;base64,not-base64!"/>'), /image href/],
+    ['wrong image bytes', staticFigure('<image href="data:image/png;base64,d09GMg=="/>'), /image href/],
+    ['font data in image', staticFigure('<image href="data:font/woff2;base64,d09GMg=="/>'), /image href/],
+    ['external font', staticFigure('<style>@font-face { font-family: "JetBrains Mono"; src: url(https://example.com/a.woff2); }</style>'), /font-face src/],
+    ['local font', staticFigure('<style>@font-face { font-family: "JetBrains Mono"; src: local(x); }</style>'), /font-face src/],
+    ['host font family', staticFigure('<style>@font-face { font-family: system-ui; src: url(data:font/woff2;base64,d09GMg==); }</style>'), /font-family|字体族/],
+    ['system font face', staticFigure('<style>@font-face { font-family: x; src: url(data:font/woff2;base64,d09GMg==); }</style>', 'system'), /system.*@font-face|@font-face.*system/],
+    ['system image font', staticFigure('<style>svg[data-phoenix-static] text { font-family: "JetBrains Mono"; }</style>', 'system'), /system.*JetBrains|JetBrains.*system/],
+  ];
+  for (const [label, source, pattern] of attacks) {
+    fs.writeFileSync(path.join(w.dir, 'figure.svg'), source);
+    const result = w.run(draft(':::figure Queue\nstatic: figure.svg\n:::'));
+    assert.equal(result.status, 2, label + result.stderr);
+    assert.match(result.stderr, /L10:.*SVG.*L\d+.*改法/, label);
+    assert.match(result.stderr, pattern, label);
+    assert.deepEqual(fs.readFileSync(w.output), before, label);
+  }
+  const review = spawnSync(process.execPath, [reviewScript, 'draft.md', 'review.html', 'result.json', '--no-open'], { cwd: w.dir, encoding: 'utf8' });
+  assert.equal(review.status, 2, review.stderr);
+  assert.equal(fs.existsSync(path.join(w.dir, 'review.html')), false);
+});
+
+test('static SVG preserves namespaced drawing and renders in final and review pages', async t => {
+  const w = workspace(t);
+  const pixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aS1cAAAAASUVORK5CYII=';
+  const sources = {
+    embedded: staticFigure(`<title id="pd12345678-embedded-title">Queue</title><defs><pattern id="pd12345678-embedded-grid" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 0H4"/></pattern><filter id="pd12345678-embedded-shadow"><feDropShadow dx="0" dy="1" stdDeviation="1"/></filter></defs><style>@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400 800; font-display: swap; src: url(data:font/woff2;base64,d09GMg==); unicode-range: U+0000-00FF; }\nsvg[data-phoenix-static] .c-bg-rect { fill: url(#pd12345678-embedded-grid); }\n@media print { :root[data-theme="dark"] svg[data-phoenix-static] .c-bg-rect { fill: white; } }</style><rect class="c-bg-rect" width="20" height="20" filter="url(#pd12345678-embedded-shadow)" style="stroke: var(--line)"/><image href="data:image/png;base64,${pixel}" width="1" height="1"/>`),
+    system: staticFigure('<style>@media screen and (prefers-color-scheme: dark) { svg[data-phoenix-static]:not([data-theme="light"]) text { fill: var(--text); } }</style><text x="1" y="10" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">Queue</text>', 'system'),
+  };
+  for (const [policy, source] of Object.entries(sources)) {
+    const file = `${policy}.svg`;
+    fs.writeFileSync(path.join(w.dir, file), source);
+    const text = draft(`:::figure Queue ${policy}\nstatic: ${file}\n:::`);
+    const result = w.run(text);
+    assert.equal(result.status, 0, result.stderr);
+    const html = fs.readFileSync(w.output, 'utf8');
+    assert.match(html, /<div class="image-scroll" role="region" tabindex="0" aria-label="Queue /);
+    assert.match(html, new RegExp(`id="pd12345678-${policy}-figure"`));
+    assert.doesNotMatch(html, /id="fig\d+-pd12345678/);
+    assert.equal(fs.readFileSync(path.join(w.dir, file), 'utf8'), source);
+    if (policy === 'embedded') {
+      assert.match(html, /url\(#pd12345678-embedded-grid\)/);
+      assert.match(html, /<style>@font-face/);
+      assert.match(html, /data:image\/png;base64,/);
+    } else {
+      assert.doesNotMatch(html, /@font-face|data:font|JetBrains/);
+      const { renderPage } = await import(script);
+      const review = renderPage(text, { cwd: w.dir, review: { round: 1, pageKey: 'key', items: [] } });
+      assert.deepEqual(review.errors, []);
+      assert.match(review.html, /data-phoenix-static=""/);
+      assert.match(review.html, /id="elintp-review"/);
+      assert.match(review.html, /id="elintp-assets"/);
+    }
   }
 });
 
