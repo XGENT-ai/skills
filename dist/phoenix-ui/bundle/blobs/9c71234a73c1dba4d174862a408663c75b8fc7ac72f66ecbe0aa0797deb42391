@@ -4,21 +4,23 @@ Read this when the user judges an existing interface with a word that names no c
 
 ## Translate first
 
-The first thing you do after reading this file, before any Edit or Write to the surface, is send the user a visible message that carries the translation:
+Read the surface first if you need to. Then, before any Edit or Write to it, reply with the translation and stop there:
 
 ```text
 "<the user's word>", as changes that can be checked:
 - <variable to change> → <expected change>
 - <variable to change> → <expected change>
+
+Reply to go ahead, or say which lines to change.
 ```
 
 One line per variable. A variable is something a reader can check in the render or the computed styles: `hue count → from five to two plus one accent`, `section separation → rules removed, spacing step raised from 24px to 40px`.
 
-Write the list in the body of your reply, as ordinary text ahead of the first edit's tool call. Hosts show reasoning only as a short summary, if at all, so a list worked out while reasoning never reaches the user: the `→` lines themselves have to be in the visible transcript before the surface changes. A one-sentence summary does not count, nor does a list that first appears in the delivery. Do not wait for a reply after sending it, and send it in an unattended run too.
+That reply ends the turn. Nothing on the surface changes until the user answers; they may confirm the list, strike lines, or add to it, and you edit to the list as it then stands. In an unattended run nobody can answer, so the list is the delivery and the surface stays as it is.
 
-Then make exactly those changes, and in the delivery go back through the same list item by item and say what was actually changed.
+After the answer, make exactly those changes, and in the delivery go back through the same list item by item and say what was actually changed.
 
-When the judgment also matches a refine command (calmer maps to `$phoenix-ui quieter`, more daring to `bolder`, simpler to `distill`), enter that command as usual and follow its reference. The translation still comes first; the command executes it.
+When the judgment also matches a refine command (calmer maps to `/phoenix-ui quieter`, more daring to `bolder`, simpler to `distill`), enter that command once the user has answered and follow its reference; the list is what the command executes.
 
 ## What each word can mean
 
@@ -38,7 +40,7 @@ An adjective that yields no observable variable is not a reason for a change. Le
 
 ## When the meaning is unclear
 
-Ask once, through the structured question tool, offering two concrete directions the user can tell apart, each stated as its variables. Or build two comparable variants instead of asking: element-level in [live.md](live.md), whole-page on the comparison page ([compare.md](compare.md)). Do not ask a second time, and never answer vague feedback by swapping in a different style at random.
+When the word could mean two different things on this surface, the same reply offers both as two short lists, each stated as its variables, and asks which one; use the structured question tool where the host has one. That is the only question. Or build two comparable variants instead of asking: element-level in [live.md](live.md), whole-page on the comparison page ([compare.md](compare.md)). Do not follow the user's answer with another round of questions, and never answer vague feedback by swapping in a different style at random.
 
 ## Boundaries
 
