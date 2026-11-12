@@ -297,20 +297,20 @@ $spec-human-decision docs/plan/<代号>.md
 
 ### 7.3 计划评审回路
 
-#### `review-dev-plan`：判断照计划实施能否交出可用结果
+#### `review-dev-plan`：判断计划是否贴合代码事实、路线是否站得住
 
-输入是已有计划、需求来源和重要决定；复审附上轮报告。agent 核对计划中的复用、契约和依赖是否真实，方案是否满足需求，任务先后与并行是否成立，实施者是否还被迫重做关键设计。也会指出没有真实风险依据、只增加实现和验证成本的防御或测试安排。
+输入是已有计划、需求来源和重要决定；复审附上轮报告。agent 核对计划中的复用、契约和依赖是否真实，架构与技术路线是否先进、能支撑后续演进，有没有绕开根因的补丁或为省事回避正确做法，实施者是否还被迫重做关键设计。也会指出没有真实风险依据、只增加实现和验证成本的防御或测试安排。
 
 ```text
 /review-dev-plan docs/plan/<代号>.md
 /apply-doc-review docs/plan/<代号>.review.md docs/plan/<代号>.md
 ```
 
-`review-dev-plan` 看四件事：代码事实、技术路线、需求到 Milestone 的映射、交付是否真的能用。建议状态沿用 `Ready` / `Proposed` / `Blocked`（[skills/review-dev-plan/references/report-contract.md](../skills/review-dev-plan/references/report-contract.md)）。`Ready` 不是实现完成，也不是上线许可。
+`review-dev-plan` 重点看两件事：计划与代码事实是否吻合，架构与技术路线是否先进、可持续而非补丁凑合；范围越界、发布写进里程碑、需求无落点、交付断点等大问题由主 agent 顺带检查。建议状态沿用 `Ready` / `Proposed` / `Blocked`（[skills/review-dev-plan/references/report-contract.md](../skills/review-dev-plan/references/report-contract.md)）。`Ready` 不是实现完成，也不是上线许可。
 
 报告默认在计划同目录：`docs/plan/<代号>.review.md`（[skills/review-dev-plan/references/report-contract.md](../skills/review-dev-plan/references/report-contract.md)）。
 
-评审输出独立问题报告、四视角覆盖、需求映射与依赖安排，默认不改计划和进度、不实施。报告建议状态与计划自报状态分开。需要改稿时交 `apply-doc-review`；无需改稿但仍有真实阻塞时交 `resolve-blocked`；无需修改且 Ready 时交 goal。缺关键前提证据不能因 findings 为空而判 Ready。
+评审输出独立问题报告、两个重点与硬检查的覆盖、关键决策评估，默认不改计划和进度、不实施。报告建议状态与计划自报状态分开。需要改稿时交 `apply-doc-review`；无需改稿但仍有真实阻塞时交 `resolve-blocked`；无需修改且 Ready 时交 goal。缺关键前提证据不能因 findings 为空而判 Ready。
 
 #### `resolve-blocked`：查证并解除真正阻止开工的事项
 

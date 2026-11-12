@@ -10,6 +10,7 @@
 | 0a3ce7b8-4697-4225-be2f-09f368cb8d6e | [Phoenix UI 借鉴 hallmark](../../../../docs/plan/phoenix-ui-hallmark.md) | [状态](0a3ce7b8-4697-4225-be2f-09f368cb8d6e.md) | 活动 |
 | 091b457b-53b0-4d16-bb58-406a02ccf1f6 | [xgent-init 历史方案](../../../../docs/plan/xgent-init.md) | [状态](091b457b-53b0-4d16-bb58-406a02ccf1f6.md) | 归档 |
 | 3cdd61a5-ef48-4526-8b3b-4271426843e8 | [Phoenix Diagram P1](../../../../docs/plan/PHOENIX-DIAGRAM-P1.md) | [状态](3cdd61a5-ef48-4526-8b3b-4271426843e8.md) | 活动 |
+| 59495a4e-0427-41ad-920f-227e1050f1e2 | [ELINTP-VISUALS P2 gaps](../../../../docs/plan/ELINTP-VISUALS-P2-gaps.md) | [状态](59495a4e-0427-41ad-920f-227e1050f1e2.md) | 活动 |
 | 7818a838-d021-4b2e-92c7-6d57c7ae8af0 | [XGENT Phoenix UI](../../../../docs/plan/phoenix-ui.md) | [状态](7818a838-d021-4b2e-92c7-6d57c7ae8af0.md) | 活动 |
 | 90d15d49-af8b-4e97-bb61-dadb6498747c | [Claude Code goal 上下文收尾提醒](../../../../docs/plan/claude-context-goal-guard.md) | [状态](90d15d49-af8b-4e97-bb61-dadb6498747c.md) | 活动 |
 | b0529f6d-7982-404a-b16a-fe0de78e15c5 | [Phoenix Diagram P2 gaps](../../../../docs/plan/PHOENIX-DIAGRAM-P2-gaps.md) | [状态](b0529f6d-7982-404a-b16a-fe0de78e15c5.md) | 活动 |
@@ -18,7 +19,7 @@
 | bbae83cd-7065-4f90-a350-5e6439fdfed6 | AGENTS.md 与 Skills 自进化（原文已删除） | [状态](bbae83cd-7065-4f90-a350-5e6439fdfed6.md) | 归档 |
 | 49a107bf-abd1-462b-9910-ff664d6be67d | 指令质量评测与自进化 v2（原文已删除） | [状态](49a107bf-abd1-462b-9910-ff664d6be67d.md) | 归档 |
 | a2287695-163a-4569-ba21-0fff8bf83af5 | [Phoenix Diagram P2](../../../../docs/plan/PHOENIX-DIAGRAM-P2.md) | [状态](a2287695-163a-4569-ba21-0fff8bf83af5.md) | 活动 |
-
+| ec8cc07f-20e5-4d64-8b77-406df2820e71 | [ELINTP-VISUALS P1](../../../../docs/plan/ELINTP-VISUALS-P1.md) | [状态](ec8cc07f-20e5-4d64-8b77-406df2820e71.md) | 活动 |
 | e2fd7621-6529-41cf-8bce-db18e451cadf | [ELINTP-VISUALS P2](../../../../docs/plan/ELINTP-VISUALS-P2.md) | [状态](e2fd7621-6529-41cf-8bce-db18e451cadf.md) | 活动 |
 
 ## 维护约定

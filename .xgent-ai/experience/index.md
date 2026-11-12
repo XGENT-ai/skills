@@ -105,7 +105,10 @@
 - be9b7836-8f3f-4b9b-9aae-b7d465073c09 — [dev-plan 验证节奏与 E2E 比重修订](be9b7836-8f3f-4b9b-9aae-b7d465073c09.md)
 - 958f838e-cc99-4c24-afc7-67fcea5ee334 — [feature-demo skill 与 e2e 录屏调研](958f838e-cc99-4c24-afc7-67fcea5ee334.md)
 - 853ad1a1-d5a5-4e10-a98a-7c5170f3533c — [gaps plan「未回写进度」排查](853ad1a1-d5a5-4e10-a98a-7c5170f3533c.md)
+- c7a3b45d-2e88-4b50-a908-f637f96ecdc2 — [SDLC 人机分工与 SPMS 状态分开](c7a3b45d-2e88-4b50-a908-f637f96ecdc2.md)
 
 - 01a1c859-4d66-7ab2-ac5d-cfa8eee032f4 · [ELINTP-VISUALS-P1 实施](01a1c859-4d66-7ab2-ac5d-cfa8eee032f4.md)
 
 - e2fd7621-6529-41cf-8bce-db18e451cadf · [ELINTP-VISUALS-P2 实施](e2fd7621-6529-41cf-8bce-db18e451cadf.md)
+
+- a90c1529-feb0-4b81-854a-2b845d593c9d · [ELINTP P2 R1 标准输入入口](a90c1529-feb0-4b81-854a-2b845d593c9d.md)

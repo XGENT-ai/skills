@@ -28,6 +28,6 @@
 - **`local/code-review`** 的 `SKILL.md`、`references/requesting-code-review.md`、`references/verification-before-completion.md`：吸收明确评审范围、证据先于结论、反馈先核实；不引入每个实现任务都必须再派 reviewer、固定包管理器或自动修复的流程。
 - **`local/code-reviewer/SKILL.md`**：吸收快速筛查逻辑、导入导出、安全和性能线索；不采用每次保存触发、固定函数行数阈值、模式匹配即报错或未经实测的速度承诺。
 - **`local/code-reviewer2/SKILL.md`** 与 `references/spec-compliance-review.md`、`references/review-checklist.md`、`references/report-template.md`：吸收先理解意图、需求映射、多维审查和可行动反馈；不强制赞美、建议代码或因需求未通过而停止其他审查。
-- **`skills/review-dev-plan/references/report-contract.md`**：沿用完整报告默认落盘、路径优先级、防覆盖、单写者、回读和失败披露。代码报告用 `.code-review.md` 区分计划报告的 `.review.md`；不继承计划的就绪状态或固定四 reviewer 编排。
+- **`skills/review-dev-plan/references/report-contract.md`**：沿用完整报告默认落盘、路径优先级、防覆盖、单写者、回读和失败披露。代码报告用 `.code-review.md` 区分计划报告的 `.review.md`；不继承计划的就绪状态或按审查重点固定分派 reviewer 的编排。
 
 commit 范围、可选计划映射和 `inconclusive` 是本 skill 的扩展。默认 Markdown 是有意选择，并不宣称与 Codex 原生 review JSON schema 完全相同。以上内容是综合后的工作约定，不复制社区技能的整套协议。

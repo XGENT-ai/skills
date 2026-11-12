@@ -1,0 +1,545 @@
+[
+  {
+    "file": "U1-default-1440-light.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:06:30.619Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U1-theme-focus-1440-dark-01.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "dark",
+    "time": "2026-11-11T06:06:31.255Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-notes-expanded-1440-dark-02.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html#s2",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "dark",
+    "time": "2026-11-11T06:06:31.935Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-default-360-dark.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "dark",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:06:36.329Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U2-default-1440-light.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U2.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:06:38.381Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U2-default-360-dark.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U2.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "dark",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:06:43.844Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U3-default-1440-light.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U3.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:06:45.689Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U3-default-360-dark.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U3.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "dark",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:06:51.064Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U4-default-1440-light.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U4.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:06:52.905Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U4-default-360-dark.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U4.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "dark",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:06:56.959Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U1-reader-1440-light-03.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:06:58.958Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-reader-360-light-03.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:00.232Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U2-todo-default-1440-light.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U2-todo.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:00.924Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U2-done-default-1440-light.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U2-done.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:01.608Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U4-ja-default-1440-light.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U4-ja.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:02.289Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U1-nojs-1440-light.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:03.456Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U1-reader-interacted-1440-light-04.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:24.297Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-reader-bottom-1440-light-05.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:24.604Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-reader-interacted-360-light-04.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:26.413Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-reader-bottom-360-light-05.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:26.713Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U2-firstscreen-1440-light-01.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U2.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:27.406Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U2-todo-firstscreen-1440-light-01.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U2-todo.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:28.083Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U2-done-firstscreen-1440-light-01.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U2-done.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:28.760Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U4-ja-firstscreen-1440-light-01.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U4-ja.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:29.464Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U3-outline-second-1440-light-02.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U3.html#s2",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:30.408Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U3-outline-second-360-light-02.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U3.html#s2",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:31.350Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-image-360-light-01.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:32.120Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-image-scroll-360-light-02.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:32.589Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-image-360-dark-01.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "dark",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:33.340Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-image-scroll-360-dark-02.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "dark",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:33.812Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-nojs-reader-1440-light-a2.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:34.815Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-nojs-image-360-light-01.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:07:35.714Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U3-outline-scroll-1440-light-03.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U3.html#s2",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:09:06.067Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U3-outline-scroll-360-light-03.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U3.html#s2",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:09:07.566Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-reader-keyboard-360-light-07.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:09:08.636Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U1-reader-scroll-360-light-08.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U1.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:09:09.020Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  },
+  {
+    "file": "U2-record-image-360-light-01.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r2/logs/pages/U2.html",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "dataTheme": "system",
+    "time": "2026-11-11T06:09:09.716Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39",
+    "fullPage": false
+  }
+]

@@ -1,17 +1,17 @@
 ---
 name: review-dev-plan
 argument-hint: "<计划路径/链接/内容> [上轮报告] [复审/完整评审] [问题ID/范围] [报告路径] [仅聊天]"
-description: 用于评审既有开发计划、技术方案或开工条件；不用于从零写计划、实施功能或仅审代码 diff。多 agent 核查事实、方案、需求映射、依赖与交付可用性，默认落盘报告。
+description: 用于评审既有开发计划、技术方案或开工条件；不用于从零写计划、实施功能或仅审代码 diff。核查计划与代码事实是否吻合、架构与路线是否先进可持续而非补丁凑合，默认落盘报告。
 disable-model-invocation: true
 ---
 
-# review-dev-plan · 多视角开发计划评审
+# review-dev-plan · 开发计划评审
 
 ```formal
 INTENT:
-  GOAL: "判断按计划能否交付用户所需且真正可用的结果，实施者是否仍被迫重做关键决策"
-  SUCCESS: [four_review_lenses_with_verified_evidence,
-            "可定位、可修订的问题及实施顺序建议", complete_report_with_verified_delivery]
+  GOAL: "判断计划是否与代码事实吻合、架构与技术路线是否先进可持续且不凑合，实施者是否仍被迫重做关键决策"
+  SUCCESS: [two_focus_reviews_with_verified_evidence,
+            "可定位、可修订的问题及修订顺序", complete_report_with_verified_delivery]
 
 RULE @plan_default_delivery:
   UNLESS: explicit_chat_only_or_no_file_request
@@ -38,10 +38,9 @@ RULE @plan_proportionality:
   MUST: ["功能交付优先，按本期真实风险判断防御、恢复、测试与验收投入；建议新增时给出真实触发路径、不可接受后果及现有保证不足的证据",
          "计划中缺此依据的事务、重试、幂等、降级、补偿、自愈、沙箱/隔离、额外校验，或超出验收行、关键边界与真实回归风险的检查，按其拖累交付的成本报为问题，修订优先删减或简化",
          "问题的修订落在设计或契约；其验证默认由对应批次的既有检查或实施者常规测试承担，阻塞默认否",
-         "以上克制只针对新增防御、测试与验收门；按计划沿仓库同构代码或默认依赖实现就会出错的设计/契约缺陷照常报告，‘既有检查能在实施时发现’不是撤回理由"]
+         "以上克制只针对新增防御、测试与验收门，不适用于技术路线：正确但工作量大的做法不因成本被判过度设计，回避它的补丁式路线、按计划沿仓库同构代码或默认依赖实现就会出错的设计/契约缺陷照常报告，‘既有检查能在实施时发现’不是撤回理由"]
   MUST_NOT: ["以完备清单、通用最佳实践或‘可能失败’为由要求新增防御或测试",
              "为单条问题新增验收断言、检查组、里程碑退出门或收口步骤；仅当本期验收行或用户主路径没有任何检查能发现它时，写一句并入既有检查的断言",
-             "把仓库规则已对实施直接生效、计划未排除或违背的检查报为验收缺口",
              "提出与用户已确认取舍（如先做能用、失败重做）冲突的完善性、恢复或验收要求",
              "删减用户、PRD、仓库规则或已确认 NFR 明确要求的可靠性、安全与验收门"]
 
@@ -53,10 +52,9 @@ RULE @fr_before_nfr:
              "以这类 NFR 设阻塞或判 Blocked"]
 ```
 
-- 从实际可用位置读取 `dev-plan/SKILL.md` 的写作/评审部分及 `references/plan-skeleton.md`；复杂架构按需读 `references/architecture-quality.md`，调度审查按需读 `references/execution-workflow.md`；实施期合同以骨架的「实施者定位」「实施进度」两节为准。借它们核对合同，不按计划实施。
-- 找不到 `dev-plan` 时说明无法核对其模板专属要求，继续本技能的四项实质审查。用户自定义模板或历史计划不因章节名不同而报错；没有证据表明适用的新版格式规则，不追溯强加。
-- 新版 `dev-plan` 允许单份需求映射、检查 ID 引用、按测试组记录证据及阶段集中验收；按 `references/review-lenses.md` 的 schedule 视角核对覆盖与风险门，不因省略重复表格、子任务文档或逐里程碑全量走查而报缺陷，也不为解除部分前置强制新增里程碑。
-- 发现与任务相关的专项 skill 时只加载所需部分。UI/UX 评审按目标仓规则加载设计 skill（如 `phoenix-ui`），不借机重设计产品。
+- 从实际可用位置读取 `dev-plan/SKILL.md` 的写作/评审部分；架构审查按需读 `references/architecture-quality.md`。借它们核对设计质量，不按计划实施，不逐条核对骨架格式。
+- 找不到 `dev-plan` 时说明无法核对其专属要求，继续本技能的两项重点审查与硬检查。用户自定义模板或历史计划不因章节名、表格或格式与新版骨架不同而报错。
+- 发现与任务相关的专项 skill 时只加载所需部分。
 
 ## 1. 锚定输入与审查基线
 
@@ -67,7 +65,7 @@ WORKFLOW @plan_review_baseline:
   DO: ["定位用户指定计划、需求/PRD、附录及必要历史决策；目标不唯一只问目标，可先查规则，不自选相邻计划",
        "读适用根/子目录规则及产品/设计上下文，记计划路径/hash/可用版本、日期、代码 commit/dirty，明确当前工作树参与调查",
        "提取范围/排除、R/NFR/C/A 或等价 ID、决策、外部契约、交付物、里程碑与前置；缺 ID 用章节，不替作者造需求",
-       "按报告合同定路径，短台账记维度/负责人/状态/缺口及报告写入/回读；明确 UI 范围、可运行页面/原型，以及需外部服务或官方文档核实的结论"]
+       "按报告合同定路径，短台账记重点/负责人/状态/缺口及报告写入/回读；明确需外部服务或官方文档核实的结论"]
 ```
 
 ## 修复效果复审
@@ -86,25 +84,23 @@ RULE @plan_re_review:
 $review-dev-plan goal/LOGIN.md，对照 goal/LOGIN.review.md 复审修复效果，逐项记录结果。
 ```
 
-## 2. 编排四个独立审查视角
+## 2. 编排两个审查重点
 
-先读 [references/review-lenses.md](references/review-lenses.md) 的对应节，再分派下表。**有多 agent 工具时实际启动 subagents**，不是在同一段回答里扮演四个角色。主 agent 保留综合裁定职责。
+先读 [references/review-lenses.md](references/review-lenses.md) 的对应节，再分派下表。**有多 agent 工具时实际启动 subagents**，不是在同一段回答里扮演两个角色。主 agent 同期做 C 节硬检查，并保留综合裁定职责。
 
 | 角色 | 主责 | 必须交回的专属结果 |
 | --- | --- | --- |
-| `facts` | 代码事实、陈述正确性、内部矛盾 | 主张与代码证据；互相冲突的两处位置 |
-| `architecture` | 技术路线、先进性、可行性 | 关键选择的适配/代价；需补证的技术前提 |
-| `schedule` | 需求、设计、任务、里程碑、验收映射 | 断链项；依赖图/边表；可并行波次与集成门 |
-| `delivery` | 最终交付可用性，含 UI/UX | 用户主路径闭环；运行与验收缺口；界面证据等级 |
+| `facts` | 计划与代码事实是否吻合、陈述正确性、内部矛盾 | 主张与代码证据；互相冲突的两处位置 |
+| `architecture` | 架构与技术路线的先进性、持续性，补丁式或回避正确做法的路线，过度设计 | 关键决策评估；需补证的技术前提 |
 
 ### 调度规则
 
 ```formal
 RULE @plan_review_scheduling:
-  MUST: ["主 agent 在多 agent 工具可用且当前授权允许时实际启动只读 subagents，默认一视角一 reviewer；简单局部计划可用两位独立 reviewer 各覆盖两个视角，分别标覆盖与结论，不漏维度",
-         "模型继承主 agent，报告由主 agent 单写；按实际剩余槽位安排，主 agent 也占槽，总槽位为 4 时先并行 3 个视角，再复用空闲 agent 审第 4 个，更少则分批",
-         "主 agent 同期整理需求账本和全局矛盾；初轮 reviewer 获相同基线、用户约束和原始材料，独立调查后再交换影响证据，不把预设缺陷或别人结论当答案",
-         "工具缺失、用户要求串行或槽位不足时如实声明方式，主 agent 可顺序审四视角，不伪称独立多 agent 复核"]
+  MUST: ["主 agent 在多 agent 工具可用且当前授权允许时并行启动两位只读 subagent，一重点一 reviewer",
+         "模型继承主 agent，报告由主 agent 单写；槽位不足时分批",
+         "主 agent 同期做硬检查和全局矛盾整理；reviewer 获相同基线、用户约束和原始材料，独立调查后再交换影响证据，不把预设缺陷或别人结论当答案",
+         "工具缺失、用户要求串行或槽位不足时如实声明方式，主 agent 可顺序审两个重点，不伪称独立多 agent 复核"]
   MUST_NOT: [agent_initiated_model_or_reasoning_override,
              "reviewer 改原计划/代码、继续派生 agent 或写最终报告"]
 
@@ -119,7 +115,7 @@ RULE @plan_review_resources:
 发送实际绝对路径和已确认上下文，不只说“审一下方案”。可沿用：
 
 ```text
-你负责 {facts/architecture/schedule/delivery}，只读评审，不实现、不改稿、不继续派生 agent。
+你负责 {facts/architecture}，只读评审，不实现、不改稿、不继续派生 agent。
 用户目标及范围：{原始要求、排除、已有决定}
 计划与基线：{计划绝对路径、版本；仓库根、commit/dirty、日期}
 必读：{本 SKILL.md、report-contract.md、review-lenses.md 的对应节的绝对路径}
@@ -127,7 +123,7 @@ RULE @plan_review_resources:
 范围与资源：{审查章节、可读取目录、外部查询/浏览器约束}
 不要假定计划主张成立，也不要把尚待实施当成缺陷。按需追到行为级代码证据。
 防御、测试与验收门按 @plan_proportionality 判断，NFR 按 @fr_before_nfr 定级，不足与过度都可成为问题。
-交回：范围与基线；候选问题（计划定位、触发、影响、证据、最小修订、改稿核对、P级及置信度）；
+交回：范围与基线；候选问题（计划定位、触发、影响、证据、修订（路线问题写正确做法，不按最小工程量凑合）、改稿核对、P级及置信度）；
 本视角专属结果；未核实项与所需证据。没有问题可返回空 findings。
 跨视角问题只标关联，不代替另一角色完成审查。无法继续则回报缺口。
 ```
@@ -136,22 +132,21 @@ RULE @plan_review_resources:
 
 ```formal
 WORKFLOW @plan_adjudication:
-  DO: ["收齐四视角结果，逐条读候选问题的计划段落与原始证据，确认范围/版本/触发，reviewer 一致不等于事实",
-       "对事实冲突、方案依赖和交付断点向关联视角追问并同步前置，仅复核受影响链路；缺证留未决，不无限辩论",
+  DO: ["收齐两位 reviewer 结果，逐条读候选问题的计划段落与原始证据，确认范围/版本/触发，reviewer 一致不等于事实",
+       "对事实冲突与依赖该事实的架构结论互相追问，仅复核受影响链路；缺证留未决，不无限辩论",
        "按根因及修订动作去重，保留所有实质问题及关键定位，不设数量指标、不只报前三项；撤回误报，低证据主张待核实，不凑 P3",
-       "核对目标 ↔ 设计 ↔ 里程碑 ↔ 验收，集中终验有收口负责人并覆盖本期验收行与用户主路径，检测/补偿/部署能力有任务，进度/记录/完成声明有证据，局部完成不冒充阶段或跨期终验",
-       "按 @plan_script_checks 执行适用校验并人工核对等价证据",
+       "并入 review-lenses.md C 节硬检查的确认问题",
+       "按 @plan_script_checks 执行适用校验",
        "交付前核对计划/代码并发变化，只重审受影响结论，无法收敛标待核实；收集或停止仍运行的 reviewer"]
 
 RULE @plan_script_checks:
-  MUST: ["dev-plan 脚本可用且适用时，以实际路径运行 check_paths.sh <计划> <仓库根> 与 check_progress.sh <计划> <仓库根>；缺失路径人工区分新增、示例和错误复用",
-         "自定义/历史计划未采用恢复快照/完成记录协议时，说明原因并跳过 check_progress.sh，人工核对等价进度、依赖与验收证据，不因格式不兼容判错",
-         "脚本通过不证明行为真实或验收完成；脚本缺失/失败据实记录，不用通过替代人工检查"]
+  MUST: ["dev-plan 的 check_paths.sh 可用时，以实际路径运行 check_paths.sh <计划> <仓库根>；缺失路径人工区分新增、示例和错误复用",
+         "脚本通过不证明行为真实；脚本缺失/失败据实记录，不用通过替代人工核实"]
 ```
 
 ## 4. 输出评审结果
 
-使用 [报告合同](references/report-contract.md) 的完整顺序与字段：先问题，后结论和修订顺序。报告头引用原计划，保留四维覆盖、证据等级、映射、依赖/并行与集成安排；没有安全并行空间时说明具体原因。
+使用 [报告合同](references/report-contract.md) 的完整顺序与字段：先问题，后结论和修订顺序。报告头引用原计划，保留两个重点与硬检查的覆盖、证据等级和关键决策评估。
 
 ```formal
 WORKFLOW @plan_report_delivery:
@@ -171,7 +166,7 @@ REVIEW:
   CHECK: [@plan_default_delivery, @plan_review_scope, @plan_claim_evidence, @plan_proportionality, @fr_before_nfr,
           @plan_re_review, @plan_review_scheduling, @plan_review_resources, @plan_adjudication,
           @plan_script_checks, @plan_report_delivery, @plan_report_limits, @plan_report_failure]
-  ALSO: ["报告合同字段齐全，四维覆盖无遗漏；文档/原型/浏览器证据等级如实；不强加不适用的新版格式或重复验收"]
+  ALSO: ["报告合同字段齐全，两个重点与硬检查覆盖无遗漏；证据等级如实；不强加不适用的新版格式或重复验收"]
   EXPOSE: on_issue
 ```
 

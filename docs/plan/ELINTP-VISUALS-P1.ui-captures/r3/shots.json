@@ -1,0 +1,132 @@
+[
+  {
+    "file": "U1-outline-scroll-1440-light-03.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r3/logs/pages/U1.html#s2",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "time": "2026-11-11T06:50:36.450Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U1-outline-scroll-360-dark-03.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r3/logs/pages/U1.html#s2",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "dark",
+    "time": "2026-11-11T06:50:48.891Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U2-outline-scroll-1440-light-03.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r3/logs/pages/U2.html#s2",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "time": "2026-11-11T06:50:52.855Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U2-outline-scroll-360-dark-03.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r3/logs/pages/U2.html#s2",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "dark",
+    "time": "2026-11-11T06:51:04.460Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U3-outline-second-1440-light-02.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r3/logs/pages/U3.html#s2",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "time": "2026-11-11T06:51:07.487Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U3-outline-scroll-1440-light-03.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r3/logs/pages/U3.html#s2",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "time": "2026-11-11T06:51:08.146Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U3-outline-last-1440-light-04.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r3/logs/pages/U3.html#s4",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "time": "2026-11-11T06:51:08.403Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U3-outline-second-360-dark-02.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r3/logs/pages/U3.html#s2",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "dark",
+    "time": "2026-11-11T06:51:18.485Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U3-outline-scroll-360-dark-03.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r3/logs/pages/U3.html#s2",
+    "viewport": {
+      "width": 360,
+      "height": 800
+    },
+    "dpr": 1,
+    "scheme": "dark",
+    "time": "2026-11-11T06:51:19.117Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  },
+  {
+    "file": "U1-nojs-reader-1440-light-01.png",
+    "url": "file:///Users/rockie/Documents/gh-xgent/skills/docs/plan/ELINTP-VISUALS-P1.ui-captures/r3/logs/pages/U1.html",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "dpr": 1,
+    "scheme": "light",
+    "time": "2026-11-11T06:51:23.321Z",
+    "tool": "Playwright 1.59.1",
+    "browserVersion": "157.0.8103.39"
+  }
+]

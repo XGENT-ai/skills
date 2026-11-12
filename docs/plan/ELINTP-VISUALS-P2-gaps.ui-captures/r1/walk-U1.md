@@ -1,0 +1,1 @@
+未完成 UX 走查：规定的 capture 不可用，命令返回 `ENOENT: no such file or directory, open '/Users/rockie/Documents/gh-xgent/skills/skills/phoenix-ui/scripts/ENGINE.json'` 并提示 `Reinstall the pinned @xgent-ai/skills package.`，因此无法通过规定方式打开并走查页面；本次按角色文件以 inline 方式执行。
