@@ -7,9 +7,7 @@
 #                              已存在的 compose.env 不覆盖（要整份重来加 --force）。
 #                              不给 --image 就用 <REGISTRY>/<PROJECT>/one-box:latest —— 一盒
 #                              和它的反代都挂了 latest，开新项目不用先去问 tag。
-#   onebox.sh up               ★ 按顺序把整套铺起来（迁移→种子→各库→注册→起栈），幂等可重跑。
-#                              顺序本身是契约（种子会 truncate、反代启动时才读 /svc map），
-#                              这条命令就是为了不让人自己记它。
+#   onebox.sh up               ★ 迁移→仅空库播种→注册→起栈；已有门户数据不重种，可重复运行。
 #   onebox.sh upgrade [--image <ref>] [--proxy-image <ref>]
 #                              换部署资产并追加版本信息；保留现有配置、端口、密钥与数据，再跑 up。
 #   onebox.sh doctor           ★ 体检：把排查表里能自动判的都判一遍，每条给一行可直接粘的修法。
@@ -361,7 +359,7 @@ cmd_upgrade() {
   _kafka_defaults
   _vectordb_defaults
   info "部署资产已升级；现有配置、generated/、backup/、端口与数据卷保留。"
-  info "下一步：$0 up（仍会重种门户库；App 自己的库不重置）。"
+  info "下一步：$0 up（已有门户数据跳过播种，保留租户、用户与安装记录）。"
 }
 
 cmd_init() {
@@ -387,7 +385,7 @@ cmd_init() {
   home="$(cd "$(dirname "$home")" 2>/dev/null && pwd || printf '%s' "$PWD")/$(basename "$home")"
   local envf="$home/compose.env"
   if [ -f "$envf" ] && [ "$force" = 0 ]; then
-    die "$envf 已存在（里面是这台机器的密钥）。要整份重来加 --force；只想补配置就直接往它末尾加。"
+    die "$envf 已存在（里面是这台机器的密钥）。升级用 upgrade；补配置往末尾加。仅明确丢弃原配置时用 init --force。"
   fi
 
   # 一台机器一套一盒（SKILL.md 文首「一套就够」）：本机已有【别的】一盒在跑/跑过时停下，
@@ -1035,6 +1033,24 @@ _objectstore_up() {
   die "RustFS 60s 未就绪；已过提交点，rustfs-data 是权威，勿删。看 $0 dc logs rustfs；回退只执行 $HOME_DIR/backup/rollback-minio.sh。"
 }
 
+_seed_portal_if_empty() {
+  local has_data
+  has_data="$(dc exec -T postgres psql -X -U postgres -d xgent-portal -At -v ON_ERROR_STOP=1 -c '
+    SELECT EXISTS (SELECT 1 FROM public.tenants)
+        OR EXISTS (SELECT 1 FROM public.users)
+        OR EXISTS (SELECT 1 FROM public.marketplace_listings)
+        OR EXISTS (SELECT 1 FROM public.apps)
+        OR EXISTS (SELECT 1 FROM public.service_accounts);
+  ')" || die "无法确认门户库是否为空，已停止；保留现有数据，检查 PostgreSQL 与迁移日志后重试。"
+  case "$has_data" in
+    t) info "③ 已有门户数据，跳过种子；保留租户、用户、清单、安装与 UUID。" ;;
+    f)
+      info "③ 首次空库，初始化一盒种子"
+      dc run --rm portal-api bun run db:seed:onebox ;;
+    *) die "门户空库检查返回异常，已停止；不执行破坏性种子。" ;;
+  esac
+}
+
 cmd_up() {
   _require_objectstore_assets
   _require_kafka_assets
@@ -1063,8 +1079,7 @@ cmd_up() {
   done
   info "②b 你自己的库 xgent-${APP_KEY}"
   _ensure_db "xgent-${APP_KEY}"
-  info "③ 一盒种子（★ 破坏性：truncate cascade）"
-  dc run --rm portal-api bun run db:seed:onebox
+  _seed_portal_if_empty
   if [ -n "${ONEBOX_MANIFEST:-}" ] || [ -f "app.manifest.json" ]; then
     local mf="${ONEBOX_MANIFEST:-app.manifest.json}"
     info "④ 注册你的 App（${mf}）"
@@ -1512,7 +1527,7 @@ cmd_doctor() {
     if docker run --rm --entrypoint sh "$iv" -c '[ -d /srv/www/apps ]' >/dev/null 2>&1; then
       _ok "门户镜像带有共享目录预建（v1.2.0+）"
     else
-      _bad "门户镜像是旧版（缺 /srv/www/apps 等预建目录）" "$0 pull && $0 dc down -v && $0 up —— 顺序是【先换镜像、再删卷】，只做一半都不解决"
+      _bad "门户镜像是旧版（缺 /srv/www/apps 等预建目录）" "$0 pull && $0 upgrade && $0 up；已有卷的属主按下一项定点修复，保留数据卷。"
     fi
   else _note "本地没有 ${iv}，跳过（$0 pull）"; fi
 

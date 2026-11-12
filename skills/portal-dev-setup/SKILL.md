@@ -1,6 +1,6 @@
 ---
 name: portal-dev-setup
-description: '用于在 App 自己的仓库启动、重置或排查 XGENT 门户 Docker 一盒（one-box）本地联调；不需克隆或修改门户源码。处理拉镜像、注册、端口、健康检查和联调故障。'
+description: '用于在 App 自己的仓库启动、升级、重置或排查 XGENT 门户 Docker 一盒（one-box）本地联调；升级默认保留已有数据，不需克隆或修改门户源码。处理拉镜像、注册、端口、健康检查和联调故障。'
 when_to_use: "用户会说「本地起一套门户」「one-box 起不来」「联调连不上门户」时。"
 ---
 
@@ -11,6 +11,11 @@ when_to_use: "用户会说「本地起一套门户」「one-box 起不来」「�
 iframe 托管、跨应用令牌交换。
 
 需要的一切都在这里的 `scripts/` 与 `references/`，加上一件事：**门户镜像**。
+
+**默认保留已有数据。** 除非用户明确说不要原有本地一盒数据，否则更新版本、重启、重建容器和修复故障都走保留数据的路径；
+“换最新版”“重建一盒”本身不表示允许清数据。复用原一盒目录、配置、密钥与持久卷，保留门户租户/用户/安装记录及 UUID，
+也保留各 App 数据、文件对象、Kafka 消息与向量数据。不要默认执行 `down -v`、`init --force`、破坏性种子或换空卷。
+若无法保留，先说明具体阻碍、将丢失的数据与可行备份/迁移方案；在用户明确同意丢弃前停在破坏性操作之前。
 
 以下命令在你的 App repo 根目录执行。先按实际加载位置设置 `SKILL_DIR`，表示本 `SKILL.md` 所在目录；`scripts/`、`references/` 和 `puller.env.example` 都相对于它，不假定安装目录名：
 
@@ -149,7 +154,7 @@ micro 型再加 `APP_FRONTEND_DIST`（前端 dist 的**绝对路径**，目录�
 
 | | |
 | --- | --- |
-| `onebox.sh up` | **按顺序把整套铺起来**（迁移→种子→各库→注册→起栈），幂等可重跑，跑完自动体检 |
+| `onebox.sh up` | **按顺序把整套铺起来**（迁移→仅空库播种→注册→起栈），已有门户数据不重种，跑完自动体检 |
 | `onebox.sh doctor` | **体检**：排查表里能自动判的都判一遍，每条给一行可直接粘的修法。**跑不通先跑它** |
 | `onebox.sh add <key>` | 把一个平台侧 App 拉进来陪调：按它的 manifest 拉镜像+注册+建库（+建桶 / `migrateArgs`）+**生成 compose**+起容器+冒烟，非破坏性；目录里的清单型 App（如 observability）`up` 会自动走这一步 |
 | `onebox.sh status` | 生效 env + 容器状态 + 宿主侧健康探测 |
@@ -167,8 +172,10 @@ S="$SKILL_DIR/scripts/onebox.sh"
 "$S" up          # ← 就这一条。按顺序铺完，跑完自动体检
 ```
 
-顺序是契约（种子会 truncate、反代启动时才读 /svc map），`up` 存在的意义就是**不让人自己记它**。
-它幂等，改完 manifest 或 compose.env 重跑即可。下面这几步是它替你做的事——想手动控某一步时照着敲：
+顺序是契约（首次播种必须早于注册、反代启动时才读 /svc map），`up` 存在的意义就是**不让人自己记它**。
+它先迁移，再检查门户核心表：租户、用户、清单、安装或服务账号任一有数据就跳过种子；确认这些表均为空才初始化。
+查询失败或结果异常直接停止，不按空库处理。改完 manifest 或 compose.env 可重跑，原有身份和安装记录保留。
+下面这几步是它替你做的事——想手动控某一步时照着敲：
 
 ```bash
 # 1) 基础设施由 "$S" up 先做资产检查、存量对象存储切换，再起 postgres/redis/rustfs/kafka。
@@ -179,8 +186,8 @@ S="$SKILL_DIR/scripts/onebox.sh"
 "$S" dc run --rm portal-api bun run db:migrate
 for k in files llm-gateway git org; do "$S" dc run --rm portal-api bun run db:$k:migrate; done
 
-# 3) 一盒种子   ★ 破坏性：truncate cascade，清掉租户/用户/清单/安装
-"$S" dc run --rm portal-api bun run db:seed:onebox
+# 3) up 仅在确认门户核心表为空时播种；已有数据不执行 db:seed:onebox。
+#    该种子本身会 truncate cascade，不能作为升级或修复命令手动补跑。
 
 # 3b) 你自己的库：新镜像在 postgres【首次初始化】时按 APP_KEY 建好 `xgent-<key>`；
 #     老镜像不建，换过 APP_KEY 的也不会补建（初始化脚本只在数据卷为空时跑一次）。
@@ -203,8 +210,8 @@ for k in files llm-gateway git org; do "$S" dc run --rm portal-api bun run db:$k
   所以「逐租户基线」由种子代跑（`org` 的预置档案字段就是这么来的）。表还没建就只是一条
   `⚠ org per-tenant baseline FAILED`，栈照样起得来 —— 症状要到你在组织架构里**建第一个员工**
   时才出现：`UNKNOWN_FIELD 未知字段：name`（零字段定义时连预置的「姓名」都是未知 key）。
-  补救：`"$S" dc run --rm portal-api bun run db:org:migrate` 之后重跑一次 `db:seed:onebox`。
-- **`db:seed:onebox` 必须在 `register-app` 之前。** 种子第一步是 `truncate … marketplace_listings … cascade`——
+  补救：先补 `db:org:migrate`，再对受影响租户单独运行 `apps/org-server/scripts/bootstrap-baseline.ts <tenantId>`，不重种门户库。
+- **首次空库的 `db:seed:onebox` 必须在 `register-app` 之前。** 种子第一步是 `truncate … marketplace_listings … cascade`——
   先注册后种子 = 你的 App 注册被静默清掉，市场里找不到它。
 - **`register-app` 最好在 `reverse-proxy` 之前。** 它落的是一个 `/svc` 放行 map 文件，而反代**启动时**才读那个目录。
   反代已经在跑就补一句 `"$S" dc exec reverse-proxy caddy reload`，否则 `/svc/<key>` 一直 404。
@@ -285,7 +292,7 @@ RustFS 用户 → 起 `vectordb` 与 `vectordb-proxy` 并等健康（首次约 1
   的 `OBS_ACCESS_KEY`，再起 `portal-logs`（fluent-bit）；portal-api 的 stdout/stderr 走 docker 的 fluentd 日志驱动
   进去，落 `app_portal_console`（`docker logs portal-api` 照常可用）。采集段已并入
   `onebox/docker-compose.onebox.yml`（原 portal-logs.yml 并入）；collector 只在目录含 observability 时由 `up` 签密钥并显式起。
-- 不建议去掉：它就是联调时看日志的面。坚持要去掉就把 `XGENT_APP_CATALOG` 里的 `observability` 删掉再 `up`（种子会重跑，破坏性），并把 `onebox/docker-compose.onebox.yml` 里五段 logging 注掉——否则 daemon 会有 fluentd 重连噪音。
+- 不建议去掉：它就是联调时看日志的面。坚持要去掉就把 `XGENT_APP_CATALOG` 里的 `observability` 删掉，按 §2.2 叠加自己的 logging 覆盖，再停掉 `portal-logs`；已有安装与数据不会因目录配置减少而删除。
 - 它的界面（`/apps/observability/`）**不在一盒镜像里**——那是 App 团队经发布提案上传的产物；一盒里只有服务面。
   看落了什么用它的查询面：`POST /svc/observability/api/t<租户UUID去横线>/_search?type=logs`，**只认用户票**（`xsak_` 会 401），
   票从 `/auth/dev/start` 登进去后在浏览器里拿，或 `"$S" dc run --rm portal-api bun -e '…mintForApp…'`。
@@ -591,13 +598,14 @@ postgres / redis / RustFS / Kafka 都发布了宿主端口，init 挑选时会�
 | 目的 | 命令 | 配置与数据 |
 | --- | --- | --- |
 | 首次初始化 | `"$S" init --key <listingKey>` → 编辑 App 配置 → `"$S" up` | 新建资产、密钥与端口配置 |
-| 已有一盒升级 | `"$S" upgrade [--image <ref>]` → `"$S" up` | 保留 compose.env、generated/、backup/、端口与数据卷 |
-| 主动清空联调数据重置 | `"$S" dc down -v` → `"$S" init --force --key <listingKey>` → `"$S" up` | 删除当前 compose 的命名卷并重新生成配置；不可当升级使用 |
+| 已有一盒升级（默认） | `"$S" upgrade [--image <ref>]` → `"$S" up` | 保留配置、密钥、端口、数据卷及门户身份/安装数据，已有门户不重种 |
+| 用户明确不要原数据时重置 | `"$S" dc down -v` → `"$S" init --force --key <listingKey>` → `"$S" up` | 删除当前 compose 的命名卷并重新生成配置；不可当升级或默认排障使用 |
 
 ### 升级：换资产，保留本机配置与对象
 
-镜像升级不会更新宿主上的 skill 与 `onebox.sh`。使用 `requiredEnv[].generate` 前，先从公开渠道
-更新安装的 `portal-dev-setup`（同一次安装可更新 `portal-external-app`、`xgent-app-release`）：
+镜像升级不会更新宿主上的 skill 与 `onebox.sh`。**旧脚本的 `up` 会每次重种门户库，即使 `upgrade` 保留了卷也会丢数据。**
+先更新安装的 `portal-dev-setup`，确认使用的是支持“仅空库播种”的脚本，再执行 `up`；拿不到新脚本时不要调用旧版 `up`，
+按 §2 手动迁移、注册和起栈，跳过种子。公开渠道安装方式（同一次安装可更新 `portal-external-app`、`xgent-app-release`）：
 
 ```bash
 npx skills add XGENT-ai/skills
@@ -635,6 +643,9 @@ Kafka 另按需补缺 `KAFKA_CLUSTER_ID` / `KAFKA_ADMIN_PASSWORD` / `KAFKA_PORT`
 沿用可变 `latest` 要先更新缓存：`"$S" pull` → `"$S" upgrade` → `"$S" up`；显式指定新的不可变 tag
 或已载入的本地新 tag，可直接 `upgrade --image <ref>`。单独 `pull` 不更新资产，不能代替 `upgrade`。
 
+换版涉及新的数据库迁移或存储切换时，先备份现有 `compose.env`、PostgreSQL 各库及受影响的持久数据，
+确认备份成功后再继续；已有备份若早于最近写入，应补备。迁移失败先保留原卷与配置，按报错修复，不能用重种或删卷绕过。
+
 升级也保留 PostgreSQL 的**现有数据大版本与挂载布局**。脚本在启动数据库前只读检查卷内
 `PG_VERSION`，已有 18 的一盒不会因新模板默认 16 而被降级；旧布局挂 `/var/lib/postgresql/data`，
 18 起的版本目录布局挂其父目录 `/var/lib/postgresql`。未知、冲突或非空但无法识别的布局会中止，
@@ -643,8 +654,9 @@ Kafka 另按需补缺 `KAFKA_CLUSTER_ID` / `KAFKA_ADMIN_PASSWORD` / `KAFKA_PORT`
 
 `up` 先检查资产，再通过共用切换脚本把存量 MinIO 复制到全新的 RustFS 卷；旧卷保留，
 桶列表、对象清单和正文摘要一致才提交。正式 RustFS 只在脚本成功后启动，并等待 `/health`。
-`add` 与建桶入口同样经过这道切换门。**`up` 仍会重种门户库**（租户、用户、清单、安装与 UUID），
-这是一盒原有契约；App 自己的数据库不被重种，对象存储数据由切换校验保留。
+`add` 与建桶入口同样经过这道切换门。**`up` 对已有门户库跳过种子**，保留租户、用户、清单、安装与 UUID；
+App 自己的数据库不被重种，对象存储数据由切换校验保留。跳过种子不会自动补齐新版本的种子配置或新增基础 App，
+缺什么就通过对应的幂等注册、安装或租户基线入口定点补齐，不能为此重种整库。
 
 备份在一盒目录的 `backup/`，包含旧镜像归档、每次切换清单及 `rollback-minio.sh`。
 失败时先读退出提示：提交前失败恢复旧服务；已提交但新服务不健康时保留 `rustfs-data`，
@@ -658,11 +670,12 @@ Kafka 数据也随升级保留。`KAFKA_CLUSTER_ID` 与 `kafka-data` 绑定，�
 
 ### 停栈与重置
 
-`"$S" dc down` 只停容器、保留卷；下次 `up` 仍会重种门户库。只想重置门户数据也可重跑
-`db:seed:onebox`，随后重跑 `register-app`、重载 Caddy；浏览器需要重新登录。
+`"$S" dc down` 只停容器、保留卷；下次 `up` 跳过已有门户的种子。只重建容器也保留原配置与卷。
+只有用户明确要求清空门户数据时，才手动运行 `"$S" dc run --rm portal-api bun run db:seed:onebox`，
+随后重跑 `register-app`、重载 Caddy；这会重建身份 UUID，关联 App 数据可能失去原租户/用户关联，浏览器也需要重新登录。
 
 `down -v` 是主动删除当前 compose 命名卷的操作，pg、RustFS、Kafka、apps、caddy 数据会丢失。
-先备份要保留的 App 数据与对象，再按上表重置；退役 MinIO 卷和 `backup/` 不在新 compose 删除范围内，
+只有用户明确同意丢弃这些数据才按上表重置；有需保留的数据则先备份并明确恢复方式。退役 MinIO 卷和 `backup/` 不在新 compose 删除范围内，
 保留供核对，不因升级自动删除。命名卷属主故障按 [排查表 §7](references/troubleshooting.md#7-命名卷属主不对eacces-一族)
 处理，升级本身不要求清空所有数据。
 
