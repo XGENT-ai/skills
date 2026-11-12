@@ -127,7 +127,7 @@ phoenix-ui capture stitch before.png after.png --match 320,320 --label 修改前
 - 状态文件（`--states`）：`initial` 描述初始状态的截图方式，`states` 逐个列出 `name` 与 `steps`；每个状态在不共享 cookie 与存储的新页面里从头执行自己的步骤。定位用 `{"role":…, "name":…}`、`{"text":…}` 或 `{"css":…}`（可加 `nth`），只查主文档，不进 iframe 与 Shadow DOM；动作有 click、dblclick、hover、fill、type、select、press、drag、scroll、wait、waitFor；原生日期、时间、颜色、范围输入用 fill 按其值格式设值（如 `2026-11-20`），type 落在这类控件上会失败。截图类型 `viewport`、`full` 或 `{"element": <定位>}`；`frames` 出序列帧，`mark` 出编号标注图。完整格式见 `phoenix-ui capture --help`。
 - 输出与命名：默认 `.phoenix-ui/capture/`，文件名模板默认 `{viewport}{-state}.png`（初始状态为 `desktop.png`，其他为 `desktop-<状态>.png`），`--name` 可改；报告 `capture-report.json`（schema `phoenix-ui-capture-v1`）逐张记录目标、地址、视口、像素比、配色、截图类型、拍摄时间、浏览器与命令版本、步骤与观察、控制台错误、失败请求与图片、横向溢出、被拦截的写请求和该状态的页面规则发现（`findings`，与 `detect` 同一套规则与项目配置）；页面扫描无法核实某段文字的字体来源时，该图条目另有 `findingsNotes` 数组，文本与 `detect` 的 `note:` 行相同，终端相应输出 `NOTE <状态> <视口> <文件>: …`。`findingsNotes` 表示所写 URL 与段落的字体来源尚未核实，不是发现，没有字体回退发现也不等于已核实：等字体加载稳定后在现有轮次内重取该状态，或人工核对该段的实际字体并记下依据；仍未解除的在最终交付的未验证项里写明 URL、段落与原因，不为它另加阻塞门或检测轮次；已存在的报告按文件名合并，只重取部分状态时其余条目保留。派生图：`--mask` 遮字版、`--thumbs` 扫视缩略图（480/180 宽）、`--sheet` 状态并排图、`frames` 序列帧、`mark` 标注图、`capture stitch` 修改前后拼图，都不替代状态截图。
 - 有效性：每张主截图自检步骤是否全部执行、有限动画是否结束、文字是否大面积透明、是否整张单色或有异常全黑带、画布是否绘出、尺寸是否符合截图类型。无效图写成 `<名>.invalid.png`，同名旧图（含失败状态的旧图）删除。退出码：0 全部有效；1 无法运行（参数或状态文件错误、浏览器不可用、目标打不开），不写报告；2 已运行但有失败状态、无效图、派生图未产出或扫描出错。
-- 浏览器与隐私：使用本机 Chrome、Chromium、Edge 或 Brave（`PHOENIX_UI_BROWSER` 可指定），无浏览器时退出 1 并说明，其他命令照常；资料目录是临时的，结束后删除。引擎自身不发请求；浏览器通过启动参数关闭组件更新、账号、时间、搜索和 Safe Browsing 密钥等后台联网，目标页面自己的资源照常加载。在本机 Google Chrome 157.0.8103.40 上未观察到目标页面及其资源之外的请求；Edge、Brave、Chromium 的后台联网尚未逐一验证。`--block-writes` 中止页面、iframe 与 worker 发出的非 GET 请求并逐条记录，`--allow-write <路径>` 放行必要写入；凭据用步骤里的 `env` 引用环境变量，它的值与 URL 中的密码在报告、终端与错误信息中替换为 `***`（页面自己显示在截图里的内容不在此列）。
+- 浏览器与隐私：使用本机 Chrome、Chromium、Edge 或 Brave（`PHOENIX_UI_BROWSER` 可指定），无浏览器时退出 1 并说明，其他命令照常；资料目录是临时的，结束后删除。引擎自身不发请求；浏览器以启动参数抑制组件更新、账号、时间、搜索和 Safe Browsing 密钥等后台联网，目标页面自己的资源照常加载。在本机 Google Chrome 157.0.8103.40 上未观察到目标页面及其资源之外的请求；Linux Chrome/Chromium 仍有下文列明的后台请求。Edge、Brave 及其他版本未逐一验证。`--block-writes` 中止页面、iframe 与 worker 发出的非 GET 请求并逐条记录，`--allow-write <路径>` 放行必要写入；凭据用步骤里的 `env` 引用环境变量，它的值与 URL 中的密码在报告、终端与错误信息中替换为 `***`（页面自己显示在截图里的内容不在此列）。
 - 走查子代理：Phoenix 随包安装 `phoenix-ui-ux-walker`，以不知道任务的首次使用者身份，通过 capture 重放步骤走一条主要路径，报告卡住、走错与犹豫；Web 完工轮在有主要操作流程时与完工评审同轮派出。
 
 ## 素材命令（media）
@@ -196,6 +196,15 @@ phoenix-ui embed-prompt --scan public/img
 | `prep-image` | 纯本地图片处理，不联网 |
 
 以上命令运行时不自动更新或下载 engine。
+
+已登记的浏览器自身残余（2026-11-12，独立临时资料目录、相同关闭参数）：
+
+| 实测环境 | 残余主机与已观察请求 | 验证限制 |
+| --- | --- | --- |
+| Linux x64，系统 Google Chrome；runner镜像清单声明156.0.8078.79，首轮未记录实际版本 | `update.googleapis.com`：HTTPS CONNECT及HTTP `POST /service/update2/json` | 更新检查端点；记录代理返回502，未证实组件下载，也不能由此保证该版本永不下载 |
+| Linux arm64，Chromium 147.0.7727.0（Playwright 1.59.1 / revision 1217） | `android.clients.google.com`：HTTPS CONNECT | 未取得HTTPS路径，具体调用者未确认 |
+
+这些是浏览器行为，不属于素材检索；关闭参数无法在上述版本保证零后台请求。联网边界测试仅在Linux登记这两个主机，仍拒绝清单外的请求；不屏蔽主机，以免破坏目标页面引用的资源。实测日志与排查边界见 [P3验收记录](plan/PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M5.md#v-11-联网边界排查)。
 
 ## 融合用法与 UI 验收
 

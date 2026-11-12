@@ -207,13 +207,13 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-12 02:47 +08:00
+- 最近更新：2026-11-12 10:15 +08:00
 - 当前进度：4/5 个里程碑完成
-- 当前状态：M1–M4 完成；M5的V-8、V-9、V-10完成，待候选提交与V-11
+- 当前状态：M1–M4 完成；M5的V-8、V-9、V-10完成，候选已推送；V-11已发现Linux浏览器残余，定向修订待下一候选验证
 - 最近完成：M4 · skill 与文档
-- 下一步：提交M5候选，申请推送授权，以候选完整SHA匹配并完成V-11
-- 当前阻塞：V-11需用户授权推送main；未获授权，不记M5完成
-- 代码基线：`e719aea`（main）+ M5工作树；M1–M4已提交
+- 下一步：收齐Phoenix CI 43136457827结果，推送残余登记与网络日志增量，核对新候选四平台及Node18证据
+- 当前阻塞：无外部授权阻塞；首轮Linux联网边界失败，M5尚未满足退出条件
+- 代码基线：`622cbfcf5356582c5b09b5ae665f18557bd8ed21`（main，M5候选，已推送）；M1–M4已提交
 
 ### 完成记录
 
@@ -222,7 +222,7 @@ REVIEW @progress_consistency:
 | M1 | 已完成 | 2026-11-12 01:35 +08:00 | 11源检索、稳定编号、联系表与真实V-1/V-2通过 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M1.md) | `2d5deab` |
 | M3 | 已完成 | 2026-11-12 01:35 +08:00 | 批量图片导出与来源保留，V-4目视及V-5、lint通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M3.md) | `ea0e5a3` |
 | M2 | 已完成 | 2026-11-12 01:40 +08:00 | V-1/V-2/V-3及最终lint通过；Chrome后台请求清零 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M2.md) | `49be9b9` |
-| M5 | 进行中 | 2026-11-12 02:47 +08:00 | V-8各分项、V-9四组与V-10通过；待授权推送及V-11 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M5.md) | 待提交 |
+| M5 | 进行中 | 2026-11-12 10:15 +08:00 | V-8/V-9/V-10完成；首轮CI的Linux残余已定位到浏览器，登记与诊断增量待CI | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M5.md) | 候选 `622cbfc`；最终提交待V-11 |
 | M4 | 已完成 | 2026-11-12 01:53 +08:00 | V-6 fresh与V-7真实宿主通过；入口说明与产品路径audit已复验 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M4.md) | `0398407` |
 
 ## 0. 需求、范围与决策

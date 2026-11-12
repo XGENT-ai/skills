@@ -15,6 +15,10 @@ use std::time::Duration;
 use serde_json::{json, Value};
 
 static NEXT: AtomicUsize = AtomicUsize::new(0);
+// Observed on Linux Chrome / Chromium; see docs/phoenix-ui.md.
+#[cfg(target_os = "linux")]
+const BROWSER_RESIDUAL_HOSTS: &[&str] = &["update.googleapis.com", "android.clients.google.com"];
+#[cfg(not(target_os = "linux"))]
 const BROWSER_RESIDUAL_HOSTS: &[&str] = &[];
 const PROXY_KEYS: &[&str] = &[
     "ALL_PROXY",
@@ -326,6 +330,8 @@ fn browser_commands_only_request_page_resources_and_documented_residuals() {
             return;
         }
     };
+    let version = Command::new(&browser).arg("--version").output().unwrap();
+    eprintln!("browser {}: {}", browser.display(), output_text(&version));
     let pages = Pages::start();
     for verb in ["detect", "capture"] {
         for external in [false, true] {
@@ -333,12 +339,14 @@ fn browser_commands_only_request_page_resources_and_documented_residuals() {
             let engine_proxy = Proxy::start();
             let browser_proxy = Proxy::start();
             let wrapper = project.0.join("browser.sh");
+            let netlog = project.0.join("browser-netlog.json");
             std::fs::write(
                 &wrapper,
                 format!(
-                    "#!/bin/sh\nexec {} --proxy-server={} \"$@\"\n",
+                    "#!/bin/sh\nexec {} --proxy-server={} --log-net-log={} \"$@\"\n",
                     shell_quote(browser.to_str().unwrap()),
-                    shell_quote(&browser_proxy.url())
+                    shell_quote(&browser_proxy.url()),
+                    shell_quote(netlog.to_str().unwrap())
                 ),
             )
             .unwrap();
@@ -378,6 +386,19 @@ fn browser_commands_only_request_page_resources_and_documented_residuals() {
             let engine_requests = engine_proxy.finish();
             let browser_requests = browser_proxy.finish();
             eprintln!("{verb} {page}: engine={engine_requests:?}; browser={browser_requests:?}");
+            assert!(std::fs::metadata(&netlog).unwrap().len() > 0);
+            if std::env::var("GITHUB_ACTIONS").as_deref() == Ok("true") {
+                // Preserve browser provenance before an assertion stops the test.
+                // The existing workflow uploads this directory on failure too.
+                let evidence = Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../../../local/phoenix-ui/ci-prepare");
+                std::fs::create_dir_all(&evidence).unwrap();
+                std::fs::copy(
+                    &netlog,
+                    evidence.join(format!("network-{verb}-{page}.netlog.json")),
+                )
+                .unwrap();
+            }
             assert!(
                 engine_requests.is_empty(),
                 "engine made external requests: {engine_requests:?}"
