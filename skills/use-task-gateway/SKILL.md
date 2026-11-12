@@ -1,27 +1,33 @@
 ---
 name: use-task-gateway
-description: '用于其他 App 接入 XGENT Task Gateway 完成异步任务，或排查鉴权、提交、幂等、进度与结果回收；需要时对齐 VM 执行器和 workflow 动作面。不用于网关自身开发发布或通用异步架构咨询。'
-when_to_use: "用户会说「接异步任务网关」「任务重复提交了」「进度和结果查不到」时。"
+description: '用于服务提供方发布执行服务与 Workflow 动作到 Task Gateway 目录，或调用方 App 接入异步任务、排查鉴权、幂等、进度与结果回收。不用于网关自身产品开发发布或通用异步架构咨询。'
 ---
 
 # use-task-gateway
 
-让调用方 App 形成可恢复的闭环：业务执行记录 → 提交任务 → 保存 task_id → 查询进度 → 消费终态结果。普通 App 默认走 Portal HTTP 租户面；任务由已注册服务的节点反向领取，网关不直接执行 payload 中的命令。
+服务提供方负责执行能力的契约、Worker 交付、目录发布与实际验收；调用方 App 从目录发现能力，形成业务执行记录 → 提交任务 → 保存 task_id → 查询进度 → 消费终态结果的闭环。普通 App 默认走 Portal HTTP 租户面；节点反向领取任务，网关不直接执行 payload 中的命令。
 
 ## 先确定接入边界
 
-从调用方仓库查找 manifest、门户鉴权/换票封装、后端配置、业务 run/job/step 模型，以及目标服务的 payload 契约。复用其语言和已有 HTTP 客户端，不要求调用方使用 Rust，也不要求克隆网关源码。
+先区分提供方发布与调用方接入。提供方从自己的仓库读取执行入口、输入/结果契约、构建部署与授权配置；调用方查找 manifest、门户鉴权/换票封装、后端配置、业务 run/job/step 模型及目标服务契约。复用现有语言与客户端，不要求使用 Rust 或克隆网关源码。
 
 先确认四项：实际 Gateway 基址、用户态或后台服务态、真实服务名、执行器所需输入。缺部署信息时先完成可配置的客户端与业务接线；仅在真实联调依赖该信息时索取，不能猜测生产地址、凭据或服务名。
 
 | 当前工作 | 按需读取 |
 | --- | --- |
+| 服务提供方发布/更新执行能力、登记服务或 Workflow 动作目录 | [references/publishing.md](references/publishing.md)；涉及 Worker 安装时再读 workers.md |
 | 用户代表调用、后台 SA、manifest 与换票排错 | [references/authentication.md](references/authentication.md) |
 | HTTP 提交、持久化、幂等、状态、取消、回调、重试 | [references/task-api.md](references/task-api.md) |
 | 新接 VM/CLI/API 执行能力、SSH 部署能力确认、任务一直 pending 或领取后失败 | [references/workers.md](references/workers.md) |
 | 明确接入 workflow 引擎动作目录、placement/lease 或运行中止 | [references/workflow-actions.md](references/workflow-actions.md)；先核验引擎专用身份 |
 
-实施普通 App 接入时读取前两份；已有执行服务时不用改节点部署。
+实施普通 App 接入时读取 authentication.md 与 task-api.md；已有执行服务时不用改节点部署。
+
+## 提供方发布责任
+
+服务提供方在自己的发布流程中维护服务配置、执行器与动作定义，交付匹配的 Worker/依赖，并负责目标环境登记、读回和真实执行验收。已有授权覆盖目录写入时直接使用现有 API；没有权限时交付可执行的登记材料和具体权限缺口，由具备权限的发布者落地，不能把平台权限视为默认拥有。
+
+服务目录与 Workflow 动作目录分别登记；只用普通任务不必新增动作。租户服务可由租户管理员创建；平台服务及 Workflow 动作当前仍走 ops 权限门，不存在普通 App SA 自助发布平台目录的接口。目录可见、镜像已推送或节点在线都不等于执行能力已验收，发布完成以目标环境真实回执为准。
 
 ## 接入面与凭据
 
@@ -57,4 +63,4 @@ when_to_use: "用户会说「接异步任务网关」「任务重复提交了」
 
 ## 契约维护依据
 
-本包任务接入契约以 `xgent-ai-task-gateway` 提交 `5e90da9` 为基线（2026-10-16 核对）；SSH 接入说明已核对 `aeca179`（1.9.3，2026-10-17）。可整目录移到其他 App 使用。引用的源码路径是维护线索，不是运行依赖。若能访问更新源码，优先核对 `gateway/src/portal/{gate,tasks,routes,onboarding}.rs`、`gateway/src/portal/workflow_actions/`、`gateway/src/agent/config.rs` 和 `proto/src/gateway.proto`；其次参考 `docs/API.md`、`docs/portal-app-contract.md`、`docs/PORTAL-APP-INTEGRATION.md`。部署可能落后于源码，需通过目标环境验证能力。
+本包任务接入契约以 `xgent-ai-task-gateway` 提交 `5e90da9` 为基线（2026-10-16 核对）；SSH 接入说明已核对 `aeca179`（1.9.3，2026-10-17）。提供方发布与来源可见性说明按 2026-11-11 的服务、ops 与动作目录实现核对。可整目录移到其他 App 使用。引用的源码路径是维护线索，不是运行依赖。若能访问更新源码，优先核对 `gateway/src/portal/{gate,tasks,services,ops,routes,onboarding}.rs`、`gateway/src/portal/workflow_actions/`、`gateway/src/agent/config.rs` 和 `proto/src/gateway.proto`；其次参考 `docs/API.md`、`docs/portal-app-contract.md`、`docs/PORTAL-APP-INTEGRATION.md`。部署可能落后于源码，需通过目标环境验证能力。

@@ -5,4 +5,5 @@
 | 对象 ID | 标题 / 来源 | 状态页 | 活动 / 归档 |
 | --- | --- | --- | --- |
 | 06d03c42-b8de-4f89-bddc-e20f595b5fd2 | [Phoenix Diagram PRD](../../../../docs/PRD-PHOENIX-DIAGRAM.md) | [状态](06d03c42-b8de-4f89-bddc-e20f595b5fd2.md) | 活动 |
+| 3df3387f-2680-458c-95e7-d44ee7885428 | [elintp 图文说明与 Phoenix Diagram 图解补充 PRD](../../../../docs/PRD-ELINTP-VISUALS.md) | [状态](3df3387f-2680-458c-95e7-d44ee7885428.md) | 活动 |
 | d6f09ace-6158-4eb2-a8e3-465807145888 | [Phoenix UI 取证与工艺增强 PRD](../../../../docs/PRD-PHOENIX-UI-EVIDENCE-CRAFT.md) | [状态](d6f09ace-6158-4eb2-a8e3-465807145888.md) | 活动 |

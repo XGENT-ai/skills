@@ -1,0 +1,1166 @@
+[
+  {
+    "unit": "U1",
+    "w": 1440,
+    "scheme": "light",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切换亮暗",
+      "toggled": "dark",
+      "persisted": "dark"
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 1440,
+    "scheme": "light",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s2",
+      "targetTop": 55.96875
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 1440,
+    "scheme": "light",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s3",
+      "last": "s3"
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 1440,
+    "scheme": "light",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 0,
+      "focus": "表头释义",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切换亮暗",
+      "toggled": "light",
+      "persisted": "light"
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s2",
+      "targetTop": 55.96875
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s3",
+      "last": "s3"
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 0,
+      "focus": "表头释义",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "scheme": "light",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切换亮暗",
+      "toggled": "dark",
+      "persisted": "dark"
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "scheme": "light",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s2",
+      "targetTop": 56
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "scheme": "light",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s3",
+      "last": "s3"
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "scheme": "light",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 40,
+      "focus": "表头释义",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "scheme": "dark",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切换亮暗",
+      "toggled": "light",
+      "persisted": "light"
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "scheme": "dark",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s2",
+      "targetTop": 56
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "scheme": "dark",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s3",
+      "last": "s3"
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "scheme": "dark",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 40,
+      "focus": "表头释义",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 1440,
+    "scheme": "light",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切换亮暗",
+      "toggled": "dark",
+      "persisted": "dark"
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 1440,
+    "scheme": "light",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s2",
+      "targetTop": 55.5625
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 1440,
+    "scheme": "light",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s6",
+      "last": "s6"
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 1440,
+    "scheme": "light",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 0,
+      "focus": "表头释义",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切换亮暗",
+      "toggled": "light",
+      "persisted": "light"
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s2",
+      "targetTop": 55.5625
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s6",
+      "last": "s6"
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 0,
+      "focus": "表头释义",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 360,
+    "scheme": "light",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切换亮暗",
+      "toggled": "dark",
+      "persisted": "dark"
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 360,
+    "scheme": "light",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s2",
+      "targetTop": 56.15625
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 360,
+    "scheme": "light",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s6",
+      "last": "s6"
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 360,
+    "scheme": "light",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 40,
+      "focus": "表头释义",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 360,
+    "scheme": "dark",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切换亮暗",
+      "toggled": "light",
+      "persisted": "light"
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 360,
+    "scheme": "dark",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s2",
+      "targetTop": 56.15625
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 360,
+    "scheme": "dark",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s6",
+      "last": "s6"
+    }
+  },
+  {
+    "unit": "U2",
+    "w": 360,
+    "scheme": "dark",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 39,
+      "focus": "表头释义",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 1440,
+    "scheme": "light",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切換亮暗",
+      "toggled": "dark",
+      "persisted": "dark"
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 1440,
+    "scheme": "light",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s4",
+      "targetTop": 109.5625
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 1440,
+    "scheme": "light",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s4",
+      "last": "s4"
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 1440,
+    "scheme": "light",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 0,
+      "focus": "表頭釋義",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切換亮暗",
+      "toggled": "light",
+      "persisted": "light"
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s4",
+      "targetTop": 109.5625
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s4",
+      "last": "s4"
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 0,
+      "focus": "表頭釋義",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 360,
+    "scheme": "light",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切換亮暗",
+      "toggled": "dark",
+      "persisted": "dark"
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 360,
+    "scheme": "light",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s2",
+      "targetTop": 55.984375
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 360,
+    "scheme": "light",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s2",
+      "last": "s4"
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 360,
+    "scheme": "light",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 40,
+      "focus": "表頭釋義",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 360,
+    "scheme": "dark",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "跳到正文",
+      "focused": "切換亮暗",
+      "toggled": "light",
+      "persisted": "light"
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 360,
+    "scheme": "dark",
+    "action": "keyboard Enter second outline item",
+    "observed": {
+      "hash": "#s2",
+      "current": "#s2",
+      "targetTop": 55.984375
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 360,
+    "scheme": "dark",
+    "action": "scroll to final section",
+    "observed": {
+      "current": "#s2",
+      "last": "s4"
+    }
+  },
+  {
+    "unit": "U3",
+    "w": 360,
+    "scheme": "dark",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 40,
+      "focus": "表頭釋義",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U4",
+    "w": 1440,
+    "scheme": "light",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "Skip to content",
+      "focused": "Switch theme",
+      "toggled": "dark",
+      "persisted": "dark"
+    }
+  },
+  {
+    "unit": "U4",
+    "w": 1440,
+    "scheme": "light",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 0,
+      "focus": "Column notes",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U4",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "Skip to content",
+      "focused": "Switch theme",
+      "toggled": "light",
+      "persisted": "light"
+    }
+  },
+  {
+    "unit": "U4",
+    "w": 1440,
+    "scheme": "dark",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 0,
+      "focus": "Column notes",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U4",
+    "w": 360,
+    "scheme": "light",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "Skip to content",
+      "focused": "Switch theme",
+      "toggled": "dark",
+      "persisted": "dark"
+    }
+  },
+  {
+    "unit": "U4",
+    "w": 360,
+    "scheme": "light",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 0,
+      "focus": "Column notes",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U4",
+    "w": 360,
+    "scheme": "dark",
+    "action": "Tab skip; Tab theme; Enter; reload",
+    "observed": {
+      "skip": "Skip to content",
+      "focused": "Switch theme",
+      "toggled": "light",
+      "persisted": "light"
+    }
+  },
+  {
+    "unit": "U4",
+    "w": 360,
+    "scheme": "dark",
+    "action": "table focus; ArrowRight; Tab; Enter notes",
+    "observed": {
+      "before": 0,
+      "after": 0,
+      "focus": "Column notes",
+      "expanded": "true",
+      "notesVisible": true
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 1440,
+    "action": "reader rendered controls",
+    "observed": [
+      "\n      \n      浅色\n    ",
+      "\n        \n        经典\n        \n      ",
+      "\n          \n          经典稳定的技术默认风格\n          \n        ",
+      "\n          \n          信号流突出动态流向\n          \n        ",
+      "\n          \n          蓝图工程评审\n          \n        ",
+      "\n          \n          编辑风格适合发布与上线说明\n          \n        ",
+      "\n      \n      动态\n    ",
+      "\n      \n      演示\n    ",
+      "\n        导出 \n      ",
+      "分享卡片1200×630 PNG",
+      "路径分享卡片1200×630 PNG",
+      "可达范围分享卡片1200×630 PNG",
+      "复制分享卡片复制 PNG 到剪贴板",
+      "复制图表复制 PNG 到剪贴板",
+      "PNG无损图像",
+      "JPEG紧凑图像",
+      "WebP现代图像格式",
+      "SVG可编辑矢量图",
+      "WebM6 秒动效",
+      "←",
+      "→",
+      "\n          ▶\n          播放故事\n        ",
+      "\n          #\n          复制此刻\n        ",
+      "显示全部",
+      "×",
+      "\n            01\n            查找任意节点搜索标签、职责、类型和稳定 ID。\n            /\n          ",
+      "\n            02\n            追踪路径查看两个语义节点如何按编写方向连接。\n            R\n          ",
+      "\n            03\n            查看完整系统打开带实时视口和稳定节点的语义雷达。\n            M\n          ",
+      "\n            04\n            比较语义类型统计角色、显示流量并比较直接编写的连接。\n            L\n          ",
+      "\n            05\n            播放引导故事此图表没有编写引导故事。\n            P\n          ",
+      "\n            06\n            进入演示模式让实时图表占满视口，同时不改变导出。\n            F\n          ",
+      "×",
+      "固定目标与边界2 条连接安全 · scope · 目标 · 指标 · 底线 · 预算",
+      "提出机制假设3 条连接前端 · hypo · 会推翻它的观察",
+      "出自明确父版本的候选2 条连接后端 · cand · 不堆叠无法归因的猜想",
+      "固定协议下比较2 条连接云服务 · cmp · 先判有效性，再比收益",
+      "记录去留与理由4 条连接数据库 · record · 保留 · 撤回 · 未定 · 无效",
+      "冻结候选2 条连接消息总线 · freeze · 基线 / 最佳 / 已确认",
+      "连续停滞先诊断2 条连接外部系统 · diagnose · 任务 · 指导 · 执行 · 评测",
+      "在未见任务上独立确认1 条连接安全 · confirm · 用于下一轮即不再未见",
+      "\n                  上游0\n                ",
+      "\n                  下游0\n                ",
+      "×",
+      "复制链接",
+      "关系",
+      "查找起点",
+      "复制链接",
+      "清除",
+      "←",
+      "\n            ▶\n            旅程\n          ",
+      "→",
+      "总览",
+      "×",
+      "安全2",
+      "云服务1",
+      "前端1",
+      "后端1",
+      "外部系统1",
+      "数据库1",
+      "消息总线1",
+      "复制链接",
+      "清除",
+      "打开雷达",
+      "×",
+      "路径",
+      "地图",
+      "透镜",
+      "",
+      "",
+      "",
+      "阅读100%",
+      ""
+    ]
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "action": "reader rendered controls",
+    "observed": [
+      "\n      \n      浅色\n    ",
+      "\n        \n        经典\n        \n      ",
+      "\n          \n          经典稳定的技术默认风格\n          \n        ",
+      "\n          \n          信号流突出动态流向\n          \n        ",
+      "\n          \n          蓝图工程评审\n          \n        ",
+      "\n          \n          编辑风格适合发布与上线说明\n          \n        ",
+      "\n      \n      动态\n    ",
+      "\n      \n      演示\n    ",
+      "\n        导出 \n      ",
+      "分享卡片1200×630 PNG",
+      "路径分享卡片1200×630 PNG",
+      "可达范围分享卡片1200×630 PNG",
+      "复制分享卡片复制 PNG 到剪贴板",
+      "复制图表复制 PNG 到剪贴板",
+      "PNG无损图像",
+      "JPEG紧凑图像",
+      "WebP现代图像格式",
+      "SVG可编辑矢量图",
+      "WebM6 秒动效",
+      "←",
+      "→",
+      "\n          ▶\n          播放故事\n        ",
+      "\n          #\n          复制此刻\n        ",
+      "显示全部",
+      "×",
+      "\n            01\n            查找任意节点搜索标签、职责、类型和稳定 ID。\n            /\n          ",
+      "\n            02\n            追踪路径查看两个语义节点如何按编写方向连接。\n            R\n          ",
+      "\n            03\n            查看完整系统打开带实时视口和稳定节点的语义雷达。\n            M\n          ",
+      "\n            04\n            比较语义类型统计角色、显示流量并比较直接编写的连接。\n            L\n          ",
+      "\n            05\n            播放引导故事此图表没有编写引导故事。\n            P\n          ",
+      "\n            06\n            进入演示模式让实时图表占满视口，同时不改变导出。\n            F\n          ",
+      "×",
+      "固定目标与边界2 条连接安全 · scope · 目标 · 指标 · 底线 · 预算",
+      "提出机制假设3 条连接前端 · hypo · 会推翻它的观察",
+      "出自明确父版本的候选2 条连接后端 · cand · 不堆叠无法归因的猜想",
+      "固定协议下比较2 条连接云服务 · cmp · 先判有效性，再比收益",
+      "记录去留与理由4 条连接数据库 · record · 保留 · 撤回 · 未定 · 无效",
+      "冻结候选2 条连接消息总线 · freeze · 基线 / 最佳 / 已确认",
+      "连续停滞先诊断2 条连接外部系统 · diagnose · 任务 · 指导 · 执行 · 评测",
+      "在未见任务上独立确认1 条连接安全 · confirm · 用于下一轮即不再未见",
+      "\n                  上游0\n                ",
+      "\n                  下游0\n                ",
+      "×",
+      "复制链接",
+      "关系",
+      "查找起点",
+      "复制链接",
+      "清除",
+      "←",
+      "\n            ▶\n            旅程\n          ",
+      "→",
+      "总览",
+      "×",
+      "安全2",
+      "云服务1",
+      "前端1",
+      "后端1",
+      "外部系统1",
+      "数据库1",
+      "消息总线1",
+      "复制链接",
+      "清除",
+      "打开雷达",
+      "×",
+      "路径",
+      "地图",
+      "透镜",
+      "",
+      "",
+      "",
+      "阅读100%",
+      ""
+    ]
+  },
+  {
+    "unit": "U1",
+    "w": 1440,
+    "action": "reader zoom button; theme button; pointer drag",
+    "observed": {
+      "before": "阅读100%",
+      "zoomed": "阅读125%",
+      "theme": "dark",
+      "beforePan": {
+        "svgStyle": "transform: translate(-93px, -43px) scale(1.25); clip-path: inset(34.4px 74.4px);",
+        "svgTransform": null,
+        "containerScroll": 0,
+        "viewBox": "0 0 1143 528"
+      },
+      "afterPan": {
+        "svgStyle": "transform: translate(-48px, -18px) scale(1.25); clip-path: inset(14.4px 110.4px 54.4px 38.4px);",
+        "svgTransform": null,
+        "containerScroll": 0,
+        "viewBox": "0 0 1143 528"
+      }
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 1440,
+    "action": "scroll inside reader to bottom",
+    "observed": {
+      "scrollY": 107,
+      "innerHeight": 736,
+      "scrollHeight": 843,
+      "text": "效果验证：让候选参与新的可比执行，才谈真实效果\n• 历史材料不能直接给新候选打效果分\n两类记录缺一不可\n• 工作样本：真实任务的输入、条件、产物与效果\n• 进化尝试：假设、父版本、候选差异、验证与去留理由\n• 只有工作样本，得到的是案例库\n• 两类关联起来，才能评价经验有没有被用好\n容易走偏的地方\n• 规则数量、修改次数、自我评价都不能当能力证明\n• 不能同时改对象和评分口径，再把分数变化算成改进\n• 确认集一旦用于选择，就不再是未见数据\n• 确认失败就恢复仍有效的已确认版本，不要反复试到出赢家"
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "action": "reader zoom button; theme button; pointer drag",
+    "observed": {
+      "before": "阅读100%",
+      "zoomed": "阅读125%",
+      "theme": "dark",
+      "beforePan": {
+        "svgStyle": "transform: translate(-90px, -41.625px) scale(1.25); clip-path: inset(33.3px 72px);",
+        "svgTransform": null,
+        "containerScroll": 0,
+        "viewBox": "0 0 1143 528"
+      },
+      "afterPan": {
+        "svgStyle": "transform: translate(-90px, -41.625px) scale(1.25); clip-path: inset(33.3px 72px);",
+        "svgTransform": null,
+        "containerScroll": 0,
+        "viewBox": "0 0 1143 528"
+      }
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "action": "scroll inside reader to bottom",
+    "observed": {
+      "scrollY": 762,
+      "innerHeight": 654,
+      "scrollHeight": 1416,
+      "text": "效果验证：让候选参与新的可比执行，才谈真实效果\n• 历史材料不能直接给新候选打效果分\n两类记录缺一不可\n• 工作样本：真实任务的输入、条件、产物与效果\n• 进化尝试：假设、父版本、候选差异、验证与去留理由\n• 只有工作样本，得到的是案例库\n• 两类关联起来，才能评价经验有没有被用好\n容易走偏的地方\n• 规则数量、修改次数、自我评价都不能当能力证明\n• 不能同时改对象和评分口径，再把分数变化算成改进\n• 确认集一旦用于选择，就不再是未见数据\n• 确认失败就恢复仍有效的已确认版本，不要反复试到出赢家"
+    }
+  },
+  {
+    "unit": "U1",
+    "action": "denied localStorage; Tab Tab Enter theme",
+    "observed": {
+      "initial": {
+        "bg": "rgb(21, 33, 36)",
+        "theme": "system"
+      },
+      "switched": {
+        "bg": "rgb(250, 250, 247)",
+        "theme": "light"
+      }
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "action": "eight consecutive Tab keys from fresh page",
+    "observed": [
+      {
+        "tag": "A",
+        "cls": "skip-link",
+        "text": "跳到正文",
+        "href": "#main",
+        "outline": "rgb(18, 99, 108) solid 3px"
+      },
+      {
+        "tag": "BUTTON",
+        "cls": "theme-toggle",
+        "text": "切换亮暗",
+        "href": null,
+        "outline": "rgb(18, 99, 108) solid 3px"
+      },
+      {
+        "tag": "A",
+        "cls": "",
+        "text": "四种模板共用一套阅读组件",
+        "href": "#s1",
+        "outline": "rgb(18, 99, 108) solid 3px"
+      },
+      {
+        "tag": "A",
+        "cls": "",
+        "text": "排版从逐次手写变成随 skill 固定",
+        "href": "#s2",
+        "outline": "rgb(18, 99, 108) solid 3px"
+      },
+      {
+        "tag": "A",
+        "cls": "",
+        "text": "先交付固定阅读页，再做审阅能力",
+        "href": "#s3",
+        "outline": "rgb(18, 99, 108) solid 3px"
+      },
+      {
+        "tag": "DIV",
+        "cls": "table-scroll",
+        "text": "状态交付物验证范围✓ 已提供四种固定模板生成后的单文件页面! 待后续人工标注与提交P2 实施，P1 不包含✗ 未纳入主题库与自定义模板本期明确不做",
+        "href": null,
+        "outline": "rgb(18, 99, 108) solid 3px"
+      },
+      {
+        "tag": "BUTTON",
+        "cls": "notes-toggle",
+        "text": "表头释义",
+        "href": null,
+        "outline": "rgb(18, 99, 108) solid 3px"
+      },
+      {
+        "tag": "IFRAME",
+        "cls": "",
+        "text": "",
+        "href": null,
+        "outline": "rgb(32, 47, 50) none 3px"
+      }
+    ]
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "action": "horizontal wheel inside reader diagram",
+    "observed": {
+      "before": [
+        {
+          "tag": "DIV",
+          "cls": "diagram-container",
+          "width": 284,
+          "scrollWidth": 744,
+          "left": 0
+        },
+        {
+          "tag": "DIV",
+          "cls": "diagram-nav no-print",
+          "width": 250,
+          "scrollWidth": 324,
+          "left": 0
+        }
+      ],
+      "after": [
+        {
+          "tag": "DIV",
+          "cls": "diagram-container",
+          "width": 284,
+          "scrollWidth": 744,
+          "left": 320
+        },
+        {
+          "tag": "DIV",
+          "cls": "diagram-nav no-print",
+          "width": 250,
+          "scrollWidth": 324,
+          "left": 0
+        }
+      ]
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "action": "horizontal wheel over reader bottom toolbar",
+    "observed": {
+      "before": {
+        "left": 0,
+        "width": 250,
+        "scrollWidth": 324
+      },
+      "after": {
+        "left": 74,
+        "width": 250,
+        "scrollWidth": 324
+      }
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "action": "real Tab sequence inside reader towards zoom in",
+    "observed": {
+      "sequence": [
+        {
+          "tag": "BUTTON",
+          "aria": "当前视觉风格：经典。选择视觉风格",
+          "title": "选择视觉风格（S 循环切换）",
+          "text": "经典"
+        },
+        {
+          "tag": "BUTTON",
+          "aria": "进入演示模式",
+          "title": "演示模式（F）",
+          "text": "演示"
+        },
+        {
+          "tag": "BUTTON",
+          "aria": "导出图表",
+          "title": "导出图表（E）",
+          "text": "导出"
+        },
+        {
+          "tag": "svg",
+          "aria": null,
+          "title": null,
+          "text": "agi-mode 有边界的进化循环\n        由 Archify 生成的工作流图。\n"
+        },
+        {
+          "tag": "g",
+          "aria": "直接关系浏览器",
+          "title": null,
+          "text": "使用方向键浏览关系。按 Enter 或空格键固定详情；按 Escape 清除。出自明确父版"
+        },
+        {
+          "tag": "g",
+          "aria": "检查第 1/9 条关系：出自明确父版本的候选 到 固定协议下比较，连接到。按 Enter 查看详情。",
+          "title": null,
+          "text": "出自明确父版本的候选 → 固定协议下比较 · 连接到"
+        },
+        {
+          "tag": "g",
+          "aria": "聚焦固定目标与边界，目标 · 指标 · 底线 · 预算, 单轮进化（有边界） › 固定边界",
+          "title": null,
+          "text": "固定目标与边界 · 目标 · 指标 · 底线 · 预算 · 单轮进化（有边界） › 固定边"
+        },
+        {
+          "tag": "g",
+          "aria": "聚焦提出机制假设，会推翻它的观察, 单轮进化（有边界） › 固定边界",
+          "title": null,
+          "text": "提出机制假设 · 会推翻它的观察 · 单轮进化（有边界） › 固定边界\n         "
+        },
+        {
+          "tag": "g",
+          "aria": "聚焦出自明确父版本的候选，不堆叠无法归因的猜想, 单轮进化（有边界） › 单轮机制实验",
+          "title": null,
+          "text": "出自明确父版本的候选 · 不堆叠无法归因的猜想 · 单轮进化（有边界） › 单轮机制实验\n"
+        },
+        {
+          "tag": "g",
+          "aria": "聚焦固定协议下比较，先判有效性，再比收益, 单轮进化（有边界） › 单轮机制实验",
+          "title": null,
+          "text": "固定协议下比较 · 先判有效性，再比收益 · 单轮进化（有边界） › 单轮机制实验\n   "
+        },
+        {
+          "tag": "g",
+          "aria": "聚焦记录去留与理由，保留 · 撤回 · 未定 · 无效, 单轮进化（有边界） › 单轮机制实验",
+          "title": null,
+          "text": "记录去留与理由 · 保留 · 撤回 · 未定 · 无效 · 单轮进化（有边界） › 单轮机"
+        },
+        {
+          "tag": "g",
+          "aria": "聚焦冻结候选，基线 / 最佳 / 已确认, 单轮进化（有边界） › 冻结与确认",
+          "title": null,
+          "text": "冻结候选 · 基线 / 最佳 / 已确认 · 单轮进化（有边界） › 冻结与确认\n    "
+        },
+        {
+          "tag": "g",
+          "aria": "聚焦连续停滞先诊断，任务 · 指导 · 执行 · 评测, 停滞诊断 › 单轮机制实验",
+          "title": null,
+          "text": "连续停滞先诊断 · 任务 · 指导 · 执行 · 评测 · 停滞诊断 › 单轮机制实验\n "
+        },
+        {
+          "tag": "g",
+          "aria": "聚焦在未见任务上独立确认，用于下一轮即不再未见, 独立确认 › 冻结与确认",
+          "title": null,
+          "text": "在未见任务上独立确认 · 用于下一轮即不再未见 · 独立确认 › 冻结与确认\n      "
+        },
+        {
+          "tag": "g",
+          "aria": "语义图例",
+          "title": null,
+          "text": "图例\n          \n            \n            方法步骤\n "
+        },
+        {
+          "tag": "g",
+          "aria": "检查方法步骤，1 个节点",
+          "title": null,
+          "text": "方法步骤\n          1"
+        },
+        {
+          "tag": "BUTTON",
+          "aria": "追踪有向路径",
+          "title": "追踪路径（R）",
+          "text": "路径"
+        },
+        {
+          "tag": "BUTTON",
+          "aria": "打开语义雷达",
+          "title": "语义雷达（M）",
+          "text": "地图"
+        }
+      ],
+      "toolbar": {
+        "left": 0,
+        "width": 250,
+        "scrollWidth": 324
+      }
+    }
+  },
+  {
+    "unit": "U1",
+    "w": 360,
+    "action": "Tab from reader theme through zoom-in; Enter",
+    "observed": {
+      "tabs": [
+        "当前视觉风格：经典。选择视觉风格",
+        "进入演示模式",
+        "导出图表",
+        null,
+        "直接关系浏览器",
+        "检查第 1/9 条关系：出自明确父版本的候选 到 固定协议下比较，连接到。按 Enter 查看详情。",
+        "聚焦固定目标与边界，目标 · 指标 · 底线 · 预算, 单轮进化（有边界） › 固定边界",
+        "聚焦提出机制假设，会推翻它的观察, 单轮进化（有边界） › 固定边界",
+        "聚焦出自明确父版本的候选，不堆叠无法归因的猜想, 单轮进化（有边界） › 单轮机制实验",
+        "聚焦固定协议下比较，先判有效性，再比收益, 单轮进化（有边界） › 单轮机制实验",
+        "聚焦记录去留与理由，保留 · 撤回 · 未定 · 无效, 单轮进化（有边界） › 单轮机制实验",
+        "聚焦冻结候选，基线 / 最佳 / 已确认, 单轮进化（有边界） › 冻结与确认",
+        "聚焦连续停滞先诊断，任务 · 指导 · 执行 · 评测, 停滞诊断 › 单轮机制实验",
+        "聚焦在未见任务上独立确认，用于下一轮即不再未见, 独立确认 › 冻结与确认",
+        "语义图例",
+        "检查方法步骤，1 个节点",
+        "追踪有向路径",
+        "打开语义雷达",
+        "打开语义透镜",
+        "查找节点",
+        "打开图表指南",
+        "再次放大以显示标签和注释。重置图表视图",
+        "放大"
+      ],
+      "zoomText": "阅读125%"
+    }
+  }
+]

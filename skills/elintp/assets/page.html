@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="/*__LANG__*/">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/*__TITLE__*/</title>
+<style>/*__CSS__*/</style>
+/*__REVIEWCSS__*/
+<script>
+(() => {
+  document.documentElement.classList.add('js');
+  try {
+    const theme = localStorage.getItem('elintp-theme');
+    if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+  } catch { /* Use the system preference when storage is unavailable. */ }
+})();
+</script>
+</head>
+<body class="tpl-/*__TEMPLATE__*/">
+<a class="skip-link" href="#main">/*__SKIP__*/</a>
+<header class="page-head">/*__HEAD__*/</header>
+<div class="lead">/*__LEAD__*/</div>
+<div class="reading-layout">
+/*__OUTLINE__*/
+<main id="main" tabindex="-1">/*__SECTIONS__*/</main>
+</div>
+/*__SOURCES__*/
+/*__DATA__*/
+<script>/*__JS__*/</script>
+/*__REVIEWJS__*/
+</body>
+</html>

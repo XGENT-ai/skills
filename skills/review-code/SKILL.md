@@ -47,6 +47,7 @@ WORKFLOW @review_code:
        recheck_previous_issues_when_applicable,
        read_diff_and_trace_required_behavior,
        validate_and_countercheck_candidate_findings,
+       obtain_missing_evidence_within_review_boundary_before_adjudication,
        adjudicate_and_recheck_snapshot_consistency,
        write_and_reread_complete_report_unless_chat_only,
        write_registered_project_status_after_primary_artifact_delivery_when_allowed,
@@ -231,9 +232,17 @@ RULE @real_use_evidence:
   MUST: ["沿用户实际入口核对本次改变的主路径：优先运行计划的场景 E2E 或真实使用验收，或按公开文档走一遍；不能运行时核对当前版本的已有证据并标明来源",
          "判断用户实际得到的结果，不只看退出码、回执或测试断言；静态推演、局部测试与真实入口证据分开记录",
          "实现记录或计划中已知的用户可见问题，既未修复也未经用户确认延期的，按本期缺陷报告",
-         "主路径缺当前版本的真实入口证据且无法补证时列待核实，不判通过验收"]
+         "主路径的当前版本真实入口证据按 @evidence_ownership 在本轮取得；仍缺时列待核实，不判通过验收"]
   MUST_NOT: ["以测试全过或覆盖率作为产品能用的依据",
              "把新增局部测试当作真实入口证据缺口的修复方向"]
+
+RULE @evidence_ownership:
+  MUST: ["补证是本轮评审的工作：结论依赖而尚缺的证据，评审边界内能取得的，本轮取得后再裁定，包括运行计划登记的检查与验收步骤、沿真实入口走查、在临时目录或隔离环境用测试数据构造所需状态；上轮待核实项同样先自行取证",
+         "现有环境运行的不是被审版本时，能按仓库既有方式另起被审版本的隔离实例就用它取证，不替换共享或正在运行的环境",
+         "只有实际尝试后仍受阻的缺口才列待核实，写明已尝试动作、受阻原因、执行者、补证动作与完成条件",
+         "执行者按受阻原因确定：需写入目标仓、换装验收环境或其他超出评审边界但 agent 可执行的，归 apply-code-review；只有用户或外部方能提供的权限、凭据、资料或决定，归用户并写明所需输入；计划自身未完成或阻塞的里程碑，归计划后续实施"]
+  MUST_NOT: ["把评审边界内可执行的验证留给下一步或用户",
+             "没有执行者的待核实项"]
 
 RULE @test_burden:
   WHEN: reviewed_change_adds_or_changes_tests
@@ -306,7 +315,7 @@ OUTPUT:
   verdict_source: references/report-contract.md
 
 REVIEW:
-  CHECK: [@new_finding_admission, @fr_before_nfr, @recheck_coverage, @snapshot_consistency,
+  CHECK: [@new_finding_admission, @fr_before_nfr, @evidence_ownership, @recheck_coverage, @snapshot_consistency,
           @complete_report, @report_persistence]
   ALSO: [coverage_disclosure, evidence_traceability, actual_report_links]
   EXPOSE: on_issue
@@ -341,8 +350,13 @@ RULE @prd_origin:
 
 RULE @needs_evidence_next:
   WHEN: "验收判定为「需补证」"
-  MUST: [list_missing_evidence_or_verification_and_how_to_obtain,
-         suggest_review_code_with_plan_or_original_scope_after_evidence_ready]
+  MUST: |
+    报告与最终回复逐项列出剩余缺口：缺什么、已尝试动作与受阻原因、执行者、
+    补证动作与完成条件。有归 apply-code-review 的缺口时，下一步给
+    apply-code-review <本报告路径>，由它执行补证并处理补证暴露的缺陷，完成后
+    review-code <计划路径或原范围> 复审；不因没有确认缺陷而说无需 apply，
+    不把这些缺口交给用户。归用户的缺口写明需要提供或决定什么；
+    归计划后续实施的指明里程碑与计划记录的继续动作。
 
 RULE @explicit_waiver:
   WHEN: user_explicitly_waives_remaining_issues_for_current_period_at_invocation_or_after_review

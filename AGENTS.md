@@ -179,6 +179,7 @@ During development, use [experience-capture](skills/experience-capture/SKILL.md)
 
 ## Working in This Repository
 
+- 本仓对应 `xgent-pms` MCP 的「XGENT-ai Skills」项目（`projectId: f26c604e1302957f12704f8f`）；未另行指定时，使用该项目。
 - Stay on the current branch unless the user explicitly requests a new one; historical examples and skill/workflow conventions are not authorization.
 - Choose Node/Python/metadata and runtime checks under `@verification_scope_and_cost`; direct file/module/package commands are allowed. `npm test` and `npm run test:phoenix` are aggregate entrypoints, not default requirements. Actual Phoenix runtime checks use mise, Rust 1.99.1 and pinned build tools; missing tools fail, not skip. Browser, native-platform and real provider-session acceptance apply only to relevant changes and must be recorded separately, never inferred from another check.
 - `skills/<name>/` is the source of truth. Gitignored `.claude/skills/`, `.agents/skills/` and `.codex/skills/` are local installs. skills.sh copies need push/reinstall for local edits; source symlinks reflect them immediately. When work depends on recent changes and a loaded skill is an installed copy, first run `diff -rq .claude/skills/<name> skills/<name>` and use source when different. Point behavior checks at `skills/<name>/...`.
