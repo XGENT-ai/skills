@@ -1,3 +1,3 @@
 interface:
   display_name: "Use Task Gateway"
-  short_description: "帮助其他 App 接入 Task Gateway，可靠提交异步任务并恢复查询、回收结果"
+  short_description: "帮助服务提供方发布执行能力到目录，并指导调用方可靠提交、恢复与回收任务结果"

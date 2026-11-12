@@ -12,7 +12,7 @@
 | GET | `/v1/tasks?service=...&state=...&limit=...&cursor=...` | `task_gateway.read` | `data.items/next_cursor`；列表没有 payload |
 | POST | `/v1/tasks/{task_id}/cancel` | `task_gateway.submit` | 无请求体；仅 pending 可取消 |
 
-服务目录包含本租户自有服务和公开的平台服务。使用真实 `name`，不把展示名当物理名。`runtime_scope` 表示 `tenant_managed/platform_managed`；提交还要求 `provisioned=true`。`active_nodes>0` 只证明节点在线，仍需验证执行能力。
+服务目录包含本租户自有服务、公开平台服务和允许当前可信来源 App 的平台服务。使用真实 `name`，不把展示名当物理名。`runtime_scope` 表示 `tenant_managed/platform_managed`；提交还要求 `provisioned=true`。`active_nodes>0` 只证明节点在线，仍需验证执行能力。能力契约与发布回执由服务提供方交付，发布方式见 [publishing.md](publishing.md)。
 
 以下示例假定目标 agent 的 `service_key.path=service`；服务名、业务 ID 与 payload 字段需换成目标服务的实际契约：
 

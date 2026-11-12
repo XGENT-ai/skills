@@ -1,5 +1,7 @@
 # workflow 引擎专用动作面
 
+本页说明引擎如何消费目录。服务提供方登记、更新或退役动作时读取 [publishing.md](publishing.md)，不需要冒用引擎身份发布。
+
 仅当实际接入的是平台 workflow 引擎时采用。身份要求同时满足 `kind=service`、门户归因 `azp=workflow`、`task_gateway.workflow_actions`。其他 App 即使持有此 scope 也不能调用；不能更改请求体/metadata 伪造身份。普通 App 使用 [task-api.md](task-api.md)，不要为获取 lease 或 abort 而冒用引擎。
 
 使用已有 workflow SA 请求门户 `/api/tokens/service`，scope 为 `task_gateway.workflow_actions`，tenant_id 从已授权流程记录取得。SA audience 可以是 `workflow-server`，无需改成 task-gateway；该面另外检查 azp。服务态不带 admin role，建服务/发节点令牌由管理员准备。
@@ -42,16 +44,16 @@ businessKey 的提交查重范围实际为 `(tenant, target service)`，摘要�
 
 ## 状态、失败和中止
 
-提交响应取 `data.taskId`，state 可为 accepted/completed/failed/suppressed；回查 state 为 pending/running/completed/failed/suppressed/unknown，不能套用普通 HTTP 六态。pending/执行中按 `data.retryAfterS` 等待（当前分别约 10/5 秒，流式约 3 秒）；终态不带该提示。unknown 不等于执行失败，检查 submissionKey/businessKey 与业务记录。
+提交响应取 `data.taskId`，`data.externalRef` 与它同值，首次提交和幂等回放都带；state 可为 accepted/completed/failed/suppressed；回查 state 为 pending/running/completed/failed/suppressed/unknown，不能套用普通 HTTP 六态。pending/执行中按 `data.retryAfterS` 等待（当前分别约 10/5 秒，流式约 3 秒）；终态不带该提示。回查查到任务时同样带 `externalRef`，unknown 不带。unknown 不等于执行失败，检查 submissionKey/businessKey 与业务记录。
 
 业务调用失败仍为 HTTP 200 + ok:false。任务 failed 的 `reason/code/retryable` 在 data 顶层，是否重做遵循 retryable 与本 App 策略；`nodeError` 是执行器自报错误，独立于网关 code，不能拿它冒充网关撤回/中止信号。终态 result.artifacts 若为数组，会原样提升到 data.artifacts；网关不存储或验证产物，文件由 runner 自行上传。
 
 | cancel 请求 | 结果 |
 | --- | --- |
-| 只有 submissionKey，任务 pending | state=cancelled；后续 status 为 failed + code=INVALID_STATE + retryable=false |
+| 只有 submissionKey，任务 pending | state=canceled；后续 status 为 failed + code=INVALID_STATE + retryable=false |
 | 只有 submissionKey，任务已领取 | ok:false + INVALID_STATE |
 | 带 abortIfRunning=true，任务已领取 | 立即记终态并回 state=aborting；status 为 failed + code=ABORTED + retryable=false |
-| 已终态 | 通常 INVALID_STATE；已中止请求的重放可回 aborting |
+| 已终态 | 回该任务结论，形状与 status 相同（state=completed/failed，带 result、submissionKey、externalRef、artifacts），表示没撤住；已中止请求的重放回 aborting |
 
 中止信号通过下一次节点心跳送达，新 agent 终止对应进程树或不启动尚未执行的任务；旧 agent 可能继续执行，迟到结果被拒绝。aborting 响应不证明物理进程已停止；取消/中止不当成可重试执行失败。流程终态通知依赖回查；body.callback 上下文不是已实现的可靠终态推送。
 
