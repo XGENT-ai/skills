@@ -75,6 +75,8 @@ pub fn default_chrome_args(user_args: &[String], dangerous_no_sandbox: bool) -> 
         "--gaia-url=http://127.0.0.1:9",
         "--google-apis-url=http://127.0.0.1:9",
         "--lso-url=http://127.0.0.1:9",
+        "--component-updater=url-source=http://127.0.0.1:9/",
+        "--gcm-checkin-url=http://127.0.0.1:9/",
         "--disable-crash-reporter",
         "--disable-default-apps",
         "--disable-dev-shm-usage",
@@ -2296,6 +2298,10 @@ mod tests {
         assert!(args.contains(&"--hide-scrollbars".to_string()));
         assert!(args.contains(&"--disable-component-update".to_string()));
         assert!(args.contains(&"--gaia-url=http://127.0.0.1:9".to_string()));
+        assert!(args.contains(
+            &"--component-updater=url-source=http://127.0.0.1:9/".to_string()
+        ));
+        assert!(args.contains(&"--gcm-checkin-url=http://127.0.0.1:9/".to_string()));
         let disabled = args
             .iter()
             .find_map(|arg| arg.strip_prefix("--disable-features="))

@@ -205,11 +205,11 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-12 17:10（UTC+8）
+- 最近更新：2026-11-12 17:17（UTC+8）
 - 当前进度：0/2 个里程碑完成
-- 当前状态：M1 已交付（mod.rs、docs、PRD v1.4 与既有用例新断言，media::tests 批内绿），提交见完成记录 M1 行；批末检查未运行
+- 当前状态：M1、M2 第一步候选均已交付提交（提交见完成记录各行）；批末检查未运行
 - 最近完成：无
-- 下一步：M2 · §5.2 第一步候选（cdp.rs 两个改发开关与 default_args_shape 断言，network_boundary.rs 不动）交付提交；随后批末 V-1–V-3
+- 下一步：批末 §9 检查 V-1–V-3（V-1 需真实信源与本机 Chrome；通过后 M1 记完成，HEAD 记 CI 候选）→ 申请推送授权运行 V-4
 - 当前阻塞：无
 - 代码基线：`3094bbeda67dbdbb72806c1c82f27bc2fbb5a403`（main）
 
@@ -218,6 +218,7 @@ REVIEW @progress_consistency:
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 进行中 | 2026-11-12 17:10 | §5.1 print_result 条目行分级旁括注许可原文（空许可不带括号）＋既有用例新增不带 --json 断言；docs「素材命令」补结果行字段说明；§5.3 PRD 四处与 v1.4。批内 media::tests 绿；批末 V-1–V-3 未运行 | [M1.md](PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.records/M1.md) | c2e6e241 |
+| M2 | 进行中 | 2026-11-12 17:17 | §5.2 第一步候选：default_chrome_args 增 --component-updater=url-source=http://127.0.0.1:9/ 与 --gcm-checkin-url=http://127.0.0.1:9/（D2）；default_args_shape 增两条包含断言；network_boundary.rs 未动（D3）。批内 default_args_shape 绿；V-1–V-4 待运行 | [M2.md](PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.records/M2.md) | 待提交 |
 
 ## 0. 需求、范围与决策
 
