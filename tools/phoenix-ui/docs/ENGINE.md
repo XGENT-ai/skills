@@ -14,7 +14,7 @@ browser-bundle/         the page JS the in-page detector bundle is built from
 crates/
   cli          the `phoenix-ui` binary: verb router, exit codes, native capture, media, prep-image
   common       Io handle (stdout/stderr/stdin/env/cwd), path + process helpers
-  context      context, doctor, staleness, signals, concept-seed, critique, ...
+  context      context, doctor, staleness, signals, concept-seed, critique, serve-question, compare, ...
   hook         the design hook (hook, hook-before-edit, hook-admin)
   live         live mode: helper server, wrap, accept, manual edits, Svelte preview
   skills       install / update / check / link

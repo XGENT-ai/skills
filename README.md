@@ -57,6 +57,9 @@ Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoe
 
 - **engine**:按包内 `dist/phoenix-ui/VERSION.json` 的摘要校验后放进 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`(`PHOENIX_UI_HOME` 可改),新旧项目的引擎可共存,支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64;不支持 Windows。不可用时整个安装在写项目前停止,可改用 `--release-dir=DIR` 离线安装或 `--no-phoenix-ui`。hook 与 context 运行时不联网补下载。
 - **素材与图片**:`phoenix-ui media` 检索并取用开放授权素材（只进 `.phoenix-ui/media/`，仅用于设计稿与方案预览），`phoenix-ui prep-image` 批量导出交付图片；参数与来源保留说明见 [使用文档](docs/phoenix-ui.md#素材命令media)。
+- **取证与走查**:`phoenix-ui capture` 按步骤取多视口、多状态的截图并自检有效性,是 Web 完工轮的默认证据;界面有主要操作流程时,同一轮以全新上下文派出 `phoenix-ui-ux-walker` 做盲测走查。见 [取证命令](docs/phoenix-ui.md#取证命令capture)。
+- **中文排版**:`phoenix-ui detect <url>` 的页面扫描含五条 `xgent/cjk-*` 规则（行高、行长、末行孤字、数字与单位分行、字体回退）,`typeset` 对以汉字为主的正文按 25–40 字行长与 1.6–1.75 行高评估。见 [XGENT 自有检测规则](docs/phoenix-ui.md#xgent-自有检测规则)。
+- **方案对比与设计指引**:`phoenix-ui compare` 把已做出来的整页方案（本地 HTML、本机地址、截图,可含现状基线）放进一张本机对比页并排比较,用户在页上选定后选择直接回到对话。skill 另有四组指引:模糊评价先翻译成可观察的变量再动手、动效的编排与手感、演示数据与图标及三类结构的补验、交付后最多三条带代价的下一步。见 [方案对比页](docs/phoenix-ui.md#方案对比页compare) 与 [设计指引增补](docs/phoenix-ui.md#设计指引增补)。
 - **已有工具**:Phoenix UI 和 Diagram 都是可重新安装的工具：安装直接覆盖工具文件，不备份旧版、不创建安装事务目录，不提供普通安装回滚。中断后重跑安装即可；成功安装会清理旧安装记录和备份。业务源码、工具生成的业务数据及其他 hooks 保留。发现旧 impeccable 时默认删除，可用 `--keep-impeccable` 保留。
 
 安装、支持矩阵与渠道说明见 [docs/phoenix-ui.md](docs/phoenix-ui.md)。

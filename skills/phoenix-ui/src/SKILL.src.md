@@ -86,6 +86,16 @@ Choose the mode from the requested surface, not the product, and persist it only
 | `live` | Iterate | Visual variant mode: pick elements in the browser, iterate on alternatives | [reference/live.md](reference/live.md) |
 | `generate [n] [action] [element]` | Iterate | Variants, versions, or alternatives of a named element to choose from in the live browser; no manual picking | [reference/generate.md](reference/generate.md) |
 
+Engine commands are what these flows run through `{{scripts_path}}/phoenix-ui <command>`. They are not `{{command_prefix}}phoenix-ui <sub-command>` design commands and take no pin.
+
+| Engine command | Purpose | Details |
+|---|---|---|
+| `capture <page>` | Step a web page into named states and screenshot them across viewports, with a validity self-check on every shot. The evidence source for the web finish round; when the surface has a primary flow, the blind UX walk is dispatched in that same round | [reference/new-work.md](reference/new-work.md) §7 |
+| `detect <url>` page rules | Detection on the browser-rendered page, including the five `xgent/cjk-*` rules for text that is mainly Han characters | [reference/craft-floor.md](reference/craft-floor.md), [reference/typeset.md](reference/typeset.md) |
+| `media <search\|preview\|fetch\|audit>` | Find and fetch open-license media for comps and previews; files go only into `.phoenix-ui/media/` | [Media requests](#media-requests) |
+| `prep-image <files>` | Export delivery images at 2× display width and print the `srcset` snippet | [reference/optimize.md](reference/optimize.md) |
+| `compare --start` / `--wait` | Show built whole-page proposals side by side and bring back the user's choice | [reference/compare.md](reference/compare.md) |
+
 Routing: <!-- rule:skill-routing -->
 
 - **Continue an accepted direction for this target:** reuse the original brief returned by context. A matching accepted hash restores the direction across sessions without another interview or concept roll. A stale, missing or ambiguous mapping requires resolving the original source and acceptance decision; do not select by mtime or silently accept changed bytes. If the user requests a different direction, record that change scope and use design-reference for the new choice.

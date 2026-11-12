@@ -188,6 +188,55 @@ phoenix-ui embed-prompt --scan public/img
 
 退出码：0 全部成功；1 参数错误或没有输入，不写文件；2 个别输入失败，其余照常处理。
 
+## 方案对比页（compare）
+
+`phoenix-ui compare` 把已经做出来的整页方案放进一张本机对比页并排展示，用户在页上选定一个并附说明，选择经本机服务直接回到调用方。它只负责把方案原样摆出来、把用户点的那个带回去：不评价、不推荐、不替用户选，也不读写项目源码。构建之前选方向仍用方向轮的决策页（`serve-question`），元素级变体仍用 live，comp-led 的组件评审仍用 `component-review`；只有一个方案时命令拒绝启动。
+
+```bash
+phoenix-ui compare --schema
+phoenix-ui compare --start --payload .phoenix-ui/compare/round.json
+phoenix-ui compare --wait --key <键>
+phoenix-ui compare --stop --key <键>
+```
+
+载荷示例（`--schema` 打印同一份并附字段说明）：
+
+```json
+{
+  "title": "订单页改版方案",
+  "question": "选一个继续做，或保持现状",
+  "serve": { "command": "pnpm dev", "cwd": "." },
+  "proposals": [
+    { "id": "current", "name": "现状", "url": "http://localhost:5173/orders", "baseline": true },
+    { "id": "ledger", "name": "方案 A · 账本", "source": ".phoenix-ui/compare/variants/ledger/index.html",
+      "concept": "把订单当作一页流水账来读", "typography": "思源宋体 + JetBrains Mono",
+      "palette": ["#1f1c18", "#efe5d0", "#a33327"], "traits": ["密排表格", "单色强调"] },
+    { "id": "board", "name": "方案 B · 看板", "source": ".phoenix-ui/compare/variants/board/index.html", "interactive": true },
+    { "id": "sketch", "name": "方案 C · 截图", "source": ".phoenix-ui/review/sketch-mobile.png", "pixelRatio": 2 }
+  ]
+}
+```
+
+- 方案至少两个；每个给 `id`（字母、数字、下划线、连字符，彼此不同）、`name`，以及 `source` 或 `url` 之一。`baseline: true` 标现状，最多一个，页面把它排在第一位并带「现状」标记。`concept`、`typography`、`palette`、`traits` 是方案信息，没填的不显示。`title`、`question` 可省；`lang` 为 `zh-CN`（默认）或 `en`，决定外壳语言。校验失败时一次列出全部问题，不起服务。
+- **HTML 方案**（`source` 为 `.html`/`.htm`，须在当前项目目录内）：对比页服务只提供该文件所在目录里的文件，所以资源要用相对路径、放在同一目录下；越出目录（`../`）、以 `/` 开头的路径和以 `.` 开头的文件取不到。默认不执行脚本，也不向对比页服务之外发任何请求（外链字体、远程图片、统计脚本都不加载）。标 `"interactive": true` 的方案允许内联与同目录的经典脚本运行，仍不能联网；模块脚本与需要构建产物的页面请改用本机地址方案。
+- **本机地址方案**（`url`）：只接受主机为 `localhost`、`127.0.0.1`、`[::1]` 的 http(s) 地址，开发服务器要开着。连不上时该方案显示不可用与载荷 `serve` 里的启动说明，其余方案照常，页面每 5 秒复查一次。带 `X-Frame-Options` 或 `frame-ancestors` 的开发服务器拒绝被嵌入，画面会是空白：用栏头的「在新标签页打开」查看，或改用截图方案。
+- **截图方案**（`source` 为 `.png`/`.jpg`/`.jpeg`/`.webp`/`.gif`）：按原图显示，不随视口开关变化；`pixelRatio`（1–4）写截图时的像素比，100% 时按“像素宽 ÷ pixelRatio”显示。
+- 页面上：并排或单个查看；HTML 与本机地址方案可切桌面（1440×900）/ 手机（390×844）视口，按真实视口渲染后整体缩放；单个视图可看 100% 实际尺寸；左右方向键与数字键切换方案，回车打开选择面板（焦点进了方案画面后先点一下页面空白处）。点「选择」后可填「喜欢它什么」「不喜欢什么」，确认即提交。
+- `--start` 校验载荷后起一个脱离终端、只监听 `127.0.0.1` 的服务，打印 `COMPARE URL:` 与 `COMPARE KEY:` 后返回；由调用方为用户打开地址，加 `--open` 时由命令用系统打开方式打开。同一键已有运行中的服务，或还留有未领取的选择时拒绝启动。`--wait` 取回选择，`--poll <秒>`（默认 60）内没有结果就返回，可重复运行。`--stop` 结束服务并丢弃未领取的选择。页面一直没打开时服务保留 `--timeout` 秒（默认 900），页面关闭后再保留 `--idle-grace` 秒（默认 600），期间重新打开同一地址可以继续选。
+- 退出码：`--start` 0 已启动；1 载荷或参数有问题、键被占用或服务没有就绪（沙箱内不能监听本机端口时会这样）；2 当前会话没有浏览器。`--wait` 0 输出 `ANSWER: {"proposalId","name","baseline","liked","disliked"}`，选的是基线时另有一行 `BASELINE KEPT:`；3 `WAITING:` 还没有选择；4 `PAGE CLOSED:` 页面已关闭且没有选择；2 服务已不在且没有选择（服务故障，不是用户的决定）。
+- 无回答时的处置（skill 的 `reference/compare.md` 同此）：先用结构化提问再问一次；仍无回答，有现状基线就保持现状并在交付里写明待选，没有基线才按主代理的推荐继续并写明未经用户选择。主代理从不替用户提交选择。
+- 状态文件在当前项目的 `.phoenix-ui/compare/`：`<键>.state.json`、`<键>.answer.json`（`--wait` 取走后删除）与 `<键>.log`。没有浏览器的会话（`PHOENIX_UI_QUESTION_DISABLED`，或 CI、无显示的 SSH/Linux）`--start` 直接退出 2；确需启动时设 `PHOENIX_UI_QUESTION_FORCE=1`。这两个环境变量与决策页共用。
+
+## 设计指引增补
+
+以下是 phoenix-ui skill 里的做法，不是命令或检测规则；细则在 skill 的对应参考里。
+
+- **模糊评价先翻译**（`reference/vague-feedback.md`）：用户只说“再高级一点”“简洁些”时，主代理先写出“要改的变量 → 预期变化”再动手，交付后逐项说明；拿不准只问一次并给两个具体选项，或给两个可比较的变体（元素级用 live，整页用对比页）。翻译不出变量的形容词不作为改动理由。方向轮里的“更大胆/更稳妥”仍是方向轮的档位。
+- **动效的编排与核对**（`reference/animate.md`）：变化从被操作的元素出发、一次切换一个方向、主角先动而其余晚 40–80ms 跟随；只变尺寸或位置的过渡不交叉淡化，选中指示用一块滑块；手感用“动作 + 实物”命名并给弹簧参数或缓动；看不见结果的操作用短提示说出结果。Web 上用 `capture` 的序列帧核对状态变化，手感只认实际操作，未操作时交付标“正常速度手感未核对”。不强制新增动效。
+- **演示数据与图标**（`reference/craft-floor.md`）：演示数据不出现整数化指标、占位人名、全部相同的相对时间与占位字，多处演示共用一个虚构场景，可能被当真的内容标为示例；图标用一套库，描边与字重相称，尺寸为字号的 1–1.25 倍，纯图标按钮有可访问名称。
+- **三类结构的补验**（同上）：界面里出现弹窗内输入、多屏导航、内部滚动容器时，分别核对键盘遮挡、往返后的位置与状态、滚动落点，并在交付里各给结果；没有的结构不做也不提。补验在既有的检查轮里完成，不新增截图或检测轮次。
+- **交付后的下一步**（`reference/routing.md`）：交付新界面、改版或一次命令执行后，答复末尾最多列三条带编号的下一步，第一条标“推荐”，每条写收益与代价；只列当前可执行且本次没做过的 Phoenix 命令或流程，用户回复编号才进入。小改动、停在确认点、用户已说明下一步或无人值守时不列。
+
 ## 联网边界
 
 | 命令 | 联网范围 |
@@ -196,6 +245,7 @@ phoenix-ui embed-prompt --scan public/img
 | `detect <url>`、`capture` | 目标页面与其自身资源；浏览器自身后台请求的验证范围见上文“浏览器与隐私” |
 | `media search/preview/fetch` | 显式调用时访问素材信源与条目提供的图片地址；`media audit` 不联网 |
 | `prep-image` | 纯本地图片处理，不联网 |
+| `compare` | 服务只监听 `127.0.0.1`，只对载荷里的本机地址做 TCP 连通探测，不发起外网请求；HTML 方案自身的对外请求由浏览器按响应头拦下，标了可交互的也一样；本机地址方案是用户自己开发服务器上的页面，它加载什么由它自己决定 |
 
 以上命令运行时不自动更新或下载 engine。
 

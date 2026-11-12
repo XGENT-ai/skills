@@ -7,7 +7,7 @@ metadata:
   internal: true
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: dc1d98a71c487ac63a3e2dde4f05b9bb8b6642c127a2c9ae191cb4647344dd5a
+  source_sha256: ccc64784725a16e39eb2cd0dde9b3227b186c281e8eb2db8851f74d5421ae226
 ---
 
 Phoenix UI provides local design tools for any UI project, including standalone sites, applications, and embedded interfaces. Follow the target project's product truth, accepted direction, and design rules; derive platform and host constraints from that project's own context. Use the command references to create complete, accessible interfaces with a clear visual direction.
@@ -85,6 +85,16 @@ Choose the mode from the requested surface, not the product, and persist it only
 | `optimize [target]` | Fix | Diagnose and fix UI performance | [reference/optimize.md](reference/optimize.md) |
 | `live` | Iterate | Visual variant mode: pick elements in the browser, iterate on alternatives | [reference/live.md](reference/live.md) |
 | `generate [n] [action] [element]` | Iterate | Variants, versions, or alternatives of a named element to choose from in the live browser; no manual picking | [reference/generate.md](reference/generate.md) |
+
+Engine commands are what these flows run through `<skill-base-dir>/scripts/phoenix-ui <command>`. They are not `$phoenix-ui <sub-command>` design commands and take no pin.
+
+| Engine command | Purpose | Details |
+|---|---|---|
+| `capture <page>` | Step a web page into named states and screenshot them across viewports, with a validity self-check on every shot. The evidence source for the web finish round; when the surface has a primary flow, the blind UX walk is dispatched in that same round | [reference/new-work.md](reference/new-work.md) §7 |
+| `detect <url>` page rules | Detection on the browser-rendered page, including the five `xgent/cjk-*` rules for text that is mainly Han characters | [reference/craft-floor.md](reference/craft-floor.md), [reference/typeset.md](reference/typeset.md) |
+| `media <search\|preview\|fetch\|audit>` | Find and fetch open-license media for comps and previews; files go only into `.phoenix-ui/media/` | [Media requests](#media-requests) |
+| `prep-image <files>` | Export delivery images at 2× display width and print the `srcset` snippet | [reference/optimize.md](reference/optimize.md) |
+| `compare --start` / `--wait` | Show built whole-page proposals side by side and bring back the user's choice | [reference/compare.md](reference/compare.md) |
 
 Routing:
 

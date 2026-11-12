@@ -22,6 +22,8 @@ The `phoenix-ui capture` command (`crates/cli/src/capture/`) adapts oil-ui's scr
 
 The `phoenix-ui media` command (`crates/cli/src/media/`) adapts its media source mappings, license grading, relevance filtering, stable references, and visual analysis algorithms. The `phoenix-ui prep-image` command (`crates/cli/src/prep_image.rs`) adapts its processing order and image snippet format. Both are rewritten in Rust.
 
+The `phoenix-ui compare` command (`crates/context/src/compare/`) adapts its comparison page's proposal fields, baseline marking, and ways of viewing (side by side or single, viewport switch, actual size), rewritten as a Rust loopback server with its own page. The phoenix-ui skill's `animate`, `craft-floor`, `routing`, and `vague-feedback` references (`skills/phoenix-ui/src/reference/`) adapt its methods for motion choreography and feel, demonstration data and icons, next steps after a delivery, and translating vague words into variables; all are rewritten.
+
 **Original work:** oil-ui 0.33.2 (local copy; upstream repository address not verified from that copy)
 **Original license:** MIT
 **Author:** oil-oil
