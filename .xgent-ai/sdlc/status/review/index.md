@@ -12,6 +12,7 @@
 | 152a12f9-044f-4063-91bc-0dbb63c482ad | [Phoenix Diagram P3 开发计划评审](../../../../docs/plan/PHOENIX-DIAGRAM-P3.review.md) | [状态](152a12f9-044f-4063-91bc-0dbb63c482ad.md) | 活动 |
 | 1e32f818-3bfe-4e1b-9bc3-18cc065b47cc | [Phoenix Diagram P2 R3代码修复效果复审](../../../../docs/plan/PHOENIX-DIAGRAM-P2.code-review.r3.md) | [状态](1e32f818-3bfe-4e1b-9bc3-18cc065b47cc.md) | 活动 |
 | 1e55e17d-4399-4289-bd1c-131954c5208e | [Phoenix UI 借鉴 hallmark R1代码评审](../../../../docs/plan/phoenix-ui-hallmark.code-review.md) | [状态](1e55e17d-4399-4289-bd1c-131954c5208e.md) | 活动 |
+| 1fa89244-4313-4e0e-a53f-6429d8e6f1f2 | [ELINTP-VISUALS P2 gaps R2代码复审](../../../../docs/plan/ELINTP-VISUALS-P2-gaps.code-review.r2.md) | [状态](1fa89244-4313-4e0e-a53f-6429d8e6f1f2.md) | 活动 |
 | 207ec261-6cff-436e-b8eb-ba88c49df34c | [Phoenix UI R3代码复审](../../../../docs/plan/phoenix-ui.code-review.r3.md) | [状态](207ec261-6cff-436e-b8eb-ba88c49df34c.md) | 活动 |
 | 2227d500-968d-4472-811f-eb720d61e58d | [Phoenix Diagram P1 R1代码评审](../../../../docs/plan/PHOENIX-DIAGRAM-P1.code-review.md) | [状态](2227d500-968d-4472-811f-eb720d61e58d.md) | 活动 |
 | 2295e0cd-7adc-447e-9d32-48f15a2efd40 | [ELINTP-VISUALS P1 R3代码修复效果复审](../../../../docs/plan/ELINTP-VISUALS-P1.code-review.r3.md) | [状态](2295e0cd-7adc-447e-9d32-48f15a2efd40.md) | 活动 |
@@ -50,6 +51,7 @@
 | c2512864-9032-4d5f-82b0-3a38c8aa2b13 | [ELINTP-VISUALS P1 R1 UI 验收评审](../../../../docs/plan/ELINTP-VISUALS-P1.ui-review.md) | [状态](c2512864-9032-4d5f-82b0-3a38c8aa2b13.md) | 活动 |
 | cd59814f-ccf0-4d52-a96b-0de9e9484628 | [Phoenix Diagram 状态图 R1代码评审](../../../../docs/plan/PHOENIX-DIAGRAM-STATECHART.code-review.md) | [状态](cd59814f-ccf0-4d52-a96b-0de9e9484628.md) | 活动 |
 | df03c1ac-f891-4ae9-9451-b673beae7382 | [Phoenix Diagram P2 gaps 开发计划评审](../../../../docs/plan/PHOENIX-DIAGRAM-P2-gaps.review.md) | [状态](df03c1ac-f891-4ae9-9451-b673beae7382.md) | 活动 |
+| e6218328-2fac-48a6-8674-a26013c87320 | [ELINTP-VISUALS P2 PRD交付覆盖修复效果复审](../../../../docs/plan/ELINTP-VISUALS-P2.prd-dev-gaps.2026-11-12.md) | [状态](e6218328-2fac-48a6-8674-a26013c87320.md) | 活动 |
 | eb880cb9-3d5a-4d35-997b-f17d5fc2d5d2 | [Phoenix UI R1代码评审](../../../../docs/plan/phoenix-ui.code-review.md) | [状态](eb880cb9-3d5a-4d35-997b-f17d5fc2d5d2.md) | 活动 |
 | f1179d88-3bd4-4256-bbe4-0802c53e0f23 | [ELINTP-VISUALS P1 R2 UI 验收评审](../../../../docs/plan/ELINTP-VISUALS-P1.ui-review.r2.md) | [状态](f1179d88-3bd4-4256-bbe4-0802c53e0f23.md) | 活动 |
 | f6d2aea3-f0a8-48c6-87cb-f32676667d2c | [ELINTP-VISUALS P2 开发计划评审](../../../../docs/plan/ELINTP-VISUALS-P2.review.md) | [状态](f6d2aea3-f0a8-48c6-87cb-f32676667d2c.md) | 活动 |
