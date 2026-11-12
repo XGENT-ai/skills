@@ -205,11 +205,11 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-11T23:49:02+08:00
+- 最近更新：2026-11-12T11:14:00+08:00
 - 当前进度：1/1 个里程碑完成
 - 当前状态：已完成
 - 最近完成：M1 · 无图注图片可标注、终稿不内嵌资源快照
-- 下一步：代码评审 · 由用户用 `review-code` 以 `docs/plan/ELINTP-VISUALS-P2-gaps.md` 发起
+- 下一步：独立 UI 复审 · R1 UI-02 已修改待评审，UI-01 经真实提交核实后不采纳；由用户用 `review-ui` 以 `docs/plan/ELINTP-VISUALS-P2-gaps.md` 发起，见 M1 UI 验收修复记录
 - 当前阻塞：无
 - 代码基线：0d097e94
 
@@ -217,7 +217,7 @@ REVIEW @progress_consistency:
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-11T23:47:22+08:00 | 两项增量及文档已实现，V-1～V-4 全部通过 | [M1 记录](ELINTP-VISUALS-P2-gaps.records/M1.md) | 68fd7618 |
+| M1 | 已完成 | 2026-11-11T23:47:22+08:00 | 两项增量及文档已实现，V-1～V-4 全部通过 | [M1 记录](ELINTP-VISUALS-P2-gaps.records/M1.md) | 68fd7618；UI修复 a72dbb62 |
 
 ## 0. 需求、范围与决策
 
