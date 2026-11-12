@@ -27,7 +27,7 @@ Keep it to 2-3 pointed picks with the exact command to type. The menu stays the 
 
 Read this when a reply delivers a new surface, a redesign, or the result of a command run. End that reply with a short numbered list of what the user could do next, so they can continue without knowing the command set.
 
-Leave the list out in four cases: the change was small (a copy edit, a single style tweak); the reply stops at a point that waits for the user's confirmation; the user has already said what comes next; or the run is unattended.
+Leave the list out in four cases: the change was small (a copy edit, a single style tweak); the reply stops at a point that waits for the user's confirmation; the user has already said what comes next; or the run is unattended, meaning nobody reads the reply to pick from it (CI, a scheduled job). A person who asked through a non-interactive command is still a reader and gets the list.
 
 - **At most three, numbered.** Mark the first one "Recommended" (`推荐` in a Chinese session). Write in the session language and in the user's own words for the surface, not in command jargon.
 - **One sentence each: the gain and the cost.** Say what the user gets when it is done, and what it costs: extra time or tokens, which files it creates or modifies, whether it uses image generation. When the cost has not been measured, describe it roughly; never invent a number.

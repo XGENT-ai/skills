@@ -4,11 +4,19 @@ Read this when the user judges an existing interface with a word that names no c
 
 ## Translate first
 
-Before any edit, write the translation in the reply, one line per variable:
+The first thing you do after reading this file, before any Edit or Write to the surface, is send the user a visible message that carries the translation:
 
-`<variable to change> → <expected change>`
+```text
+"<the user's word>", as changes that can be checked:
+- <variable to change> → <expected change>
+- <variable to change> → <expected change>
+```
 
-For example: `hue count → from five to two plus one accent`, `section separation → rules removed, spacing step raised from 24px to 40px`. A variable is something a reader can check in the render or the computed styles. Then make exactly those changes, and in the delivery go back through the list item by item and say what was actually changed.
+One line per variable. A variable is something a reader can check in the render or the computed styles: `hue count → from five to two plus one accent`, `section separation → rules removed, spacing step raised from 24px to 40px`.
+
+Write the list in the body of your reply, as ordinary text ahead of the first edit's tool call. Hosts show reasoning only as a short summary, if at all, so a list worked out while reasoning never reaches the user: the `→` lines themselves have to be in the visible transcript before the surface changes. A one-sentence summary does not count, nor does a list that first appears in the delivery. Do not wait for a reply after sending it, and send it in an unattended run too.
+
+Then make exactly those changes, and in the delivery go back through the same list item by item and say what was actually changed.
 
 When the judgment also matches a refine command (calmer maps to `{{command_prefix}}phoenix-ui quieter`, more daring to `bolder`, simpler to `distill`), enter that command as usual and follow its reference. The translation still comes first; the command executes it.
 

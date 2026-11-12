@@ -53,7 +53,7 @@ These rules shape motion that already has a job; they never ask for more of it. 
 
 - **Start from the operated element.** The change leaves from the control or item the user acted on: a removed row collapses toward its delete control and the rows below close the gap; an added item travels from the button that added it.
 - **One direction per change.** Everything in a single transition moves the same way. A card leaving to the left takes its title, index, and backdrop left with it; mixed directions read as unrelated animations.
-- **The lead moves first.** Elements affected by the change start 40–80 ms after the lead and travel a smaller distance, as if pulled along. Everything starting together at the same amplitude reads as a flash.
+- **The lead moves first.** Elements affected by the change start 40–80 ms after the lead and travel a smaller distance, as if pulled along. Everything starting together at the same amplitude reads as a flash. Content the lead displaces through layout, such as the rows an opening panel pushes down, moves with it and needs no offset of its own; the offset belongs to what responds separately: the panel's own fields, a count, a neighbour changing state.
 - **Hand the shape over.** An element of the previous state becomes an element of the next one: the button opens into the panel, the search icon stretches into the input. The user sees one object changing, not one vanishing while another appears.
 
 ## Transitions that keep the same content
