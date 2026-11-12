@@ -212,7 +212,7 @@ REVIEW @progress_consistency:
 - 最近完成：M2 · 对比页界面
 - 下一步：用户就 R1 缺口做决定；获授权后推送 main 并跑 V-9，回填后记 M3–M5 完成并做最终提交
 - 当前阻塞：V-5 R1 的“动手前把清单作为正文发出”在本宿主五次运行都只出现在可见思考摘要里，是否改流程待用户决定（[M4 保留项](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M4.md#保留项)）；V-9 需要用户授权推送
-- 代码基线：候选提交见 M5 行（main，未推送）
+- 代码基线：`4844a9033e5a6f2fbf5e3671a511e0246f869473`（main，M5 候选，未推送）
 
 ### 完成记录
 
@@ -222,7 +222,7 @@ REVIEW @progress_consistency:
 | M2 | 已完成 | 2026-11-12 23:24 +08:00 | 对比页界面；V-1 十步实拍逐张查看通过，V-2、V-3 与 lint 通过 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M2.md) | `0a49480` |
 | M3 | 进行中 | 2026-11-13 01:09 +08:00 | 六份参考与触发句已交付；V-4 通过，V-5 的 R2–R6 符合，剩 R1 的动手前清单一处缺口待用户决定 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M3.md) | `3adeb8a`；修订 `28a51d5` |
 | M4 | 进行中 | 2026-11-13 01:09 +08:00 | 引擎命令表、docs、README、evals、声明文字已交付；V-4 通过，交付后下一步经 V-7 A2、A3 验证；与 M3 共用 R1 缺口 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M4.md) | `d2fe94b`；修订 `28a51d5` |
-| M5 | 进行中 | 2026-11-13 01:09 +08:00 | oracle 用例、冒烟增补、许可清单重算已交付；V-6、V-7、V-8 通过，V-9 待授权推送 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M5.md) | 待提交 |
+| M5 | 进行中 | 2026-11-13 01:09 +08:00 | oracle 用例、冒烟增补、许可清单重算已交付；V-6、V-7、V-8 通过，V-9 待授权推送 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M5.md) | 候选 `4844a90` |
 
 ## 0. 需求、范围与决策
 
