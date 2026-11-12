@@ -570,7 +570,7 @@ phoenix-ui media audit [<路径>…] [--dir <素材区>] [--json]
 `index::resolve_area(cwd, dir)`：
 
 1. `base = cwd/.phoenix-ui`；`area = cwd.join(dir)` 做词法规范化（去掉 `.`、`..`）；`area` 不以 `base` 开头时拒绝。
-2. 物理允许的素材根锚定为规范化后项目目录的 `.phoenix-ui`：`create_dir_all(area)` 前后各取 `canonicalize`，已有最近父目录与最终 `area` 不落在锚定根内时拒绝（父目录也可以是锚定根在项目内的祖先，用于尚未创建的新素材区）；`.phoenix-ui` 本身是指向外面的符号链接（如指到 `public/`）同样在创建目录与联网前拒绝。
+2. 物理允许的素材根锚定为规范化后项目目录的 `.phoenix-ui`：`create_dir_all(area)` 前后各取 `canonicalize`，已有最近父目录与最终 `area` 不落在锚定根内时拒绝；父目录祖先例外仅限词法素材根本身尚未创建的新素材区（此时最近已有父目录就是项目目录）。素材根或其子路径已存在时，其真实路径必须已在锚定根内：`.phoenix-ui` 指向外面（如 `public/`）、`.phoenix-ui -> .` 或素材区内指回项目祖先的上跳链接，都在创建目录、联网与 readonly（`audit`）接受之前拒绝。
 3. 拒绝的文案：`素材只取到 .phoenix-ui/ 下的素材区，只用于设计稿与方案预览，不进入产品：<路径> 在 .phoenix-ui/ 之外`，退出 1；拒绝发生在第 1 步时不创建任何目录，也不联网。
 4. `area/.gitignore` 不存在时写入一行 `*`；已存在则不动。
 

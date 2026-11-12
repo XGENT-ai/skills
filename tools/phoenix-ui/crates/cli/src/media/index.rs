@@ -37,9 +37,14 @@ fn resolve(cwd: &Path, dir: &str, create: bool) -> Result<PathBuf, String> {
         parent = parent.parent().ok_or_else(outside)?;
     }
     let real_parent = parent.canonicalize().map_err(|e| e.to_string())?;
-    if !(real_parent.starts_with(&root)
-        || (root.starts_with(&real_parent) && real_parent.starts_with(&real_cwd)))
-    {
+    if !real_parent.starts_with(&root) && base.exists() {
+        // The only allowed exception is a media root that does not exist yet:
+        // then nothing under `base` exists and the nearest existing ancestor is
+        // the project directory itself. Once the root or any path under it
+        // exists, its real location must already be inside the anchored root,
+        // so a link jumping back to the project (`.phoenix-ui -> .` or an
+        // up-jump inside the root) is rejected before any directory is created
+        // and before a readonly area is accepted.
         return Err(outside());
     }
     if !create {
@@ -297,6 +302,25 @@ mod tests {
         assert!(err.contains("在 .phoenix-ui/ 之外"));
         assert!(!cwd.join("public/media").exists());
         assert!(resolve_readonly(&cwd, ".phoenix-ui/media").is_err());
+        fs::remove_dir_all(cwd).unwrap();
+    }
+    #[test]
+    #[cfg(unix)]
+    fn area_rejects_existing_links_to_project_ancestors() {
+        let cwd = project();
+        // root link back to the project itself
+        std::os::unix::fs::symlink(".", cwd.join(".phoenix-ui")).unwrap();
+        assert!(resolve_area(&cwd, ".phoenix-ui/public/media").is_err());
+        assert!(resolve_readonly(&cwd, ".phoenix-ui/public/media").is_err());
+        assert!(!cwd.join("public/media").exists());
+        fs::remove_file(cwd.join(".phoenix-ui")).unwrap();
+        // first-time initialization of a fresh root still works
+        resolve_area(&cwd, ".phoenix-ui/media").unwrap();
+        // an up-jump link inside the existing root
+        std::os::unix::fs::symlink("..", cwd.join(".phoenix-ui/escape")).unwrap();
+        assert!(resolve_area(&cwd, ".phoenix-ui/escape/public/media").is_err());
+        assert!(resolve_readonly(&cwd, ".phoenix-ui/escape/public/media").is_err());
+        assert!(!cwd.join("public").exists());
         fs::remove_dir_all(cwd).unwrap();
     }
     #[test]
