@@ -205,11 +205,11 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-12 20:15（UTC+8）
-- 当前进度：1/2 个里程碑完成
-- 当前状态：V-4 候选轮（run 43194037946）全绿，两残余主机判定清零，处置已完成（清单清空＋docs 改写），处置提交待推送复跑
-- 最近完成：M1（2026-11-12，提交 c2e6e241，退出检查证据见 M2.md「批末检查」）
-- 下一步：处置提交推送 → 复跑 CI 四平台＋Node 18 全绿 → M2 记完成并回填 SHA → 最终提交与交接
+- 最近更新：2026-11-12 21:15（UTC+8）
+- 当前进度：2/2 个里程碑完成
+- 当前状态：V-1–V-4 全部通过；处置提交 f8a9993f 复跑 run 43215790210 四平台＋Node 18 全绿；仅剩最终提交与交接
+- 最近完成：M2（2026-11-12，提交 ed35605c、f8a9993f，退出检查证据见 M2.md「批末检查」「V-4 阶段收口」）
+- 下一步：最终提交剩余成果并回填各短 SHA；@progress_consistency 自查、台账同步后提示用户发起代码评审
 - 当前阻塞：无
 - 代码基线：`3094bbeda67dbdbb72806c1c82f27bc2fbb5a403`（main）
 
@@ -218,7 +218,7 @@ REVIEW @progress_consistency:
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-11-12 17:40 | §5.1 print_result 条目行分级旁括注许可原文（空许可不带括号）＋既有用例新增不带 --json 断言；docs「素材命令」补结果行字段说明；§5.3 PRD 四处与 v1.4。批末 V-1–V-3 通过（证据见 M2.md「批末检查」） | [M1.md](PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.records/M1.md) | c2e6e241 |
-| M2 | 进行中 | 2026-11-12 17:17 | §5.2 第一步候选：default_chrome_args 增 --component-updater=url-source=http://127.0.0.1:9/ 与 --gcm-checkin-url=http://127.0.0.1:9/（D2）；default_args_shape 增两条包含断言；network_boundary.rs 未动（D3）。批内 default_args_shape 绿；V-1–V-4 待运行 | [M2.md](PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.records/M2.md) | ed35605c |
+| M2 | 已完成 | 2026-11-12 21:15 | §5.2 候选两开关＋断言（ed35605c）；V-4 判定：两 Linux 残余主机在 4 平台×4 场景 netlog 全部清零、无新增外发主机，按处置表第一行清空清单、docs 收口（f8a9993f）；复跑 run 43215790210 四平台＋Node 18 全绿 | [M2.md](PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.records/M2.md) | ed35605c f8a9993f |
 
 ## 0. 需求、范围与决策
 
