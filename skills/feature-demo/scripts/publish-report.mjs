@@ -14,6 +14,9 @@ function fail(lines, code = 1) {
   process.exit(code);
 }
 
+// Node 的 fetch 失败时只抛 fetch failed，真正的原因（ECONNREFUSED、ENOTFOUND 等）在 cause 上。
+const reason = error => error.cause?.code ?? error.cause?.message ?? error.message;
+
 function parseArgs(argv) {
   const [reportPath, flag, projectId, ...rest] = argv;
   if (!reportPath || flag !== '--project' || !projectId || rest.length) {
@@ -30,12 +33,20 @@ const sha256 = path =>
 
 // MCP Streamable HTTP：服务端可能直接回 JSON，也可能回一段 SSE，取最后一条 data。
 async function callTool(url, token, name, args) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', authorization: `Bearer ${token}` },
-    body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method: 'tools/call', params: { name, arguments: args } }),
-  });
-  const text = await response.text();
+  let response;
+  let text;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method: 'tools/call', params: { name, arguments: args } }),
+    });
+    text = await response.text();
+  } catch (error) {
+    const lines = [`连不上 SPMS（${url}）：${reason(error)}`];
+    if (name === 'report_template_commit') lines.push('文件已上传，但不确定报告是否已发布；重新运行本脚本即可，同批次会原位替换。');
+    fail(lines);
+  }
   const payload = text.trimStart().startsWith('{') ? text : text.split('\n').filter(line => line.startsWith('data:')).pop()?.slice(5);
   let body;
   try {
@@ -103,12 +114,17 @@ const byPath = new Map(files.map(file => [file.path, file]));
 const failedUploads = [];
 await forEachLimited(begin.uploads, async upload => {
   const response = await fetch(upload.uploadUrl, { method: 'PUT', headers: upload.headers, body: readFileSync(byPath.get(upload.path).full) }).catch(
-    error => ({ ok: false, status: error.message }),
+    error => ({ ok: false, status: reason(error) }),
   );
   if (!response.ok) failedUploads.push(`${upload.path}（${response.status}）`);
 });
 if (failedUploads.length) {
-  fail([`上传失败，报告未发布：`, ...failedUploads.map(item => `- ${item}`), `上传地址 ${begin.uploadUrlTtlSeconds} 秒内有效，过期后重新运行本脚本。`]);
+  fail([
+    `上传失败，报告未发布：`,
+    ...failedUploads.map(item => `- ${item}`),
+    `上传地址在 ${new URL(begin.uploads[0].uploadUrl).host}，直连对象存储，不经过 SPMS。`,
+    `上传地址 ${begin.uploadUrlTtlSeconds} 秒内有效，过期后重新运行本脚本。`,
+  ]);
 }
 
 const result = await callTool(url, token, 'report_template_commit', { publishId: begin.publishId });
