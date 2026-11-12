@@ -49,7 +49,7 @@ UI['zh-CN'].review = {
   unclear: '没看懂', question: '疑问', suggestion: '建议', note: '一句说明（可选）',
   save: '保存', cancel: '取消', kind: '标注类型', confirmClear: '清除全部标注？',
   storage: '当前浏览器不能保存审阅草稿，请不要刷新，先提交',
-  sending: '正在提交…', sent: '已提交给 Agent', offline: '本机服务不可达，标注已保留。请让 Agent 用原端口重开本轮后再提交。',
+  sending: '正在提交…', sent: '已提交给当前 Agent', offline: '本机服务不可达，标注已保留。请让 Agent 用原端口重开本轮后再提交。',
   badJSON: '提交内容不是合法 JSON', badRound: '轮次不匹配，请打开当前审阅页',
   badItems: '至少添加一条标注后再提交', badItem: '标注的内容块、小节、类型或文字无效，请核对后再提交',
   writeError: '结果文件写入失败，请让 Agent 检查结果路径后重试',
