@@ -24,6 +24,7 @@
 | 49a107bf-abd1-462b-9910-ff664d6be67d | 指令质量评测与自进化 v2（原文已删除） | [状态](49a107bf-abd1-462b-9910-ff664d6be67d.md) | 归档 |
 | a2287695-163a-4569-ba21-0fff8bf83af5 | [Phoenix Diagram P2](../../../../docs/plan/PHOENIX-DIAGRAM-P2.md) | [状态](a2287695-163a-4569-ba21-0fff8bf83af5.md) | 活动 |
 | db4510c9-7ece-40a0-9908-7600a14db4a5 | [Phoenix UI 预览素材与交付图片处理 P3 gaps](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.md) | [状态](db4510c9-7ece-40a0-9908-7600a14db4a5.md) | 活动 |
+| 90398f71-e485-4511-9662-74fc2d8ca76f | [Phoenix UI 方案对比页与动效、反馈、细节指引 P4](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4.md) | [状态](90398f71-e485-4511-9662-74fc2d8ca76f.md) | 活动 |
 | e2fd7621-6529-41cf-8bce-db18e451cadf | [ELINTP-VISUALS P2](../../../../docs/plan/ELINTP-VISUALS-P2.md) | [状态](e2fd7621-6529-41cf-8bce-db18e451cadf.md) | 活动 |
 | ec8cc07f-20e5-4d64-8b77-406df2820e71 | [ELINTP-VISUALS P1](../../../../docs/plan/ELINTP-VISUALS-P1.md) | [状态](ec8cc07f-20e5-4d64-8b77-406df2820e71.md) | 活动 |
 

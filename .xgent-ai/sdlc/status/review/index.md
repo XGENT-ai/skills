@@ -23,6 +23,7 @@
 | 2b0f985a-15b1-4195-8717-ef6ac21b5608 | [ELINTP-VISUALS P2 gaps 开发计划评审](../../../../docs/plan/ELINTP-VISUALS-P2-gaps.review.md) | [状态](2b0f985a-15b1-4195-8717-ef6ac21b5608.md) | 活动 |
 | 2ced5278-54e4-49fb-be27-b2d781ef3286 | [ELINTP-VISUALS P2 R2代码修复效果复审](../../../../docs/plan/ELINTP-VISUALS-P2.code-review.r2.md) | [状态](2ced5278-54e4-49fb-be27-b2d781ef3286.md) | 活动 |
 | 2fc34df8-6142-4b7a-9484-8bee4fa7a248 | [ELINTP-VISUALS P2 gaps R1代码评审](../../../../docs/plan/ELINTP-VISUALS-P2-gaps.code-review.md) | [状态](2fc34df8-6142-4b7a-9484-8bee4fa7a248.md) | 活动 |
+| 339c267d-7815-49f2-8218-e1da08b57ac1 | [Phoenix UI 方案对比页与设计指引 P4 开发计划完整评审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4.review.md) | [状态](339c267d-7815-49f2-8218-e1da08b57ac1.md) | 活动 |
 | 36031e7a-08fe-4917-bb56-137d42750e52 | [Phoenix UI 中文排版检测与口径 P2 R6代码修复效果复审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.code-review.r6.md) | [状态](36031e7a-08fe-4917-bb56-137d42750e52.md) | 活动 |
 | 3833fbb3-87bd-4e75-8a81-e2e3d7622a90 | [Phoenix UI R2代码复审](../../../../docs/plan/phoenix-ui.code-review.r2.md) | [状态](3833fbb3-87bd-4e75-8a81-e2e3d7622a90.md) | 活动 |
 | 3918db31-0c92-4464-94d0-4480c071981b | [Codex guard 开发计划评审及文档处置](../../../../docs/plan/codex-context-goal-guard.review.md) | [状态](3918db31-0c92-4464-94d0-4480c071981b.md) | 活动 |

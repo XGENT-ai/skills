@@ -28,6 +28,7 @@
 | Phoenix UI 取证与盲测走查 P1（开发计划） | [docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1.md](../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1.md) | [状态](status/plan/11519166-68ab-4aeb-9468-794b8662667c.md) |
 | Phoenix UI 中文排版检测与口径 P2（开发计划） | [docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.md](../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.md) | [状态](status/plan/ddfc2db0-1081-4c9e-8cee-8aecf3179c7e.md) |
 | Phoenix UI 预览素材与交付图片处理 P3（开发计划） | [docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P3.md](../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P3.md) | [状态](status/plan/3fafbda8-0f05-482b-8320-18ca474ee753.md) |
+| Phoenix UI 方案对比页与设计指引 P4（开发计划） | [docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4.md](../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4.md) | [状态](status/plan/90398f71-e485-4511-9662-74fc2d8ca76f.md) |
 | Phoenix Diagram P1（开发计划） | [docs/plan/PHOENIX-DIAGRAM-P1.md](../../docs/plan/PHOENIX-DIAGRAM-P1.md) | [状态](status/plan/3cdd61a5-ef48-4526-8b3b-4271426843e8.md) |
 | Phoenix Diagram P2（开发计划） | [docs/plan/PHOENIX-DIAGRAM-P2.md](../../docs/plan/PHOENIX-DIAGRAM-P2.md) | [状态](status/plan/a2287695-163a-4569-ba21-0fff8bf83af5.md) |
 | Codex guard（开发计划） | [docs/plan/codex-context-goal-guard.md](../../docs/plan/codex-context-goal-guard.md) | [状态](status/plan/b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) |

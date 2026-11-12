@@ -57,6 +57,7 @@ Commands:
   capture <page> [options]         Screenshot named page states with a provenance report
   media <search|preview|fetch|audit>   Find open-license reference media for comps and previews
   prep-image <files...> [options]     Export delivery images at 2x display width with srcset
+  compare --start|--wait [options]    Show built page proposals side by side and return the user's pick
   ignores                          Manage detector ignore rules, files, and values
   help                             List all available skills and commands
   install --bundle-root DIR        Install skills from an explicit local Phoenix bundle
