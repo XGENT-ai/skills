@@ -109,12 +109,15 @@ export function runSmoke(releaseDir, target, { fallback = false, stage = false }
     assert(missing.status === 4 && /phoenix-ui engine install --project/.test(missing.stderr), `capture without an engine must exit 4 with the install command (exit ${missing.status})`);
     const missingMedia = nodeResult('node-missing-engine-media', ['media', '--help']);
     assert(missingMedia.status === 4 && /phoenix-ui engine install --project/.test(missingMedia.stderr), `media without an engine must exit 4 with the install command (exit ${missingMedia.status})`);
+    const missingCompare = nodeResult('node-missing-engine-compare', ['compare', '--help']);
+    assert(missingCompare.status === 4 && /phoenix-ui engine install --project/.test(missingCompare.stderr), `compare without an engine must exit 4 with the install command (exit ${missingCompare.status})`);
     assert.equal(JSON.parse(node('node-explicit-offline-install', ['engine', 'install', '--project', project, '--release-dir', releaseDir, '--json'], 0)).status, 'installed');
     assert.equal(node('node-engine-version', ['--version'], 0).trim(), manifest.data.toolVersion);
     assert.match(node('node-context', ['context', '--target', project], 0), /Phoenix CI local fixture/);
     assert.match(node('node-capture-help', ['capture', '--help'], 0), /phoenix-ui capture/);
     assert.match(node('node-media-help', ['media', '--help'], 0), /phoenix-ui media/);
     assert.match(node('node-prep-image-help', ['prep-image', '--help'], 0), /phoenix-ui prep-image/);
+    assert.match(node('node-compare-help', ['compare', '--help'], 0), /phoenix-ui compare/);
     const media = JSON.parse(node('node-media-offline', ['media', 'search', 'map', '--timeout-ms', '1000', '--json'], 1));
     assert.equal(media.count, 0);
     assert.match(media.message, /网络不可用/);
@@ -140,6 +143,52 @@ export function runSmoke(releaseDir, target, { fallback = false, stage = false }
     assert(fs.readFileSync(imagePath).equals(originalImage), 'prep-image must preserve its input bytes');
     assert.equal(node('node-prep-image-read-provenance', ['embed-prompt', output.file, '--read'], 0).trim(), provenance);
     record.prepImage = 'processed';
+    for (const id of ['a', 'b']) {
+      fs.mkdirSync(path.join(project, 'variants', id), { recursive: true });
+      fs.writeFileSync(path.join(project, 'variants', id, 'index.html'), `<!doctype html><title>${id}</title><p>${id}</p>`);
+    }
+    const proposal = id => ({ id, name: `Proposal ${id}`, source: `variants/${id}/index.html` });
+    fs.writeFileSync(path.join(project, 'single.json'), JSON.stringify({ proposals: [proposal('a')] }));
+    fs.writeFileSync(path.join(project, 'round.json'), JSON.stringify({ lang: 'en', proposals: [proposal('a'), proposal('b')] }));
+    // CI has no display; the page itself is exercised by the engine's browser tests.
+    const compare = (name, args) => {
+      const result = spawnSync(process.execPath, [launcher, 'compare', ...args], { cwd: project, env: { ...env, PHOENIX_UI_QUESTION_FORCE: '1' }, encoding: 'utf8', timeout: 60000, maxBuffer: 4 * 1024 * 1024, windowsHide: true });
+      record.checks.push({ name, argv: ['compare', ...args], exitCode: result.status, error: result.error?.message });
+      assert(!result.error, `${name} failed: ${result.error?.message}`);
+      return result;
+    };
+    const single = compare('node-compare-single-proposal', ['--start', '--payload', 'single.json']);
+    assert(single.status === 1 && !fs.existsSync(path.join(project, '.phoenix-ui/compare')), `compare must refuse a single proposal without serving (exit ${single.status}): ${single.stderr}`);
+    const started = compare('node-compare-start', ['--start', '--key', 'smoke', '--payload', 'round.json', '--timeout', '60']);
+    const compareUrl = /^COMPARE URL: (http:\/\/127\.0\.0\.1:\d+\/)$/m.exec(started.stdout)?.[1];
+    assert(started.status === 0 && compareUrl && /^COMPARE KEY: smoke$/m.test(started.stdout), `compare --start must print the address and key (exit ${started.status}): ${started.stderr || started.stdout}`);
+    try {
+      // What the page does on confirm, plus one post from a foreign origin that must not count.
+      const page = spawnSync(process.execPath, ['-e', `
+        const http = require('node:http');
+        const base = process.argv[1];
+        const send = (method, target, headers, body) => new Promise((resolve, reject) => {
+          const request = http.request(new URL(target, base), { method, headers }, response => {
+            let text = ''; response.setEncoding('utf8');
+            response.on('data', chunk => { text += chunk; });
+            response.on('end', () => resolve({ status: response.statusCode, text }));
+          });
+          request.on('error', reject); request.end(body);
+        });
+        (async () => {
+          const shell = await send('GET', '/', {});
+          const json = { 'Content-Type': 'application/json' };
+          const forged = await send('POST', '/answer?key=smoke', { ...json, Origin: 'https://example.invalid' }, JSON.stringify({ proposalId: 'a' }));
+          const answer = await send('POST', '/answer?key=smoke', { ...json, Origin: new URL(base).origin }, JSON.stringify({ proposalId: 'b', liked: 'smoke' }));
+          console.log(JSON.stringify({ shell: shell.status, data: shell.text.includes('id="compare-data"'), forged: forged.status, answer: answer.status }));
+        })().catch(error => { console.error(error); process.exit(1); });
+      `, compareUrl], { encoding: 'utf8', timeout: 30000, windowsHide: true });
+      assert.deepEqual(JSON.parse(page.stdout || '{}'), { shell: 200, data: true, forged: 403, answer: 200 }, `compare page requests failed: ${page.stderr || page.stdout}`);
+      const waited = compare('node-compare-wait', ['--wait', '--key', 'smoke', '--poll', '10']);
+      const picked = JSON.parse(/^ANSWER: (.+)$/m.exec(waited.stdout)?.[1] || 'null');
+      assert(waited.status === 0 && picked?.proposalId === 'b' && picked.liked === 'smoke' && picked.baseline === false, `compare --wait must return the choice (exit ${waited.status}): ${waited.stdout}`);
+      record.compare = 'answered';
+    } finally { compare('node-compare-stop', ['--stop', '--key', 'smoke']); }
     const shot = nodeResult('node-capture-shot', ['capture', 'page.html', '--viewport', '390x844', '--out', 'capture']);
     if (shot.status === 0) {
       const report = JSON.parse(fs.readFileSync(path.join(project, 'capture/capture-report.json'), 'utf8'));

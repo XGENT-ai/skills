@@ -206,13 +206,13 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-13 01:00 +08:00
+- 最近更新：2026-11-13 01:09 +08:00
 - 当前进度：2/5 个里程碑完成
-- 当前状态：批 1（M1、M2）已完成；批 2（M3、M4）已交付，V-4 通过，V-5 的 R2–R6 符合，剩两处缺口；M5 的 oracle 用例、冒烟增补与许可清单重算已做，V-6–V-9 未运行
+- 当前状态：M1、M2 已完成；M3、M4 已交付，V-4 与 V-5 的 R2–R6 符合，交付后下一步经 V-7 A2、A3 验证，只剩 R1 的动手前清单一处缺口；M5 的 V-6、V-7、V-8 通过，候选已提交，V-9 未运行
 - 最近完成：M2 · 对比页界面
-- 下一步：M5 ④ 起：开发构建、V-6、V-7（A2 同时验证下一步的形式）、V-8、候选提交
-- 当前阻塞：V-5 R1 的“动手前把清单作为正文发出”在本宿主四次运行都未出现，是否改流程待用户决定（[M4 保留项](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M4.md#保留项)）；V-9 需要用户授权推送
-- 代码基线：`d8bb7f80`（main）；M1–M4 已提交，V-5 引出的文本修订与 M5 成果未提交，未推送
+- 下一步：用户就 R1 缺口做决定；获授权后推送 main 并跑 V-9，回填后记 M3–M5 完成并做最终提交
+- 当前阻塞：V-5 R1 的“动手前把清单作为正文发出”在本宿主五次运行都只出现在可见思考摘要里，是否改流程待用户决定（[M4 保留项](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M4.md#保留项)）；V-9 需要用户授权推送
+- 代码基线：候选提交见 M5 行（main，未推送）
 
 ### 完成记录
 
@@ -220,8 +220,9 @@ REVIEW @progress_consistency:
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-11-12 23:24 +08:00 | compare 的载荷校验、守护进程、路由与回传协议；与 M2 同批通过 V-1、V-2、V-3，同键守卫顺序在 V-1 中修正 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M1.md) | `0a49480`（与 M2 同一提交） |
 | M2 | 已完成 | 2026-11-12 23:24 +08:00 | 对比页界面；V-1 十步实拍逐张查看通过，V-2、V-3 与 lint 通过 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M2.md) | `0a49480` |
-| M3 | 进行中 | 2026-11-13 01:00 +08:00 | 六份参考与三条触发句已交付；V-4 通过，V-5 的 R2–R6 符合，R1 的动手前清单与下一步形式两处缺口待解 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M3.md) | `3adeb8a` |
-| M4 | 进行中 | 2026-11-13 01:00 +08:00 | 引擎命令表、docs、README、evals、声明文字已交付；V-4 通过，V-5 证据与缺口见记录 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M4.md) | `d2fe94b` |
+| M3 | 进行中 | 2026-11-13 01:09 +08:00 | 六份参考与触发句已交付；V-4 通过，V-5 的 R2–R6 符合，剩 R1 的动手前清单一处缺口待用户决定 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M3.md) | `3adeb8a`；修订 `28a51d5` |
+| M4 | 进行中 | 2026-11-13 01:09 +08:00 | 引擎命令表、docs、README、evals、声明文字已交付；V-4 通过，交付后下一步经 V-7 A2、A3 验证；与 M3 共用 R1 缺口 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M4.md) | `d2fe94b`；修订 `28a51d5` |
+| M5 | 进行中 | 2026-11-13 01:09 +08:00 | oracle 用例、冒烟增补、许可清单重算已交付；V-6、V-7、V-8 通过，V-9 待授权推送 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M5.md) | 待提交 |
 
 ## 0. 需求、范围与决策
 
@@ -274,7 +275,7 @@ REVIEW @progress_consistency:
 | D12 | 命令行输出 | 帮助与校验错误用中文（同 `capture`、`media`）；协议行以固定的 ASCII 关键字开头：`COMPARE URL:`、`COMPARE KEY:`、`ANSWER:`、`WAITING:`、`PAGE CLOSED:`、`BASELINE KEPT:` | skill 参考可以不分语言地引用这些关键字 | crates/cli/src/capture/mod.rs:39；crates/context/src/serve_question.rs:102、:464、:474 |
 | D13 | 无浏览器信号 | 沿用 `PHOENIX_UI_QUESTION_DISABLED` 与 `PHOENIX_UI_QUESTION_FORCE` 两个环境变量和同一套无头判断；`--start` 命中时退出 2 并提示改用结构化提问 | 一个会话里三种页面的开关一致 | crates/context/src/serve_question.rs:393-405；crates/context/src/component_review/mod.rs 的 `serve` 分支 |
 | D14 | 代码复用方式 | `serve_question.rs` 里要复用的助手函数只把可见性放宽到 `pub(crate)`，不移动、不改写（`reject_detached_post` 的签名因加了可见性关键字超出行宽，按 rustfmt 折成多行，仓库 lint 门把被触及的格式差异计为新增）；无头判断那几行在新模块里照写一份 | 决策页的行为与 golden 不受影响；接受少量受控重复 | AGENTS.md `@surgical_changes`；WORK-F10/AC-6 |
-| D15 | skill 落位 | 对比页写成新参考 `compare.md`★；模糊反馈写成新参考 `vague-feedback.md`★；动效规则进 `animate.md`；演示数据、图标与补验进 `craft-floor.md`；交付后的下一步进 `routing.md`；`SKILL.src.md` 只加触发句与引擎命令表 | SKILL.md 每个会话都加载，只放触发条件；细则在用到时才读 | §0.6；§6 |
+| D15 | skill 落位 | 对比页写成新参考 `compare.md`★；模糊反馈写成新参考 `vague-feedback.md`★；动效规则进 `animate.md`；演示数据、图标与补验进 `craft-floor.md`；交付后的下一步进 `routing.md`；`SKILL.src.md` 只加触发句与引擎命令表；其中“模糊评价”与“交付后下一步”两条触发句带上形式要点（先发“变量 → 预期变化”清单；最多三条、编号、首条标推荐、带代价、只列 Phoenix 命令或流程） | SKILL.md 每个会话都加载，只放触发条件；细则在用到时才读。V-5、V-7 的会话在交付收尾时不会为这两条再去读参考，所以要点必须在常驻文本里 | §0.6；§6 |
 | D16 | SKILL.md 命令表 | 在 Commands 一节的设计子命令表之后加一张「Engine commands」小表，列 `capture`、`detect <url>` 页面规则、`media`、`prep-image`、`compare` | 引擎命令不是 `/phoenix-ui <子命令>`，不进设计子命令表（该表与 `command-metadata.json` 的 23 个子命令一一对应，冒烟断言其数量）；WORK-N4/AC-3 要求的“SKILL.md 命令表”有了落点 | scripts/smoke-phoenix-ui.mjs:94；§6.8 |
 | D17 | 既有页面的回归门 | 决策页、component-review、live 的源码除 D14 的可见性外不改；回归看既有 oracle golden 逐字节不变、既有浏览器测试通过，并在收口实际打开一次决策页走通选择 | AC-6 有确定的判据 | V-6、V-7 A4、V-8 |
 | D18 | 收口验收 | 本机 darwin-arm64 完成开发构建、冒烟、Phoenix UI 全量回归与真实使用验收；四平台与 Node 18 用现有 Phoenix CI（push 触发），推送须用户授权 | 未获授权推送时 V-9 记未运行，收口不宣称 WORK-N2/AC-4 通过 | C-10；docs/phoenix-ui.md「维护者：统一候选与本地交接」 |

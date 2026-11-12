@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "compare：--start 需要 --payload <文件>\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

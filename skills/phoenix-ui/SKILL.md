@@ -7,7 +7,7 @@ metadata:
   internal: true
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: caf0f1dbfa9a11527ae4240a68592faf3d0e08a8eebd74c4446cf7ad26ef8541
+  source_sha256: 4a4fb446bd120d09fa3d4072546d60978b3280132bcde479434751d0e576fdc8
 ---
 
 Phoenix UI provides local design tools for any UI project, including standalone sites, applications, and embedded interfaces. Follow the target project's product truth, accepted direction, and design rules; derive platform and host constraints from that project's own context. Use the command references to create complete, accessible interfaces with a clear visual direction.
@@ -103,7 +103,7 @@ Routing:
 - **Independent UI acceptance:** route to review-ui; an existing UI report routes repairs to apply-ui-review. If the required skill is unavailable, report that prerequisite rather than claim Phoenix's design review completed that acceptance.
 - **Compare built proposals:** when the user asks to compare proposals that already exist, or one delivery hands over two or more runnable whole-page proposals the user must choose between (a redesign beside the current page included), read [reference/compare.md](reference/compare.md). A single proposal never opens the comparison page.
 - **No argument:** read [routing.md](reference/routing.md) and present its context-aware menu; never auto-run a command.
-- **After a delivery:** when a reply delivers a new surface, a redesign, or a command run, end it with next steps in this form: at most three, numbered, the first marked Recommended (`推荐` in a Chinese session), each one sentence saying what the user gets and what it costs. Before writing them, read routing.md's [Next steps after a delivery](reference/routing.md#next-steps-after-a-delivery) for what may be listed. Leave them out after a small change, at a point waiting for the user's confirmation, when the user already said what comes next, and in unattended runs where nobody reads the reply (CI, scheduled jobs); a person who asked through a non-interactive command still gets them.
+- **After a delivery:** when a reply delivers a new surface, a redesign, or a command run, end it with next steps in this form: at most three, numbered, the first marked Recommended (`推荐` in a Chinese session), each one sentence saying what the user gets and what it costs. List only Phoenix commands or flows that can run now and have not run in this session (critique, polish, animate, adapt, extending the system to other pages, another proposal on the comparison page); engineering work and chores for the user are not next steps. routing.md's [Next steps after a delivery](reference/routing.md#next-steps-after-a-delivery) has the full rule. Leave them out after a small change, at a point waiting for the user's confirmation, when the user already said what comes next, and in unattended runs where nobody reads the reply (CI, scheduled jobs); a person who asked through a non-interactive command still gets them.
 - **Explicit or clearly implied request to run a command:** load its reference (native variant on native platforms) and follow it. Ask once if two commands fit.
 - **Workflow or command-selection question:** read [Workflow questions](reference/routing.md#workflow-questions).
 - **Otherwise:** treat the request as general design work. Missing PRODUCT.md routes a new surface or replacement world through init, then new-work; a narrow refinement of existing code proceeds on the incumbent implementation as `phoenix-ui context` directs, offering init afterward rather than blocking on it.

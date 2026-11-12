@@ -1,0 +1,7 @@
+{
+  "stdout": "compare：当前环境没有浏览器（CI、无头或远程会话），没有启动对比页；改用结构化提问。确需启动时设 PHOENIX_UI_QUESTION_FORCE=1。\n",
+  "stderr": "",
+  "exit": 2,
+  "signal": null,
+  "files": {}
+}

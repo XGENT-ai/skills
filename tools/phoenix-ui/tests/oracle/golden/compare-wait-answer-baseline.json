@@ -1,0 +1,7 @@
+{
+  "stdout": "ANSWER: {\"proposalId\":\"now\",\"name\":\"现状\",\"baseline\":true,\"liked\":\"\",\"disliked\":\"新方案都太挤\"}\nBASELINE KEPT: 用户选择保持现状，不要修改现有实现\n",
+  "stderr": "",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}

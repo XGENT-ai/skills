@@ -1,0 +1,9 @@
+{
+  "stdout": "",
+  "stderr": "compare：键 k1 已有运行中的对比页；先运行 --stop --key k1，或换一个键。\n",
+  "exit": 1,
+  "signal": null,
+  "files": {
+    ".phoenix-ui/compare/k1.state.json": "{\"pid\":<PID>,\"port\":1,\"url\":\"http://127.0.0.1:1/\"}"
+  }
+}

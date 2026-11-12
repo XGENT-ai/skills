@@ -1,0 +1,7 @@
+{
+  "stdout": "compare：对比页服务已不在，而且没有选择。这是服务故障，不是用户的决定：用同一份载荷重新运行 --start --key k1，为用户重新打开地址，再 --wait。\n",
+  "stderr": "",
+  "exit": 2,
+  "signal": null,
+  "files": {}
+}
