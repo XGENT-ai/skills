@@ -207,11 +207,11 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-12 13:30 +08:00
+- 最近更新：2026-11-12 14:41 +08:00
 - 当前进度：5/5 个里程碑完成
-- 当前状态：M1–M5全部完成；V-1–V-11全部通过；R1 代码评审 F-01/F-02 已修复并验证（[M1 评审修复](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M1.md#评审修复)，修复提交 `a21c228`），待复审
+- 当前状态：M1–M5全部完成；V-1–V-11全部通过；R2 复审确认 F-02 已解决、F-01 部分解决，残留已修复并验证（[M1 评审修复](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M1.md#评审修复)，修复提交 `a21c228`、`b7d6042`），待复审
 - 最近完成：M5 · 阶段收口、真实使用验收与四平台候选
-- 下一步：用 review-code 以本计划路径为参数复审 R1 修复效果（评审由用户发起）
+- 下一步：用 review-code 以本计划路径为参数复审 R2 修复效果（评审由用户发起）
 - 当前阻塞：无
 - 代码基线：`54b1d67907a255bb838a7b8c24c0caa8539e48ed`（main，最终代码候选，已推送）；M1–M5已提交
 
@@ -219,7 +219,7 @@ REVIEW @progress_consistency:
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-12 13:30 +08:00 | 11源检索、稳定编号、联系表与真实V-1/V-2通过；R1修复F-01/F-02并验证 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M1.md) | `2d5deab`；修复 `a21c228` |
+| M1 | 已完成 | 2026-11-12 14:41 +08:00 | 11源检索、稳定编号、联系表与真实V-1/V-2通过；R1修复F-01/F-02并验证；R2残留再修复并验证 | [M1 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M1.md) | `2d5deab`；修复 `a21c228`、`b7d6042` |
 | M3 | 已完成 | 2026-11-12 01:35 +08:00 | 批量图片导出与来源保留，V-4目视及V-5、lint通过 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M3.md) | `ea0e5a3` |
 | M2 | 已完成 | 2026-11-12 01:40 +08:00 | V-1/V-2/V-3及最终lint通过；Chrome后台请求清零 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M2.md) | `49be9b9` |
 | M4 | 已完成 | 2026-11-12 01:53 +08:00 | V-6 fresh与V-7真实宿主通过；入口说明与产品路径audit已复验 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M4.md) | `0398407` |
