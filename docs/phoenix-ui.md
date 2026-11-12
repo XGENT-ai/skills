@@ -201,8 +201,8 @@ phoenix-ui embed-prompt --scan public/img
 
 | 实测环境 | 残余主机与已观察请求 | 验证限制 |
 | --- | --- | --- |
-| Linux x64，系统 Google Chrome；runner镜像清单声明156.0.8078.79，首轮未记录实际版本 | `update.googleapis.com`：HTTPS CONNECT及HTTP `POST /service/update2/json` | 更新检查端点；记录代理返回502，未证实组件下载，也不能由此保证该版本永不下载 |
-| Linux arm64，Chromium 147.0.7727.0（Playwright 1.59.1 / revision 1217） | `android.clients.google.com`：HTTPS CONNECT | 未取得HTTPS路径，具体调用者未确认 |
+| Linux x64，Google Chrome 156.0.8078.79（CI netlog实测） | `update.googleapis.com`：HTTPS CONNECT及HTTP `POST /service/update2/json` | 更新检查端点；记录代理返回502，未证实组件下载，也不能由此保证该版本永不下载 |
+| Linux arm64，Chromium 147.0.7727.0（Playwright 1.59.1 / revision 1217） | `android.clients.google.com`：HTTPS `POST /checkin` | netlog确认后台请求，具体调用者未确认 |
 
 这些是浏览器行为，不属于素材检索；关闭参数无法在上述版本保证零后台请求。联网边界测试仅在Linux登记这两个主机，仍拒绝清单外的请求；不屏蔽主机，以免破坏目标页面引用的资源。实测日志与排查边界见 [P3验收记录](plan/PHOENIX-UI-EVIDENCE-CRAFT-P3.records/M5.md#v-11-联网边界排查)。
 
