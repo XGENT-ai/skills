@@ -8,6 +8,8 @@
 
 一个键至多认领一次业务执行，失败键不能再认领。重放返回原结果/错误并带 `Idempotent-Replayed:true`。取消、删音色、ACK、正文过期都不释放键；占用永久保留。
 
+决策两入口的kind分别为decisions、systemone，搜索与读取为search、fetch；同键换入口冲突。带键的决策答案、搜索结果和读取正文保留7天，过期重放410；不带键不保留该结果正文。日志正文模式none不保存查询、url或结果正文，但不取消带键结果的留存。
+
 | 操作 | 协议 |
 | --- | --- |
 | 回读 | `GET /v1/calls?key=<URL编码的键>`，200原生调用视图；未记录404 NOT_FOUND |
@@ -30,8 +32,11 @@
 | HTTP/code | 处置 |
 | --- | --- |
 | 400校验/能力/文件错误 | 修正请求或模型；若键已认领，原键仍重放错误，明确重做才建立新attempt |
+| 400 CAPABILITY_UNSUPPORTED（决策） | 按消息区分不可跨协议表达与平台金额预算缺计量依据；后者请管理员补齐所指渠道/模型的采购价（输出显式0或全0），不能删问题或自动换模型绕过 |
 | 403 MODEL_UNPRICED | 配了金额预算（租户月上限或API Key日/月金额上限）且可用候选都未定价，调用前已拒绝、未发往上游；请管理员录采购价或从平台价格目录同步后再调，不是凭证问题，不换Key重试 |
 | 401/403 | 查Key或服务票的状态、归属、安装、scope，不换用户票/更宽账号绕过 |
+| 403 FETCH_TARGET_BLOCKED / 404 FETCH_NO_CONTENT | 读取目标被上游策略拒绝或无可读正文；换地址，不对同一地址盲目重试，不误判成Key失效 |
+| 413 PAYLOAD_TOO_LARGE | 缩小请求，不原样重发 |
 | 404 | 查基址、版本、模型、租户和主体；不据此认定免费重生成 |
 | 409 IDEMPOTENCY_CONFLICT/IDEMPOTENCY_KEY_SEALED | 核对原请求或封存决定，停止以此键提交不同意图 |
 | 409 TASK_RUNNING | 响应类带键调用执行中，回读同键 |
@@ -41,6 +46,7 @@
 | 429预算/限流/队列满 | 根据budgetWindow、Retry-After及观察上限等待或停止，不无界重试、不自动换键 |
 | 502 UPSTREAM_ADDRESS_REJECTED | 渠道地址被网关安全策略拒绝（内网/回环/重定向到内网），连接前即拒、未发往上游；由管理员修渠道地址或部署级开关，不重试 |
 | 502/503或断连 | 结果可能未知，优先同键回读/对账 |
+| 503 NO_AVAILABLE_CHANNEL（决策/搜索/读取） | 按消息查决策路由、默认搜索/读取路由及读取能力；未配置由管理员处理，不循环重试 |
 | 504 TASK_RUNNING | 保存details.taskId，查原任务，不再POST生成 |
 
 `/v1` 顶层错误用真实HTTP状态与 `{error:{message,type,code,details}}`。charged/unknown错误带 `x-should-retry:false`；缺该头也不是自动重试或免费证明。关闭或接管SDK的自动写重试，按项目安装版本配置。流式首帧后中断可能用协议错误帧表达，不能自动重生成整段；流式与Anthropic/Gemini/realtime不支持按键重放。
