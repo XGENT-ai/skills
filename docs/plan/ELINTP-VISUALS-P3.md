@@ -206,13 +206,13 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-12T21:30:00+08:00
-- 当前进度：0/5 个里程碑完成（M1–M4 自动门、命令级验收与文档同步完成，实际看图项环境缺失）
-- 当前状态：active；M5 收口中
-- 最近完成：M1–M3 引擎批次（`63ec4961`）；M4 elintp 静态图内联（提交待回填）
-- 下一步：M4 提交（fmt/clippy 门 + elintp render/review 双测试）；M5 全量回归（test:diagram、十一类两策略静态表与体积比对、旧四张 summary 登记、现行复述 grep、bundle 核对）、V-6、最终提交与全部 SHA 回填
-- 当前阻塞：图像能力缺失（主模型与 scout/worker 子代理读图均返回 IMAGE_UNSUPPORTED）；实际看图项挂起，由用户终验时查看
-- 代码基线：`63ec4961`；开发引擎 `local/phoenix-diagram/elintp-p3`
+- 最近更新：2026-11-12T21:22:55+08:00
+- 当前进度：0/5 个里程碑完成（M1–M5 命令级验收与提交完成；全部实际看图与登记观察项环境缺失，待用户终验）
+- 当前状态：active；命令级工作收口完成，待终验看图
+- 最近完成：M5 全量回归与 V-6 用户路径（提交待回填）
+- 下一步：用户终验时逐项查看：V-1 六例与 V-5 的 44 张静态截图、V-3/V-6 终稿亮暗/窄屏/打印，并完成各 summary 的 review-record 登记与旧四张 summary 登记
+- 当前阻塞：图像能力缺失（三个模型读图均返回 IMAGE_UNSUPPORTED）
+- 代码基线：见完成记录各行 SHA；开发引擎 `local/phoenix-diagram/elintp-p3-final`
 
 ### 完成记录
 
@@ -221,7 +221,8 @@ REVIEW @progress_consistency:
 | M1 | 进行中 | 2026-11-12T20:43+08:00 | 静态 SVG、两字体策略与 `static` 命令完成；V-1 自动门与无效输入、V-4 引擎测试通过；实际看图项环境缺失 | [M1 记录](ELINTP-VISUALS-P3.records/M1.md) | 63ec4961 |
 | M2 | 进行中 | 2026-11-12T20:43+08:00 | 宿主页双覆盖浏览器检查与登记完成；V-2 恢复提示、缺观察拒绝、10 条覆盖证据齐备 | [M2 记录](ELINTP-VISUALS-P3.records/M2.md) | 63ec4961 |
 | M3 | 进行中 | 2026-11-12T20:43+08:00 | Reader 两张/比较六张减量、§5.7 文档与 bundle 同步完成；Reader 字节与基线一致 | [M3 记录](ELINTP-VISUALS-P3.records/M3.md) | 63ec4961 |
-| M4 | 进行中 | 2026-11-12T21:30+08:00 | elintp `static:` 安全内联与两策略取图完成；V-4 13/13、真实产物内联与 XML 有效性通过；看图项环境缺失 | [M4 记录](ELINTP-VISUALS-P3.records/M4.md) | 待回填 |
+| M4 | 进行中 | 2026-11-12T21:30+08:00 | elintp `static:` 安全内联与两策略取图完成；V-4 13/13、真实产物内联与 XML 有效性通过；看图项环境缺失 | [M4 记录](ELINTP-VISUALS-P3.records/M4.md) | bfd626b5 |
+| M5 | 进行中 | 2026-11-12T21:22+08:00 | V-5 全量回归与十一类表通过（SHA 全同基线、比例 3.9–14.7%、44 张截图）；V-6 用户路径全通（离线安装、自写交付、零网络终稿）；看图与登记观察项环境缺失 | [M5 记录](ELINTP-VISUALS-P3.records/M5.md) | 待回填 |
 
 ## 0. 需求、范围与决策
 
