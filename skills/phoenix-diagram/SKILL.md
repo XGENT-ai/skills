@@ -89,21 +89,6 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 
 自动三门（validate、deliver、browser-check）通过后，视觉状态仍是 `required-pending`；只有三门 `pass`、`automatedStatus: "pass"`、`visualReview.status: "passed"`、`deliveryStatus: "complete"` 时，才能报告完整交付。修改 candidate 后须重新 finalize 并重新看图审核。
 
-## 可内联的静态图
-
-用户明确要求可内联的静态图时，用完整 candidate 运行：
-
-```sh
-"$PD" static <type> CANDIDATE OUTPUT.svg --json
-"$PD" static <type> CANDIDATE OUTPUT.svg --font-policy system --json
-```
-
-`--font-policy embedded|system` 默认为 `embedded`，内嵌 JetBrains Mono；调用方明确要求系统字体时必须选 `system`，不内嵌字体、不含 JetBrains Mono 或 `@font-face`，只使用 `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`。两种策略都须在实际输出字体下通过浏览器检查与看图；同一 candidate 的静态 SVG 字节数不得超过其 Reader HTML 的 50%。
-
-`static` 依次执行 validate、static、browser-check，写出 SVG、旁边的 `NAME.static-summary.json` 及 `NAME.static.1440x900.light.png`、`NAME.static.1440x900.dark.png` 两张截图。静态 SVG 只有主图、关系、标签与图内图例，不含 Reader 页面标题、摘要卡片、节点索引或交互控件；无脚本、无外部资源。宿主 `<html data-theme="light|dark">` 优先控制亮暗，没有有效属性时跟随系统偏好，打印使用亮色。
-
-实际打开 summary 列出的两张截图，按[交付合同](references/delivery-contract.md#静态图)逐张写观察并用 `review-record OUTPUT.svg --record review.json --json` 登记。只有自动门通过、实际看图完成且 summary 显示 `deliveryStatus: "complete"` 才算完成。静态图与同名 Reader HTML、finalize summary 及截图相互独立；`static` 不存在或失败时如实报告，不能冒称静态交付完成。
-
 ## 环境与停止
 
 普通 launcher 和安装脚本需要 Node.js 18+；图解核心为 Rust，消费环境不需要 Rust、Cargo 或检出源码。普通命令只验证已存在的引擎，不下载、不更新、不安装，不主动打开用户浏览器页面或启动 preview 服务。`finalize` 的隔离浏览器验收属于默认交付路径。

@@ -206,23 +206,23 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-12T22:08:05+08:00
+- 最近更新：2026-11-13T15:13:00+08:00
 - 当前进度：5/5 个里程碑完成
-- 当前状态：active；P3 全部完成
-- 最近完成：M1–M5 看图与登记补验（kimi-coding/k3.1-pro 子代理实际读图；44 张静态截图、旧四张、V-6 与页面级 V-3 全部通过并登记 complete）
-- 下一步：无；可用 review-code 以本计划路径评审
+- 当前状态：active；P3 修复验证完成
+- 最近完成：M5 修复后收口；F-01–F-03 已修复并验证，22 份真实产物内联及浏览器补验通过
+- 下一步：无
 - 当前阻塞：无
-- 代码基线：功能提交 `63ec4961`/`bfd626b5`，记录提交 `2fb94fb6`/`6ca033cd` 及本次收口提交；开发引擎 `local/phoenix-diagram/elintp-p3-final`
+- 代码基线：功能提交 `63ec4961`/`bfd626b5`，记录提交 `2fb94fb6`/`6ca033cd`/`f4e83113`；本轮修复待提交；开发引擎 `local/phoenix-diagram/elintp-p3-final`
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-12T22:08+08:00 | 静态 SVG、两字体策略与 `static` 命令完成；V-1 自动门与无效输入、V-4 引擎测试通过；看图与打印亮色已补验 | [M1 记录](ELINTP-VISUALS-P3.records/M1.md) | 63ec4961 |
-| M2 | 已完成 | 2026-11-12T22:08+08:00 | 宿主页双覆盖浏览器检查与登记完成；V-2 恢复提示、缺观察拒绝、10 条覆盖证据齐备 | [M2 记录](ELINTP-VISUALS-P3.records/M2.md) | 63ec4961 |
-| M3 | 已完成 | 2026-11-12T22:08+08:00 | Reader 两张/比较六张减量、§5.7 文档与 bundle 同步完成；Reader 字节与基线一致 | [M3 记录](ELINTP-VISUALS-P3.records/M3.md) | 63ec4961 |
-| M4 | 已完成 | 2026-11-12T22:08+08:00 | elintp `static:` 安全内联与两策略取图完成；V-4 13/13、真实产物内联与 XML 有效性通过；V-3 看图补验通过（窄屏文字裁切为模板既有行为，已记录） | [M4 记录](ELINTP-VISUALS-P3.records/M4.md) | bfd626b5 |
-| M5 | 已完成 | 2026-11-12T22:08+08:00 | V-5 全量回归与十一类表通过（SHA 全同基线、比例 3.9–14.7%）；V-6 用户路径全通；44 张与旧四张、V-6 看图登记全部完成 | [M5 记录](ELINTP-VISUALS-P3.records/M5.md) | 2fb94fb6 |
+| M1 | 已完成 | 2026-11-13T15:13+08:00 | 静态 SVG、两字体策略与 `static` 命令完成；V-1 自动门与无效输入、原 Rust 测试通过，静态 CLI 行为另有场景证据；看图与打印亮色已补验 | [M1 记录](ELINTP-VISUALS-P3.records/M1.md) | 63ec4961 |
+| M2 | 已完成 | 2026-11-13T15:13+08:00 | 宿主页双覆盖浏览器检查与登记完成；V-2 恢复提示、缺观察拒绝、10 条覆盖证据齐备 | [M2 记录](ELINTP-VISUALS-P3.records/M2.md) | 63ec4961 |
+| M3 | 已完成 | 2026-11-13T15:13+08:00 | Reader 两张/比较六张；F-03 重复流程已删除并同步 bundle，相关元数据与引用检查通过 | [M3 记录](ELINTP-VISUALS-P3.records/M3.md) | 63ec4961 |
+| M4 | 已完成 | 2026-11-13T15:13+08:00 | F-01/F-02 已修复；22 件真实产物内联、18 项 render/review 检查通过；真实 360px 无页面横向溢出 | [M4 记录](ELINTP-VISUALS-P3.records/M4.md) | bfd626b5 |
+| M5 | 已完成 | 2026-11-13T15:13+08:00 | 修复后集成与浏览器补验通过；未改引擎的全量、Reader 字节、44 张审核与 V-6 安装证据复用 | [M5 记录](ELINTP-VISUALS-P3.records/M5.md) | 2fb94fb6 |
 
 ## 0. 需求、范围与决策
 
@@ -262,7 +262,7 @@ REVIEW @progress_consistency:
 | D2 | 静态图的样式来源 | Rust 共享静态样式函数处理 `viewer/viewer.css`、节点卡及六类 `TypeRenderer.defs` 的 CSS | 所有规则采用同一作用域与主题/媒体策略；各维护源、`template.html` 与 Reader 分支输出不变；不新增 CSS 生成物或装配转换器 | ADR-1；§5.2 |
 | D3 | 怎样跟随宿主亮暗 | 宿主 `<html data-theme="light\|dark">` 优先；没有该属性时跟随 `prefers-color-scheme`；打印为亮色 | 与 elintp 页面（`skills/elintp/assets/page.css` L14–L30、L134）和阅读器的约定一致；宿主不需要脚本 | ADR-2 |
 | D4 | 字体 | `static --font-policy embedded\|system`，默认 `embedded`；summarize 或明确要求系统字体时必须选 `system` | `embedded` 嵌六段 JetBrains Mono；`system` 仅用 `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`，无 JetBrains 与 `@font-face`。两者复用既有等宽布局估计，并在实际输出字体下检查文字边界与看图；不能拿 Reader 字体下的校验代替系统字体检查。内嵌字体重复是已接受代价，未来出现体积问题再评估 | summarize §3；WORK-F9/AC-1、AC-3；§5.3、§5.4 |
-| D5 | 静态图包含什么 | 只含阅读器的主图 SVG（节点、关系、标签、图内图例）；不含页面标题、摘要卡片、节点索引与任何控件；静态上下文不生成 Reader 控件、按钮角色、Tab 停靠点与事件钩子 | 标题与说明由宿主页面提供；`<title>`、`<desc>` 仍在 SVG 内。重新评估：用户要求静态图自带摘要卡片 | PRD WORK-F9 边界；阅读器的完整 SVG 导出同样只导出主图（`viewer/export.js` L246–L247） |
+| D5 | 静态图包含什么 | 只含阅读器的主图 SVG（节点、关系、标签、图内图例）；不含页面标题、摘要卡片、节点索引与任何控件；静态转换移除 Reader 控件、按钮角色、Tab 停靠点与事件钩子 | 标题与说明由宿主页面提供；`<title>`、`<desc>` 仍在 SVG 内。重新评估：用户要求静态图自带摘要卡片 | PRD WORK-F9 边界；阅读器的完整 SVG 导出同样只导出主图（`viewer/export.js` L246–L247） |
 | D6 | 多张静态图同页的 ID 冲突 | 引擎用 candidate 摘要前 8 位及字体策略给全部元素 ID 加前缀 `pd<8hex>-<policy>-` | 宿主不必改写静态图；同一 candidate 同策略放两次时 ID 相同但定义相同；不同策略不混用定义 | 复用 `render.rs` `namespace_svg`（L670） |
 | D7 | 静态图的交付与审核记录 | 复用 `FinalizeReceipt` 结构，summary 写在 SVG 旁的 `NAME.static-summary.json`；`review-record` 按 `.svg` 后缀找到它 | 登记校验与单图相同；恢复提示按 summary.command 分派到 `static` 或 `finalize`，不新增审核实现 | WORK-F10/AC-5；`delivery/review.rs` |
 | D8 | 静态图的自动检查 | 引擎把静态图内联进一份无脚本宿主页，在 1440×900 亮、暗各测一次并截图 | 检查独立显示、主题、无外部请求及实际字体下的文字边界；candidate 校验复用，主题/打印变体并入 V-1/V-3，不增加待审截图 | WORK-F9/AC-1、AC-2；§5.4 |
@@ -278,9 +278,9 @@ REVIEW @progress_consistency:
 - 状态：Accepted
 - 背景与驱动：WORK-F9 要求图面完整、离线、体积减半；WORK-N3/AC-3 要求 Reader HTML 字节不变。现有主图来自共享渲染器，样式同时来自 `viewer.css`、`node-card-style.svg` 和六类 `TypeRenderer.defs`，后者包含按场景生成的 CSS。
 - 备选：A. Rust 渲染层用同一静态样式函数派生全部来源；B. 构建脚本只派生固定样式，动态类型 CSS 再由 Rust 转换，会重复维护主题/作用域策略；C. 浏览器导出，增加取图依赖且仍要修正宿主作用域；D. 另写静态渲染器或 CSS，产生双份维护源。
-- 决策：A。保留 Rust 场景、几何与 ID 命名空间复用，在样式与属性生成点引入静态上下文。Reader 上下文保持原始输出。无需新增装配生成物，构建脚本仍只管理现有 Reader 产物。
+- 决策：A。保留 Rust 场景、几何与 ID 命名空间复用，先生成并命名空间化 Reader SVG，再按标记解析派生样式、清理交互属性与控件。Reader 入口保持原始输出。无需新增装配生成物，构建脚本仍只管理现有 Reader 产物。
 - 正面后果：固定与动态 CSS 共用一份静态转换策略，原样式与 Reader 模板不改；取图不依赖浏览器，交付检查仍需真实浏览器。
-- 负面/中性后果：Rust 需要覆盖当前选择器和媒体规则的有界解析；未知的图面规则不能静默遗漏。两种字体策略都须按实际输出检查，系统字体跨机器的具体字形可能不同。
+- 负面/中性后果：Rust 需要覆盖当前选择器和媒体规则的有界解析；未知的图面规则不能静默遗漏。Reader 新增交互属性或控件时须同步维护 `SvgConversion` 的清理清单。两种字体策略都须按实际输出检查，系统字体跨机器的具体字形可能不同。
 - 既有探索证据：原方案实验记录 Reader HTML 967–989 KB、内嵌字体静态图 157–177 KB（16.3%–17.9%）；只作为体积可行性线索，不能证明本修订方案或系统字体已经通过。两策略的十一类体积与图面按 V-5 实测。
 - 重新评估触发：维护源改为当前解析不支持的 CSS 语法，或静态图需要 Reader 运行时才有的图元。
 
@@ -339,9 +339,9 @@ REVIEW @progress_consistency:
 
 **引擎（`tools/phoenix-diagram`）**
 
-- `tools/phoenix-diagram/src/render.rs`：新增 `render_static`、`RenderContext` / `FontPolicy`，共享属性生成点按上下文输出。
+- `tools/phoenix-diagram/src/render.rs`：新增 `render_static` / `FontPolicy`，入口转交 `static_style::render`；Reader 入口不改。
 - `tools/phoenix-diagram/src/render/static_style.rs` ★：统一派生 viewer、节点卡与类型 CSS。
-- `tools/phoenix-diagram/src/render/{erd,class,tree,timeline,waterfall,statechart}.rs`：`TypeRenderer` 的 defs/body/legend 入口接收上下文；静态属性、控件与样式就地分派，Reader 分支保留原字节。
+- `tools/phoenix-diagram/src/render/{erd,class,tree,timeline,waterfall,statechart}.rs`：保持原入口与生成字节；静态转换复用其 SVG 输出，不修改六类渲染器。
 - `tools/phoenix-diagram/src/delivery.rs`、`delivery/finalize.rs`、`delivery/support.rs`、`delivery/review.rs`：`static_figure` 入口、`summary_path` 认 `.svg`、审核恢复提示分派。
 - `tools/phoenix-diagram/src/browser/static_figure.rs` ★、`static-probe.js` ★、`browser/mod.rs`、`browser/cdp.rs`、`browser/evidence.rs`、`browser/comparison.rs`：静态图检查与截图；采集条件与数量。
 - `tools/phoenix-diagram/src/cli.rs`：`static` 命令、帮助文本。
@@ -367,13 +367,13 @@ REVIEW @progress_consistency:
 | 模块 | 调用者 | 接口与不变量 | 接缝 | 隐藏复杂度 | 依赖分类 | 测试面 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `render::static_style` | 共享渲染器的静态分支 | 输入各来源 CSS 与静态根作用域，统一输出 scoped、按主题/媒体分派的 CSS；同输入同输出 | 无 | 当前选择器与媒体规则解析（§5.2） | 进程内 | CLI 写出的 SVG；V-4 |
-| `render::render_static` | `delivery::static_figure` | 输入已编译场景、ID 前缀与 `FontPolicy`，输出 SVG 字节；几何与内容复用，样式及交互语义按静态上下文生成 | 无 | 根属性、样式与底色矩形的插入位置 | 进程内 | 写出的 `.svg` |
+| `render::render_static` | `delivery::static_figure` | 输入已编译场景、ID 前缀与 `FontPolicy`，输出 SVG 字节；几何与内容复用，样式及交互语义由标记级转换处理 | 无 | 根属性、样式与底色矩形的插入位置 | 进程内 | 写出的 `.svg` |
 | `delivery::static_figure` | `cli.rs` | 校验 → 写出 → 浏览器检查，返回并落盘 `FinalizeReceipt` 形态的 summary | 无 | 阶段顺序与失败语义（§5.4） | 本地文件系统 | 回执、summary、文件 |
 | `browser::check_static` | `delivery::static_figure` | 输入 `.svg` 路径，返回 `BrowserReceipt`（2 条覆盖、至多 2 张截图） | 无 | 宿主页生成、主题切换、离线判定 | 本机 Chrome（既有发现逻辑） | 回执与截图 |
-| `RenderContext` | `render_svg_layers`、`write_nodes` 与六类 `TypeRenderer` 的 defs/body/legend | `Reader` 保持原字节；`Static(FontPolicy)` 在生成点省略交互并统一派生样式 | 无 | 几何/绘制属性与 Reader 钩子的区分 | 进程内 | 无失效按钮语义；V-1/V-3/V-5 |
+| `static_style::SvgConversion` | `static_style::render` | 解析命名空间化后的 Reader SVG，清理交互属性/控件并统一派生样式；Reader 入口保持原字节 | 无 | 几何/绘制属性与 Reader 钩子的区分 | 进程内 | 无失效按钮语义；V-1/V-3/V-5 |
 | elintp `static:` 来源 | `parseDraft` 的 `figure` 分支 | 根标记用于分派，全部 SVG/CSS 必须通过静态安全解析；保留 ID，安全重序列化后内联 | 无 | 元素/属性、CSS 作用域与 URL/MIME 位置白名单（§6.1） | 本地文件（不可信边界） | 生成页面与拒绝诊断；V-3/V-4 |
 
-不新增接缝或适配器：静态样式函数由多个样式生成点共享，静态交付与浏览器检查各有单一实现。删除测试：去掉 `static_style`，同一作用域/主题策略会散进 viewer、节点卡与六类渲染器，故保留；去掉 `browser::check_static`，宿主页与两主题的采图逻辑会塞进 `check_browser` 的十次循环，故单列。
+不新增接缝或适配器：静态样式函数由 viewer 样式入口与 SVG 内各样式块的转换共享，静态交付与浏览器检查各有单一实现。删除测试：去掉 `static_style`，同一作用域/主题策略会散进 viewer、节点卡与六类渲染器，故保留；去掉 `browser::check_static`，宿主页与两主题的采图逻辑会塞进 `check_browser` 的十次循环，故单列。
 
 ## 4. 集成与契约
 
@@ -404,15 +404,15 @@ static <type> <candidate.json> <output.svg> [--font-policy embedded|system] [--q
 
 ### 5.2 全部静态样式在 Rust 共享层派生
 
-`render/static_style.rs` ★ 提供一个静态 CSS 派生函数；只在 `RenderContext::Static` 中调用，Reader 分支仍逐字写原样式。不新增依赖，不在 elintp 改 CSS，也不复制维护源。
+`render/static_style.rs` ★ 提供一个静态 CSS 派生函数；只在 `render_static` 的转换路径中调用，Reader 分支仍逐字写原样式。不新增依赖，不在 elintp 改 CSS，也不复制维护源。
 
 **来源与接入点**：
 
 | 样式来源 | 静态分支处理 | Reader 分支 |
 | --- | --- | --- |
 | `viewer/viewer.css` | 用 `include_str!` 读取维护源，按下表筛选图面规则并派生 | 模板装配不变 |
-| `assets/node-card-style.svg` 的 `<style>` | 在当前插入点取 CSS，经同一函数处理；识别七类节点的 `:is([data-theme="dark"] svg[…], svg[…][data-theme="dark"])` 为暗色规则 | 保留原片段 |
-| `TypeRenderer.defs`：erd、class、tree、timeline、waterfall、statechart | defs 的几何定义原样复用；每个 CSS 块在生成点统一经同一函数处理，包括场景生成的 hue 规则、类型选择器与嵌套媒体规则 | 保留原 defs 的字节与顺序 |
+| `assets/node-card-style.svg` 的 `<style>` | 在已生成 SVG 的样式块中取 CSS，经同一函数处理；识别七类节点的 `:is([data-theme="dark"] svg[…], svg[…][data-theme="dark"])` 为暗色规则 | 保留原片段 |
+| `TypeRenderer.defs`：erd、class、tree、timeline、waterfall、statechart | defs 的几何定义原样复用；每个 CSS 块在 SVG 转换时统一经同一函数处理，包括场景生成的 hue 规则、类型选择器与嵌套媒体规则 | 保留原 defs 的字节与顺序 |
 | `viewer/template.source.html` 的 `phoenix-diagram-fonts` 样式块 | 仅 `embedded` 取六段字体；`system` 不取此块 | 模板不变 |
 
 `ROOT` 为 `svg[data-phoenix-static]`。解析当前维护源的规则块、声明、选择器列表及媒体块（括号/引号内逗号不能拆）；不是正则全局替换，也不实现通用 CSS 引擎。输出规则：
@@ -433,20 +433,19 @@ static <type> <candidate.json> <output.svg> [--font-policy embedded|system] [--q
 
 ### 5.3 静态图文件的内容
 
-共享渲染器引入显式上下文：
+共享渲染器提供静态入口，字体策略传入静态转换：
 
 ```rust
 pub enum FontPolicy { Embedded, System }
-pub enum RenderContext { Reader, Static(FontPolicy) }
 pub fn render_static(scene: &CompiledDiagram, id_prefix: &str, font: FontPolicy)
     -> Result<Vec<u8>, Diagnostics>
 ```
 
-`render_svg_layers`、普通节点属性生成点，以及六类 `TypeRenderer` 的 root/defs/body/legend 路径接收上下文。Reader 现有入口始终传 `Reader`，字节不变；静态模式共用几何、内容、定义与绘制流程，不复制渲染器，不在输出后正则删属性。
+`render_static` 先校验几何，再由 `static_style::render` 调用既有 `render_svg` 与 `namespace_svg`。`SvgConversion` 按标签、属性和样式块解析转换 Reader SVG；不复制几何渲染器，不用全局正则删除属性。六类 `TypeRenderer` 与 Reader 入口不改，Reader 输出字节不变。
 
-1. 静态分支在属性生成点保留几何、绘制、节点/关系身份、必要图型与预设属性、`<title>` / `<desc>` 和根 `role="img"`、`aria-labelledby`、语言；这些是图面与无障碍名称，不是按钮。
-2. 普通节点、erd/class 共用节点属性、tree/timeline/waterfall/statechart 的各自入口与图例均省略 `tabindex`、`role="button"`、`aria-pressed`、控件 `aria-expanded` / `aria-controls` 及 Reader 事件/动画钩子（如 `data-animate`、`data-motion-*`、`data-animation`）。保留用于绘制的 `data-node-id`、`data-graph-role` 等属性。tree 不生成 toggle / expand-all 控件，全部展开；不靠隐藏控件实现无交互。
-3. 全部 CSS 按 §5.2 在生成点派生；defs 中的 marker、pattern、clipPath 等非样式定义保留。根追加 `data-phoenix-static=""`、`data-font-policy="embedded|system"`、`width`、`height`、唯一根 ID（前缀 + `figure`），在图元前插入背景矩形，四个值取 `scene.view_box`。
+1. 静态转换保留几何、绘制、节点/关系身份、必要图型与预设属性、`<title>` / `<desc>` 和根 `role="img"`、`aria-labelledby`、语言；这些是图面与无障碍名称，不是按钮。
+2. 转换器从普通节点、erd/class、tree/timeline/waterfall/statechart 及图例中移除 `tabindex`、`role="button"`、`aria-pressed`、控件 `aria-expanded` / `aria-controls` 及 Reader 事件/动画钩子（如 `data-animate`、`data-motion-*`、`data-animation`）。保留用于绘制的 `data-node-id`、`data-graph-role` 等属性。tree 的 toggle / expand-all 控件子树在转换时移除，图面全部展开；不靠隐藏控件实现无交互。
+3. 全部 CSS 按 §5.2 在转换时派生；defs 中的 marker、pattern、clipPath 等非样式定义保留。根追加 `data-phoenix-static=""`、`data-font-policy="embedded|system"`、`width`、`height`、唯一根 ID（前缀 + `figure`），在图元前插入背景矩形，四个值取 `scene.view_box`。
 4. 通过既有 `namespace_svg` 处理 ID / 本地引用，不在 CSS 中产生未命名空间化的 `url(#…)`；场景专属样式根锚点使用同一前缀。UTF-8，无 XML 声明。
 
 文件契约（elintp 与其他宿主依赖的全部内容）：
@@ -468,7 +467,7 @@ pub fn render_static(scene: &CompiledDiagram, id_prefix: &str, font: FontPolicy)
 4. summary 写到 `summary_path(output)`。`support::summary_path` 增加：文件名以 `.svg` 结尾时返回 `NAME.static-summary.json`。
 5. 状态字段语义与 `finalize` 相同：三阶段通过后 `automatedStatus: "pass"`、`visualReview.status: "required-pending"`、`deliveryStatus: "incomplete"`；浏览器不可用时 `status: "unavailable"`，SVG 已写出。
 
-`review-record figure.svg --record r.json`：`cli.rs` 现有分流不改（`.svg` 不是比较产物，落到 `delivery::record_review`）；`review::record` 经 `summary_path` 自动读到静态 summary，「自动门已通过、文件未变、记录逐一列出当前截图」三项校验原样生效（WORK-F10/AC-4、AC-5）。`delivery/review.rs` 依据 `summary.command` 分派两条恢复信息：`static` 的自动门失败提示重跑 `static` 直到通过，产物变化提示 SVG 已变化、重跑 `static` 再看图登记；原 `finalize` 的 HTML 提示保持不变。诊断码、身份/截图校验和记录结构不变。
+`review-record figure.svg --record r.json`：`cli.rs` 现有分流不改（`.svg` 不是比较产物，落到 `delivery::record_review`）；`review::record` 经 `summary_path` 自动读到静态 summary，「自动门已通过、文件未变、记录逐一列出当前截图」三项校验原样生效（WORK-F10/AC-4、AC-5）。`delivery/review.rs` 依据 `summary.command` 分派两条恢复信息：`static` 的自动门失败提示重跑 `static` 直到通过，产物变化提示 SVG 已变化、重跑 `static` 再看图登记；原 `finalize` 保留重跑 `finalize` 的恢复语义。诊断码、身份/截图校验和记录结构不变。
 
 `static` 只写 `.svg`、`NAME.static-summary.json` 与 `NAME.static.1440x900.{light,dark}.png`，不读写同名 `.html`、`.finalize-summary.json` 及其截图（WORK-F9/AC-4）。
 
@@ -506,7 +505,7 @@ pub fn render_static(scene: &CompiledDiagram, id_prefix: &str, font: FontPolicy)
 
 ### 5.6 兼容
 
-- 阅读器 HTML：`render_with_layers` 只向共享渲染器传 Reader 上下文；其装配、`template.html`、`viewer/**` 与 Reader 分支生成字节不改，同一 candidate 的 HTML 字节不变。V-5 用改动前后的 SHA-256 对比证明。
+- 阅读器 HTML：`render_with_layers` 及共享 Reader 渲染入口不改；其装配、`template.html`、`viewer/**` 与 Reader 分支生成字节不改，同一 candidate 的 HTML 字节不变。V-5 用改动前后的 SHA-256 对比证明。
 - 既有命令的参数、回执字段与退出码不变；回执里只有 `screenshots` 的条数与 `screenshot-capture` 的 `scope` 数值变化。
 - `build.rs` 的 `INPUTS` 已包含 `assets` 目录，新生成物自动计入 `sourceInputSha256`，不需要改 `build.rs`。
 
@@ -604,7 +603,7 @@ PRD §5.3 的清单是基线；本期只触及其中三项。实施 diff 逐项�
 | V-2 | 场景 E2E | **图解作者照常交付一张图和一份架构比较，审核只看两张与六张。** 输入：`minimal.erd.json`；作者按 `architecture-compare.md` 写的两份 architecture（head 比 base 多一个组件、改一个标签，连接带 `id`）。覆盖 WORK-F10/AC-1 至 AC-4。结果：<br>• 单图 summary 列两张 1440×900 截图；浏览器回执的 `coverage` 仍是四个桌面窗口加窄屏各亮、暗共 10 条<br>• 比较 summary 列六张；只写五张观察的记录被拒，六张齐全后完成<br>• 静态自动门未过与 SVG 改变分别保留原诊断码并提示重跑 `static`；HTML 对应失败仍提示 `finalize`<br>• 不看图直接读 summary，状态仍是 `required-pending` / `incomplete` | 1. `"$E" finalize erd skills/phoenix-diagram/examples/minimal.erd.json $OUT/erd.html --json`，读 summary 的 `screenshots` 与 `stages[2].receipt.coverage`<br>2. 看两张图，`review-record` 登记<br>3. `"$E" compare architecture $OUT/base.json $OUT/head.json $OUT/cmp.html --json`<br>4. `"$E" visual-check $OUT/cmp.html --out-dir $OUT/cmp-evidence --json`<br>5. 先用五张的记录登记（应失败），再看六张并登记<br>6. 扩展 `delivery` 已有自动门失败与产物变化用例，在公开 delivery 接口断言两个来源的恢复信息；场景中用真实 `review-record` 入口验证静态 SVG 变化路径，断言诊断消息中的恢复命令；静态 SVG 写出后修改再登记，应被拒绝并要求重跑 `static` | 与 V-1 同批 |
 | V-3 | 场景 E2E | **文档作者按 summarize 的阅读面要求生成带图页面。** 角色：只读 `skills/elintp` 与 `skills/phoenix-diagram` 的 skill 文件及其引用文档，不读实现源码。输入：`docs/PRD-ELINTP-VISUALS.md`，附 summarize §3 的三条硬要求原文，页面需要 §2.3 主路径的流程图。覆盖 WORK-F5/AC-2、C-1。不调用 `report_submit`。结果：<br>• 终稿是单个 HTML；图是内联静态图，没有 `iframe`；产物使用 `system`，无 JetBrains / `@font-face` / 字体 data，计算字体族符合 D4，实际字体下文字无缺失/裁剪<br>• 断网打开无任何网络请求，图完整<br>• 切换页面亮暗，图随之切换；清除保存主题后模拟系统亮/暗，节点文字/线条/填充均可辨认，类型样式不污染其他图<br>• 360 px 宽下页面不横向滚动，图在自己的区域内横向滚动<br>• 显式 dark 下打印预览中图完整、为亮色，节点填充/描边也转亮色；SVG 内无 `tabindex`、按钮/按压语义或 Reader 事件钩子（滚动容器的键盘入口仍保留）<br>• 交付说明写明图的形态与实际做过的检查<br>常见变体与误操作：同一材料不带内联要求再生成一次，图为页内嵌入阅读器（默认不变）；把一份自绘 SVG 写到 `static:` 下，得到带行号的格式错误且旧页面未被覆盖 | 1. 按 `skills/elintp/SKILL.md` 执行，phoenix-diagram 的命令用 `$E`（launcher 只负责定位引擎）<br>2. 用 Chrome 打开终稿：DevTools Network 设为 Offline 后刷新，确认请求列表只有文件本身；点主题按钮；把窗口设为 360 px 宽；打开打印预览<br>3. `grep -c '<iframe' 终稿`（应为 0）、`grep -c 'data-phoenix-static' 终稿`（等于图数）<br>4. 两个变体各运行一次 `review.mjs` 或 `render.mjs`；用 DevTools 检查静态 SVG 内字体与语义属性，清除主题存储后分别模拟系统亮/暗，再于显式 dark 下查看 print | M4 交付齐备后（依赖 V-1 已通过的开发引擎） |
 | V-4 | 局部 | 准入依据：分支多的 CSS/SVG 安全解析，以及既有溢出与恢复路径。<br>• 通过真实 `static` CLI 输出观察 §5.2 各类选择器/主题/媒体与动态类型样式的作用域；两字体策略不交叉覆盖，错误策略退出 2（`tests/delivery.rs`）；断言运行产物，不测试静态源码文字<br>• `static:`：安全的两策略产物通过并内联，保留 ID 与局部片段；无标记退出 2；在现有 SVG 安全用例加伪造标记的脚本/事件/foreignObject、外部资源、CSS URL 绕过及不合约 data MIME/位置，均退出 2 且旧页字节不变（`test/elintp/render.test.js`）<br>• 既有浏览器合同测试随数量更新：任一窗口溢出仍失败（WORK-F10/AC-2），截图数为 2 与 6；审核失败消息承接 V-2 | `mise exec --no-deps -- node --test test/elintp/render.test.js`<br>`$CARGO test $MF --test browser_contract --test delivery --test compare --test compare_browser` | 引擎部分在 M1–M3 批末；elintp 安全解析部分在 M4 批末 |
-| V-5 | 阶段收口 | 全量回归与兼容（WORK-N3/AC-3、WORK-F9/AC-1、AC-3、C-3、C-4、C-7）：<br>• 十一类最小示例的阅读器 HTML 与基线 SHA-256 逐一相同<br>• 十一类在两字体策略下都能取得静态图，自动阶段全过，体积比均 ≤ 50%<br>• 基线引擎产出的旧交付（四张截图的 summary）用新引擎仍可按四张登记<br>• 现行文档中不再有旧数量的复述；skill 描述与引用测试通过；bundle 与源一致 | 1. `mise exec --no-deps -- npm run test:diagram`（fmt、clippy、全部 Rust / Node / Reader 测试；耗时未知）<br>2. `mise exec --no-deps -- node --test test/elintp/render.test.js test/elintp/review.test.js`<br>3. 最终代码上重新开发构建（新输出目录），对十一类各运行 `deliver` 与两策略的 `static`（分别输出），比对 SHA-256 与 `wc -c`，并逐类实际打开每个策略亮、暗两张静态截图（每件产物仍只登记两张）；复核类型节点/图例无失效交互语义，system 文字完整且无嵌入字体；对基线的 workflow 旧交付运行 `review-record`（四张）<br>4. `git grep -n -e '四张' -e '12 张' -e '2048×1320' -- skills/phoenix-diagram docs/phoenix-diagram.md README.md skills/documentation-writer skills/elintp`，逐条确认不是现行截图数量的复述；对照 PRD §5.3 的 C6、C11、C12 读一遍两个 skill 的 diff<br>5. `node scripts/build-phoenix-diagram.mjs --sync-bundle` 后 `git status --short dist/phoenix-diagram/bundle` 无未提交差异 | M5，代码改完后 |
+| V-5 | 阶段收口 | 全量回归与兼容（WORK-N3/AC-3、WORK-F9/AC-1、AC-3、C-3、C-4、C-7）：<br>• 十一类最小示例的阅读器 HTML 与基线 SHA-256 逐一相同<br>• 十一类在两字体策略下都能取得静态图，自动阶段全过，体积比均 ≤ 50%<br>• 基线引擎产出的旧交付（四张截图的 summary）用新引擎仍可按四张登记<br>• 现行文档中不再有旧数量的复述；skill 描述与引用测试通过；bundle 与源一致 | 1. `mise exec --no-deps -- npm run test:diagram`（fmt、clippy、全部 Rust / Node / Reader 测试；耗时未知）<br>2. `mise exec --no-deps -- node --test test/elintp/render.test.js test/elintp/review.test.js`<br>3. 最终代码上重新开发构建（新输出目录），对十一类各运行 `deliver` 与两策略的 `static`（分别输出），比对 SHA-256 与 `wc -c`；22 份 SVG 分别以 `static:` 经 `render.mjs` 内联，断言退出 0、无 iframe 且 system 无字体资源；并逐类实际打开每个策略亮、暗两张静态截图（每件产物仍只登记两张）；复核类型节点/图例无失效交互语义，system 文字完整且无嵌入字体；对基线的 workflow 旧交付运行 `review-record`（四张）<br>4. `git grep -n -e '四张' -e '12 张' -e '2048×1320' -- skills/phoenix-diagram docs/phoenix-diagram.md README.md skills/documentation-writer skills/elintp`，逐条确认不是现行截图数量的复述；对照 PRD §5.3 的 C6、C11、C12 读一遍两个 skill 的 diff<br>5. `node scripts/build-phoenix-diagram.mjs --sync-bundle` 后 `git status --short dist/phoenix-diagram/bundle` 无未提交差异 | M5，代码改完后 |
 | V-6 | 真实使用验收 | 从干净的用户状态连续完成三件事，亲自看产物（WORK-F9、WORK-F10、WORK-F5/AC-2 的本期部分）：<br>1. 新项目按文档离线安装后，图解作者用安装后的 skill 入口，为一份自己写的 sequence candidate 交付阅读器 HTML（看两张、登记）并取静态图（看两张、登记）<br>2. 文档作者在同一项目里用 elintp 把 `docs/phoenix-diagram.md` 讲成一页，明确要求零网络阅读面，页面带上一步的静态图<br>3. 读者断网打开终稿，切换亮暗，在窄屏下阅读<br>发现的用户可见问题修复后复验，或列给用户确认延期 | 1. 新建临时目录作项目，按 `docs/phoenix-diagram.md`「离线安装」：`node bin/xgent-skills.js install "$PROJECT" --no-phoenix-ui --providers=claude --diagram-release-dir="<V-5 第 3 步的开发构建目录>"`<br>2. `PD="$PROJECT/.claude/skills/phoenix-diagram/scripts/phoenix-diagram"`，只凭安装后的 `SKILL.md` 与 `references/` 操作<br>3. elintp 用仓内 `skills/elintp`；角色只读两个 skill 的文件与公开文档<br>4. 浏览器操作同 V-3 第 2 步 | M5，V-5 通过后 |
 
 V-3、V-6 是 Agent 角色模拟，不代表真人可用性结论。门户报告阅读面的实际显示未覆盖（A-1）。
@@ -615,7 +614,7 @@ M1–M3 同批：都在同一个开发引擎上验证，之间没有风险门，
 
 | # | 里程碑 | 前置依赖 | 内容与并行边界 | 验证/退出条件 |
 | --- | --- | --- | --- | --- |
-| M1 | 引擎写出静态 SVG | 基线已记录（§9.1） | **落点**：§5.2 `render/static_style.rs` ★ 的统一样式策略；§5.3 `render.rs` `render_static`、`RenderContext` / `FontPolicy` 及六类 `TypeRenderer` 的属性/defs/body/legend 入口；§5.1 `cli.rs`；§5.4 第 1、2、4、5 步（`delivery.rs`、`finalize.rs`、`support.rs`）<br>**同构**：`finalize.rs` `finalize`；当前 defs、节点/图例属性生成点；`viewer/export.js` L275–L305 的选择器约定<br>**文档**：`references/static-figure.md` ★ 的命令、两字体策略与文件契约部分 | 与 M3 同批：V-1、V-4；回写「实施进度」 |
+| M1 | 引擎写出静态 SVG | 基线已记录（§9.1） | **落点**：§5.2 `render/static_style.rs` ★ 的统一样式策略；§5.3 `render.rs` `render_static` / `FontPolicy` 与 `static_style::SvgConversion`（复用六类 TypeRenderer 输出）；§5.1 `cli.rs`；§5.4 第 1、2、4、5 步（`delivery.rs`、`finalize.rs`、`support.rs`）<br>**同构**：`finalize.rs` `finalize`；当前 defs、节点/图例属性生成点；`viewer/export.js` L275–L305 的选择器约定<br>**文档**：`references/static-figure.md` ★ 的命令、两字体策略与文件契约部分 | 与 M3 同批：V-1、V-4；回写「实施进度」 |
 | M2 | 静态图的浏览器检查、截图与审核登记 | M1 的 `.svg` 输出 | **落点**：§5.4 `browser/static_figure.rs` ★、`static-probe.js` ★、`cdp.rs` `inspect_static` / `screenshot_static`、`evidence.rs` 主干命名、`delivery/review.rs` 恢复提示分派；实际输出策略下文字边界测量<br>**同构**：`browser/mod.rs` `check_browser`；`cdp.rs` `inspect`、`screenshot`<br>**文档**：`static-figure.md` 的看图与登记部分 | 与 M3 同批：V-1、V-2 恢复路径；回写「实施进度」 |
 | M3 | 单图与架构比较审核减量，接口文字同步 | 无（与 M1、M2 改同一 crate，同一人顺序修改 `evidence.rs`、`mod.rs`） | **落点**：§5.5 三处代码与四个测试文件的数量断言；§5.7 全部文字；`--sync-bundle`<br>**同构**：各文件现有写法<br>**注意**：`SKILL.md` 描述改后跑 `skill.test.js` | 批末（M1–M3 交付齐备、开发引擎构建后）：V-1、V-2、V-4 的引擎部分；回写「实施进度」 |
 | M4 | elintp 用静态图内联嵌图 | §5.3 文件契约；V-3 需 V-1 已通过 | **落点**：§6.1 `draft.mjs` 静态 SVG/CSS 安全解析；§6.2 `page.css`；§6.3 `draft-format.md`、`SKILL.md` 的字体分派/安全边界说明；`test/elintp/render.test.js`<br>**同构**：`draft.mjs` L244 的截图容器、L263–L277 的 `figure` 分支 | V-3、V-4 的 elintp 部分；回写「实施进度」 |

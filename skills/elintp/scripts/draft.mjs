@@ -7,7 +7,7 @@ export const escapeHTML = text => String(text).replace(/[&<>"']/g, char => ({ '&
 const SVG_ELEMENTS = new Set('svg g defs title desc path rect circle ellipse line polyline polygon text tspan marker linearGradient radialGradient stop clipPath use'.split(' '));
 const SVG_ATTRIBUTES = new Set(('id class role aria-label aria-labelledby aria-describedby xmlns xmlns:xlink viewBox width height x y x1 x2 y1 y2 cx cy r rx ry d points transform fill fill-opacity fill-rule stroke stroke-width stroke-opacity stroke-linecap stroke-linejoin stroke-dasharray stroke-dashoffset stroke-miterlimit opacity color font-family font-size font-weight font-style text-anchor dominant-baseline alignment-baseline dx dy textLength lengthAdjust letter-spacing word-spacing marker-start marker-mid marker-end markerWidth markerHeight refX refY orient markerUnits gradientUnits gradientTransform offset stop-color stop-opacity fx fy fr spreadMethod clip-path clip-rule clipPathUnits mask filter href xlink:href preserveAspectRatio vector-effect').split(' '));
 const STATIC_SVG_ELEMENTS = new Set([...SVG_ELEMENTS, ...'style image pattern mask filter feBlend feColorMatrix feComponentTransfer feComposite feConvolveMatrix feDiffuseLighting feDisplacementMap feDistantLight feDropShadow feFlood feFuncA feFuncB feFuncG feFuncR feGaussianBlur feMerge feMergeNode feMorphology feOffset fePointLight feSpecularLighting feSpotLight feTile feTurbulence'.split(' ')]);
-const STATIC_SVG_ATTRIBUTES = new Set([...SVG_ATTRIBUTES, ...'style lang aria-hidden patternUnits patternTransform primitiveUnits filterUnits in in2 result stdDeviation mode type values operator k1 k2 k3 k4 radius edgeMode kernelMatrix order targetX targetY divisor bias preserveAlpha surfaceScale diffuseConstant specularConstant specularExponent scale xChannelSelector yChannelSelector baseFrequency numOctaves seed stitchTiles tableValues slope intercept amplitude exponent flood-color flood-opacity lighting-color azimuth elevation pointsAtX pointsAtY pointsAtZ limitingConeAngle kernelUnitLength color-interpolation-filters'.split(' ')]);
+const STATIC_SVG_ATTRIBUTES = new Set([...SVG_ATTRIBUTES, ...'style pointer-events lang aria-hidden patternUnits patternTransform primitiveUnits filterUnits in in2 result stdDeviation mode type values operator k1 k2 k3 k4 radius edgeMode kernelMatrix order targetX targetY divisor bias preserveAlpha surfaceScale diffuseConstant specularConstant specularExponent scale xChannelSelector yChannelSelector baseFrequency numOctaves seed stitchTiles tableValues slope intercept amplitude exponent flood-color flood-opacity lighting-color azimuth elevation pointsAtX pointsAtY pointsAtZ limitingConeAngle kernelUnitLength color-interpolation-filters'.split(' ')]);
 const STATIC_CSS_PROPERTIES = new Set(('color color-scheme fill fill-opacity fill-rule stroke stroke-width stroke-opacity stroke-linecap stroke-linejoin stroke-dasharray stroke-dashoffset stroke-miterlimit opacity display visibility overflow font font-family font-size font-weight font-style line-height letter-spacing word-spacing font-variant-numeric text-anchor dominant-baseline alignment-baseline text-transform text-rendering white-space paint-order shape-rendering vector-effect filter clip-path clip-rule mask marker marker-start marker-mid marker-end rx ry transform transform-origin width height min-width max-width flex flex-direction flex-wrap align-items justify-content gap pointer-events transform-box').split(' '));
 const STATIC_CSS_FUNCTIONS = new Set('var color-mix calc min max clamp rgb rgba hsl hsla hwb lab lch oklab oklch color drop-shadow blur brightness contrast grayscale hue-rotate invert opacity saturate sepia matrix translate translatex translatey scale scalex scaley rotate skew skewx skewy'.split(' '));
 const FONT_FACE_PROPERTIES = new Set('font-family font-style font-weight font-display src unicode-range'.split(' '));
@@ -131,8 +131,7 @@ function selectorChain(selector, fail) {
     const spaced = /\s/.test(selector[i] || '');
     while (/\s/.test(selector[i] || '')) i++;
     if (i >= selector.length) break;
-    if (/[+~]/.test(selector[i])) { fail(i, 'CSS 选择器不能用兄弟组合器跳出静态 SVG'); return null; }
-    combinators.push(selector[i] === '>' ? (i++, '>') : spaced ? ' ' : '');
+    combinators.push(/[+~>]/.test(selector[i]) ? selector[i++] : spaced ? ' ' : '');
     if (!combinators.at(-1)) { fail(i, 'CSS 选择器组合器无效'); return null; }
   }
   return { parts, combinators };
@@ -221,6 +220,9 @@ function validateSelectors(text, rootId, fail) {
     } else if (!first.anchor) { fail(part.at, 'CSS 选择器必须锚定静态 SVG 根'); return false; }
     const rootPart = selectorCompound(chain.parts[rootIndex].value, rootId, fail, 'root');
     if (!rootPart?.anchor) { fail(part.at + chain.parts[rootIndex].at, 'CSS 选择器必须锚定静态 SVG 根'); return false; }
+    if (chain.combinators.slice(0, rootIndex + 1).some(combinator => /[+~]/.test(combinator))) {
+      fail(part.at, 'CSS 选择器不能用兄弟组合器跳出静态 SVG'); return false;
+    }
     for (let i = rootIndex + 1; i < chain.parts.length; i++) {
       if (!selectorCompound(chain.parts[i].value, rootId, fail, 'drawing')) return false;
     }
@@ -243,6 +245,8 @@ function parseStaticCSS(css, policy, rootId, fail) {
     }
     cleaned += css[i++];
   }
+  // SVG style text is decoded again when the containing page is parsed as HTML.
+  if (cleaned.includes('&')) { fail(cleaned.indexOf('&'), 'CSS 不允许残留字符引用或 &'); return ''; }
   function rules(start, end, allowFont) {
     const output = [];
     let i = start;
@@ -361,6 +365,7 @@ function inlineSVG(source, title, prefix, report, staticMode = false) {
         if (/^(?:tabindex|aria-pressed|aria-expanded|aria-controls)$/.test(key)
           || /^data-(?:animate|animation|motion(?:-|$)|reader-|tree-toggle|tree-expand-all)/.test(key)) bad(at, name, `属性 ${key} 是交互或阅读器钩子`);
         if (key === 'role' && value !== 'img') bad(at, name, '静态图只允许 role="img"');
+        if (key === 'pointer-events' && value !== 'none') bad(at, name, '静态图 pointer-events 只允许 none');
         if (['href', 'xlink:href'].includes(key)) {
           if (name === 'image') {
             if (!decodeDataURL(value, IMAGE_MIMES, imageBytes)) bad(at, name, 'image href 只允许内容匹配的 base64 PNG、JPEG、WebP 或 ICO');
