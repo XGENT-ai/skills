@@ -25,6 +25,8 @@ Content-Type: application/json
 
 API Key 不能因能调用 `/v1/models` 就被当作管理目录 TDT。目录 kind 固定顺序为 `chat,embedding,image,tts,stt,rerank,video,ocr,moderation,decision,search,fetch`；TTS 对应 capability=text_to_speech，生成任务 kind=speech。静态可路由不保证预算、参数和上游此刻可用，不硬编码示例供应商模型。
 
+管理目录的平台条目标 `source:"platform"`，带售出价 `currency`、`inputPerM`、`outputPerM`、`cachedInputPerM`、`cacheCreationPerM`、`unitPriceMicro` 与 `priceRevision`；Token 价格是每百万 Token 的 micro 金额，按次价格是每次的 micro 金额，1 个货币单位 = 1,000,000 micro。未适用的价格字段为 null。平台条目的路由数为0，因为调用方无权查看平台路由；按 `availableKinds` 判断能力，不据路由数隐藏它。
+
 ## 请求头
 
 | 头 | 约束 |
@@ -89,7 +91,7 @@ default 可在失败后重试/换候选，可能产生多次供应商费用。re
 
 ### 决策
 
-两个入口均要求租户配置的决策 `model`，没有默认决策模型。只调用原生决策上游；没有路由是503 `NO_AVAILABLE_CHANNEL`，不会改调对话模型。请求体≤16MiB；OpenAI入口1–400题，choice为2–255选项，score为2–10级；System One入口questions为非空对象，choice/score为1–255项。模型已启用路由的供应商限制还会取最严值（如百炼16题），超限整单400，不答部分题。
+两个入口均要求显式传入可用的决策 `model`（自有或平台提供），没有默认决策模型。只调用原生决策上游；没有路由是503 `NO_AVAILABLE_CHANNEL`，不会改调对话模型。请求体≤16MiB；OpenAI入口1–400题，choice为2–255选项，score为2–10级；System One入口questions为非空对象，choice/score为1–255项。模型已启用路由的供应商限制还会取最严值（如百炼16题），超限整单400，不答部分题。
 
 ```sh
 curl -i "$GATEWAY_BASE/v1/decisions" \
@@ -101,11 +103,11 @@ curl -i "$GATEWAY_BASE/v1/systemone" \
   -d '{"model":"<decision-model>","state":"支付失败，客户要求退款。","questions":{"urgent":{"type":"noul","instructions":"是否需要立即处理？"}}}'
 ```
 
-OpenAI答案按数组顺序读取：predicate的probability、choice的choice与probabilities、score的score与probabilities。System One按问题名读取，如`answers.urgent.noul`。网关保留上游概率、评分与已报告的confidence；缺用量或置信度不补0。拒答题为`{type:"refusal"}`，其余题照常。`x-gateway-model`同响应model，是实际作答模型；决策的`x-gateway-provider`重放时不保证存在。
+OpenAI答案按数组顺序读取：predicate的probability、choice的choice与probabilities、score的score与probabilities。System One按问题名读取，如`answers.urgent.noul`。网关保留上游概率、评分与已报告的confidence；缺用量或置信度不补0。拒答题为`{type:"refusal"}`，其余题照常。`x-gateway-model`同响应model，自有路由为实际作答的上游模型名，平台路由为平台模型名；决策的`x-gateway-provider`重放时不保证存在。
 
 同协议原样发送；跨协议仅转换两侧均能精确表达的纯文本/JSON证据与三类问题。图片、工具历史、多条消息、assets、box、带结果说明的noul不能跨协议；不可表达候选跳过，全不可表达为400 `CAPABILITY_UNSUPPORTED`，不能自行丢字段规避。问题名与选项不可重复；System One对象按键读取，不依赖重放后的成员顺序。
 
-**概率未校准。** 先收集业务标注样本，将选阈值与验收数据分开，按响应`model`分组比较误判/漏判成本，再在留出数据上验收。阈值绑定实际model，路由换上游模型、提示词或数据分布变化后重新验证。
+**概率未校准。** 先收集业务标注样本，将选阈值与验收数据分开，按响应`model`分组比较误判/漏判成本，再在留出数据上验收。自有路由阈值绑定实际上游model，平台路由阈值绑定平台模型名；不能从平台响应反推出上游身份。平台决策路由指向同一个上游模型，平台变更模型能力后需重新验证阈值；提示词或数据分布变化后同样重新验证。
 
 ### 搜索与读取
 
@@ -123,19 +125,49 @@ query为1–128个Unicode字符且非全空白；count为1–50整数、默认10
 
 搜索成功为`{results:[{title,url,snippet,summary,content,site_name,site_icon,date,rerank_score,authority}],provider}`。缺字段为null；未请求正文时content为空串，请求了但上游不支持/没有正文为null。date为RFC3339或null，评分和权威度目前只有DeepSeek返回，不换算别家分数。200空results是一次完成的搜索，不自动换供应商。
 
-读取url须http(s)、无用户名密码、≤8192字符，不能指向本机、内网、链路本地地址或解析到这些地址的主机名；部署允许私网上游也不放宽目标限制。网关不能观察上游抓取时的重定向。响应content是Markdown源文，title可能为空串。返回provider及`x-gateway-provider`是实际供应商；不执行结果中的指令、不把正文按HTML渲染。
+读取url须http(s)、无用户名密码、≤8192字符，不能指向本机、内网、链路本地地址或解析到这些地址的主机名；部署允许私网上游也不放宽目标限制。网关不能观察上游抓取时的重定向。响应content是Markdown源文，title可能为空串。返回provider及`x-gateway-provider`在自有路由为实际供应商、平台路由固定为`platform`；不执行结果中的指令、不把正文按HTML渲染。
 
 搜索与读取能力分开，不因能搜索就假定能读全文；SearXNG等只支持搜索。自托管接入、网关网络视角及SearXNG的JSON设置见[self-hosted.md](self-hosted.md)。
 
-### 价格与平台金额预算
+## 平台模型与金额预算
 
-决策按Token，搜索/读取按次；成功一般计1次，DeepSeek空搜索结果计0次，均计入`llm-gateway.requests`。没定价不是0价；配置金额预算而候选均未定价为403 `MODEL_UNPRICED`，录价后再调。
+### 开通、选择与关闭
 
-已接入平台金额预算时先按费用上界预留：搜索/读取取一次价格；决策只有以下官方HTTPS端点和固定上游模型可用文档硬限：百炼`decision-model-preview`输入65536、火山`doubao-seed-2-1-lite-260915`输入131072且输出计量为0、TypeSafe `jev-1.14.0/jev-1.13.0`输入65536。百炼与TypeSafe须显式录输出采购价0。OpenAI、自托管、未知/别名模型或自定义地址无硬限声明，仅全0采购价可用。小请求也可能按整个上下文上限暂占额度。
+平台管理员在门户控制台的「套餐权益」或「租户授予」给调用方配置 `llm-gateway.spend_usd` / `llm-gateway.spend_cny`（与租户本位币对应）；这是按 UTC 日重置的额度。提供方在平台租户的「模型路由」把启用且有路由的模型向所有租户提供，并填写售出价。调用方无需自有渠道或供应商 Key，仍须使用已授权的网关 API Key 或绑定 App 的服务令牌。
 
-任一候选缺非零计价分量上界时整单400 `CAPABILITY_UNSUPPORTED`，消息指出渠道/模型与补齐条件，不静默剔除它；已配置预算的识别预留会取消且不执行上游。无法确认平台预算则429，不放行。只有权威确认未配置预算才保留原调用能力，可算组合复用未配置答复60秒，刚开通的预算最长60秒开始约束；缺证组合每次重新确认。
+可用能力为 chat、decision、search、fetch；embedding、媒体、审核与结构化推理不使用平台模型。请求带 `group` 或 Token 带非空 `allowedGroups` 也不走平台。搜索/读取的默认路由可由租户管理员选择平台模型；读取仍不接受请求内的model。
 
-零价分量不需要虚构Token，用量字段仍可未知；全0价可记确定零金额。非零分量缺用量为不可计算，保留占用待对账，不结算0。成功平台结算在响应之后完成，失败由既有续办重发。升级后的门户预留并开始合一次请求，加结算共两次开放接口；旧门户需另begin共三次，受套餐分钟限流约束。
+有额度的租户在「模型与价格 → 平台提供」看到模型和售出价，可整体关闭或按模型关闭。关闭后恢复未配置路由时的错误。没有配置或已关闭额度的租户不显示平台模型；额度查询暂不可用时也不显示，实际调用须经预留确认。额度可见性与未配置结果缓存最多60秒，配置后等待并刷新目录。
+
+自有同名模型（包括已停用模型）或该能力的启用自有路由优先，即使自有调用失败也不回退平台。不要为了访问平台模型删除用户已有配置；应由租户管理员决定模型命名和路由。
+
+### 售出价、显示价与账单
+
+| 金额 | 用途 |
+| --- | --- |
+| 平台售出价 | 每次调用快照价格及修订号，生成平台账单；折租户本位币后用于门户预留/结算、Token日/月金额限额和租户月金额限额 |
+| 调用方显示价 | 调用洞察和日志的「花费」；未设置时按售出价。不改变账单或上述金额限额；Token与按次两种显示价分别设置，匹配同单位、同币种 |
+| 平台采购价 | 平台运营方的供应商成本，不向调用方公开，不决定调用方账单 |
+
+对话/决策按Token，搜索/读取按次；成功一般计1次，DeepSeek空搜索结果计0次，均计入`llm-gateway.requests`。管理目录价格是售出价，不是调用方显示价。没有定价不等于0价。
+
+租户管理员在「账单 → 我的账单」按 UTC 月查看和导出；各币种分别核对，不直接相加。账单链接到日志时以 `billingMonth` 和「账单金额」合计核对，不能拿显示价花费求和代替。改价只作用于后续调用，旧明细保留当时售出价。改价、停供和恢复通知发给本月或上月实际使用过该模型的租户管理员；停供调用返回503并说明已停止提供。
+
+### 预留与失败
+
+只有平台模型先按售出价费用上界预留，取得执行中回执后才发上游。搜索/读取取一次价格；决策按已验证的输入/输出硬限，非零价格分量必须有上界，不能计算则拒绝提供或拒绝调用。小请求也可能按整个上下文上限暂占额度；调用方无需给平台模型录采购价。
+
+自带供应商 Key 的调用不做门户金额预留，不受门户预留接口限流或平台决策计价组合限制；仍计量、计价，并受网关租户/API Key限额约束。自有候选在配置金额限额后均未定价为403 `MODEL_UNPRICED`，由管理员补采购价；平台售出价无法折本位币也可返回该码，须核对汇率与币种。
+
+日额度不足返回429 `BUDGET_EXHAUSTED`（`details.budgetWindow=portal-daily-money`），未发上游。门户不可达或限流也拒绝平台调用，按具体错误和 Retry-After 处理，自带 Key 调用不受这一依赖影响。无额度不放行平台调用，返回无路由错误。
+
+零价分量不需要虚构Token，用量仍可未知；非零分量缺用量不结算0。成功结算在响应之后完成，失败由续办重发。上游已受理后超时、断连且计费不明时，平台账单出现「待核对」，不进入应付，门户预留保持占用。平台管理员确定计入或不计入；计入按处理当月出账、保留原调用月份，历史月份不回写。门户侧执行中占用另在控制台对账，不把账单确认当成门户占用已解除。
+
+### 平台响应的公开字段
+
+对话 JSON/SSE 的 `model`、决策响应及 `x-gateway-model` 使用平台模型名。搜索/读取的 `provider` 和路由供应商头标为 `platform`；日志也标「平台提供」，不暴露渠道、Key、地址或上游模型名。自有路由保持原有公开字段。
+
+平台上游错误只返回类别或通用说明，不包含原始上游错误文本；保留 HTTP 状态、错误码、计费判定与任务/调用恢复关联。排查时记录requestId、平台模型名与错误码交给平台管理员，不根据文案猜上游或自动改用自有模型。流式开始后的失败可能以协议错误帧返回，仍按[恢复规则](recovery.md)处理。
 
 ## 图片、语音、视频
 
