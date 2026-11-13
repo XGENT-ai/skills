@@ -219,7 +219,7 @@ REVIEW @progress_consistency:
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 · 静态图卡片数据与 elintp 卡片区 | 已完成 | 2026-11-13 21:57 +08:00 | 引擎在静态 SVG 写卡片数据，elintp 渲染页面卡片区；V-1、V-2 通过 | [M1.md](ELINTP-VISUALS-P3-gaps.records/M1.md) | `13435a65` |
-| M2 · 收口（V-3 回归兼容、V-4 真实使用验收） | 已完成 | 2026-11-13 22:18 +08:00 | V-3 全过（SHA/体积/内联/bundle/测试），V-4 角色模拟终稿单文件零网络、卡片出现 | [M2.md](ELINTP-VISUALS-P3-gaps.records/M2.md) | 待提交 |
+| M2 · 收口（V-3 回归兼容、V-4 真实使用验收） | 已完成 | 2026-11-13 22:18 +08:00 | V-3 全过（SHA/体积/内联/bundle/测试），V-4 角色模拟终稿单文件零网络、卡片出现 | [M2.md](ELINTP-VISUALS-P3-gaps.records/M2.md) | `3bf1ff09` |
 
 ## 0. 需求、范围与决策
 
