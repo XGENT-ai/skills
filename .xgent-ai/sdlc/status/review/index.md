@@ -56,6 +56,7 @@
 | 95a558a1-9185-4aa5-9df3-37bec6654872 | [Phoenix UI 取证与盲测走查 P1 R1代码评审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1.code-review.md) | [状态](95a558a1-9185-4aa5-9df3-37bec6654872.md) | 活动 |
 | 96e105dd-da91-4da5-831d-d947f7a4630a | [Phoenix Diagram P2 PRD交付覆盖复审（gaps修复效果）](../../../../docs/plan/PHOENIX-DIAGRAM-P2.prd-dev-gaps.2026-10-28.md) | [状态](96e105dd-da91-4da5-831d-d947f7a4630a.md) | 活动 |
 | 98308b27-f2d8-4bf9-ace7-d2abec1022e4 | [Phoenix Diagram P2 PRD交付覆盖核查](../../../../docs/plan/PHOENIX-DIAGRAM-P2.prd-dev-gaps.md) | [状态](98308b27-f2d8-4bf9-ace7-d2abec1022e4.md) | 活动 |
+| 9990dcdf-a6e6-495a-ba4f-0f55928e2cca | [Phoenix UI P4 R2修复效果复审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4.code-review.r2.md) | [状态](9990dcdf-a6e6-495a-ba4f-0f55928e2cca.md) | 活动 |
 | 9a03cbc2-3524-4b92-9a2c-baf9d81964be | [Phoenix Diagram P2 gaps R1代码评审](../../../../docs/plan/PHOENIX-DIAGRAM-P2-gaps.code-review.md) | [状态](9a03cbc2-3524-4b92-9a2c-baf9d81964be.md) | 活动 |
 | 9a6386c1-91c6-4a95-98b4-989e9b806613 | AGENTS.md 与 Skills 自进化开发计划首审（原文已删除） | [状态](9a6386c1-91c6-4a95-98b4-989e9b806613.md) | 归档 |
 | a5feaee3-bf79-4dc2-a83a-9bbdcfed8d9c | [Phoenix UI 取证与盲测走查 P1 R2代码修复效果复审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1.code-review.r2.md) | [状态](a5feaee3-bf79-4dc2-a83a-9bbdcfed8d9c.md) | 活动 |
