@@ -68,6 +68,7 @@
 | c233a571-1ecc-4a6f-8eec-8bda8035102d | [Phoenix UI 取证与盲测走查 P1 gaps 开发计划完整评审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1-gaps.review.md) | [状态](c233a571-1ecc-4a6f-8eec-8bda8035102d.md) | 活动 |
 | c2512864-9032-4d5f-82b0-3a38c8aa2b13 | [ELINTP-VISUALS P1 R1 UI 验收评审](../../../../docs/plan/ELINTP-VISUALS-P1.ui-review.md) | [状态](c2512864-9032-4d5f-82b0-3a38c8aa2b13.md) | 活动 |
 | c511226d-f358-4d94-96a2-0d34cf34b4bb | [Phoenix UI 中文排版检测与口径 P2 R4代码修复效果复审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.code-review.r4.md) | [状态](c511226d-f358-4d94-96a2-0d34cf34b4bb.md) | 活动 |
+| cd0cd044-4236-4aa4-8808-a97ee29499a4 | [Phoenix UI 方案对比页与设计指引 P4 R1代码评审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4.code-review.md) | [状态](cd0cd044-4236-4aa4-8808-a97ee29499a4.md) | 活动 |
 | cd59814f-ccf0-4d52-a96b-0de9e9484628 | [Phoenix Diagram 状态图 R1代码评审](../../../../docs/plan/PHOENIX-DIAGRAM-STATECHART.code-review.md) | [状态](cd59814f-ccf0-4d52-a96b-0de9e9484628.md) | 活动 |
 | d2befa0f-b3d4-49ba-a4ea-6ac8c5842c51 | [Phoenix UI 中文排版与口径 P2 PRD交付覆盖核查](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.prd-dev-gaps.md) | [状态](d2befa0f-b3d4-49ba-a4ea-6ac8c5842c51.md) | 活动 |
 | d4d30e83-37c3-4412-bd39-6359b3b14c94 | [Phoenix UI 预览素材与交付图片处理 P3 R3代码修复效果复审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P3.code-review.r3.md) | [状态](d4d30e83-37c3-4412-bd39-6359b3b14c94.md) | 活动 |

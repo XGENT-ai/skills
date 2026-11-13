@@ -7,7 +7,7 @@ metadata:
   internal: true
   version: 0.1.0
   source: skills/phoenix-ui/src
-  source_sha256: f4ac40e00b75f691e9afdb5924808b07d4ce88f6d87208e1646ea10650c86800
+  source_sha256: 1fcb51e23b4c7e5580c0b145cc300d0bef27418fe05392798c57014a7e13ec29
 ---
 
 Phoenix UI provides local design tools for any UI project, including standalone sites, applications, and embedded interfaces. Follow the target project's product truth, accepted direction, and design rules; derive platform and host constraints from that project's own context. Use the command references to create complete, accessible interfaces with a clear visual direction.
@@ -18,7 +18,7 @@ Core principles:
 - Go all out. No hedging, no shortcuts. The deliverable must be complete (except assets the user must provide).
 - Dream big and bold. Distinct, beautiful, outstanding and highly inspiring work.
 - Let the coding agent choose sub-agents and parallelism for efficiency under its own orchestration policy and the user's constraints. Phoenix adds no separate approval or waiting step for delegation.
-- Keep Phoenix design self-QA to one batched inspection and at most one confirmation after fixing the findings. This ceiling applies to the design pass. Independent review-ui/apply-ui-review cycles and work the user has authorized follow their own completion conditions. Finish-reviewer and component-review evidence do not close an independent UI acceptance cycle.
+- Before the final build’s first rendered preview, read [reference/finish.md](reference/finish.md) for the complete inspection and handoff flow. Keep Phoenix design self-QA to one batched inspection (`review/inspect/`) and at most one confirmation (`review/confirm/`) after fixing the findings; confirmation evidence means the next action is reviewer handoff. This ceiling applies to the design pass. Independent review-ui/apply-ui-review cycles and work the user has authorized follow their own completion conditions. Finish-reviewer and component-review evidence do not close an independent UI acceptance cycle.
 
 ## Media requests
 
@@ -90,7 +90,7 @@ Engine commands are what these flows run through `<skill-base-dir>/scripts/phoen
 
 | Engine command | Purpose | Details |
 |---|---|---|
-| `capture <page>` | Step a web page into named states and screenshot them across viewports, with a validity self-check on every shot. The evidence source for the web finish round; when the surface has a primary flow, the blind UX walk is dispatched in that same round | [reference/new-work.md](reference/new-work.md) §7 |
+| `capture <page>` | Step a web page into named states and screenshot them across viewports, with a validity self-check on every shot. The evidence source for the web finish round; when the surface has a primary flow, the blind UX walk is dispatched in that same round | [reference/finish.md](reference/finish.md) |
 | `detect <url>` page rules | Detection on the browser-rendered page, including the five `xgent/cjk-*` rules for text that is mainly Han characters | [reference/craft-floor.md](reference/craft-floor.md), [reference/typeset.md](reference/typeset.md) |
 | `media <search\|preview\|fetch\|audit>` | Find and fetch open-license media for comps and previews; files go only into `.phoenix-ui/media/` | [Media requests](#media-requests) |
 | `prep-image <files>` | Export delivery images at 2× display width and print the `srcset` snippet | [reference/optimize.md](reference/optimize.md) |

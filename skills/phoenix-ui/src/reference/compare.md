@@ -54,6 +54,8 @@ On the page the user can view the proposals side by side or one at a time, switc
 
 `BASELINE KEPT:` follows the answer when the pick is the baseline: the user chose to keep the current state. Do not modify the existing implementation, and do not start building one of the other proposals.
 
+When the selected proposal still needs implementation, read [finish.md](finish.md) in full before editing, and [animate.md](animate.md) when motion is part of the request. Use that final build's `review/inspect/` and `review/confirm/` batches to keep its inspection stage visible. Its first rendered preview already starts Inspect; calling a screenshot an implementation preview does not put it outside the inspection budget. Carry all planned viewports and motion states through the same batch, then leave unselected proposals alone.
+
 ## No answer
 
 - **`--wait` exits 4:** ask once more through the structured question tool, naming the same proposals. With still no answer: when the round has a baseline, keep the current state and mark the delivery `choice pending` (`待选` in a Chinese session); when it has none, continue with the proposal you recommend and mark the delivery `not chosen by the user` (`未经用户选择`). Then run `{{scripts_path}}/phoenix-ui compare --stop --key <key>`.
