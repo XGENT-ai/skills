@@ -118,6 +118,8 @@ Every web animation needs a `prefers-reduced-motion` path with an intentional al
 
 ## Verify
 
+Plan the states before the first inspection: forward, reverse, rapid repeats, keyboard, and reduced motion where applicable. Batch their captures and detection into that inspection; after fixing findings, use at most one confirmation batch. Then stop inspecting and report remaining findings or unchecked states. Missing evidence in the report below is not permission for another round.
+
 - The focal motion is specific to the selected world and surface.
 - Every supporting animation explains feedback, state, or relationship.
 - Interruption and repeated use behave correctly.
@@ -129,10 +131,14 @@ Every web animation needs a `prefers-reduced-motion` path with an intentional al
 - Sequence frames show only how the state changes. Feel is judged by operating it: once at normal speed, once in reverse, and a few rapid repeated presses.
 - When that hands-on check did not happen, the delivery says `normal-speed feel not checked` (`正常速度手感未核对` in a Chinese session).
 
-These checks run inside the existing two inspection rounds; they add no capture or detector round.
-
 ## Report
 
-For every motion that changes state, the delivery states its origin (the operated element), its direction, and the order in which other elements follow, plus the feel as its action-plus-object name with the spring parameters or easing used.
+Before sending the delivery, check that each state-changing motion has a short entry containing:
+
+- the operated element → direction → order of followers;
+- its action-plus-real-object feel name and the actual stiffness / damping or easing used;
+- the sequence evidence and whether normal-speed feel was checked.
+
+An implementation summary or a duration alone does not supply the feel name and parameters. If visual verification was blocked, still report those implementation facts and state the unverified part separately.
 
 When motion earns its place, hand off to `$phoenix-ui polish` for the final pass.
