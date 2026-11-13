@@ -285,6 +285,28 @@ fn load_round(io: &mut Io, cwd: &str, payload_path: &str) -> Option<payload::Rou
     }
 }
 
+fn key_available(io: &mut Io, qdir: &str, key: &str) -> bool {
+    // An uncollected pick belongs to the previous round; a new round on the
+    // same key would hand it to this round's first --wait. Checked before
+    // liveness: a server that just answered still has a fresh heartbeat on
+    // file, and "stop it first" would discard the pick.
+    if exists(&answer_file(qdir, key)) {
+        io.err(&format!(
+            "compare：键 {} 还留有上一轮未领取的选择；先运行 --wait --key {} 领取，或 --stop --key {} 丢弃，再重新 --start。\n",
+            key, key, key
+        ));
+        return false;
+    }
+    if read_state(qdir, key).is_some_and(|s| alive(&s)) {
+        io.err(&format!(
+            "compare：键 {} 已有运行中的对比页；先运行 --stop --key {}，或换一个键。\n",
+            key, key
+        ));
+        return false;
+    }
+    true
+}
+
 fn start(a: &Args, io: &mut Io, cwd: &str, qdir: &str) -> i32 {
     let env = io.env.clone();
     if env_set(&env, "PHOENIX_UI_QUESTION_DISABLED") {
@@ -310,27 +332,13 @@ fn start(a: &Args, io: &mut Io, cwd: &str, qdir: &str) -> i32 {
         return 1;
     }
     let key = a.arg("key").unwrap_or_else(random_key);
-    // An uncollected pick belongs to the previous round; a new round on the
-    // same key would hand it to this round's first --wait. Checked before
-    // liveness: a server that just answered still has a fresh heartbeat on
-    // file, and "stop it first" would discard the pick.
-    if exists(&answer_file(qdir, &key)) {
-        io.err(&format!(
-            "compare：键 {} 还留有上一轮未领取的选择；先运行 --wait --key {} 领取，或 --stop --key {} 丢弃，再重新 --start。\n",
-            key, key, key
-        ));
+    if !key_available(io, qdir, &key) {
         return 1;
     }
-    if read_state(qdir, &key).is_some_and(|s| alive(&s)) {
-        io.err(&format!(
-            "compare：键 {} 已有运行中的对比页；先运行 --stop --key {}，或换一个键。\n",
-            key, key
-        ));
+    if let Err(e) = std::fs::create_dir_all(qdir) {
+        io.err(&format!("compare：无法创建状态目录：{}\n", e));
         return 1;
     }
-    let _ = std::fs::create_dir_all(qdir);
-    // The wait below must see the new server's state, never a dead one's.
-    let _ = std::fs::remove_file(state_file(qdir, &key));
     let log_file = jsp::join(&[qdir, &format!("{}.log", key)]);
     let log = std::fs::OpenOptions::new()
         .append(true)
@@ -374,13 +382,29 @@ fn start(a: &Args, io: &mut Io, cwd: &str, qdir: &str) -> i32 {
         }
     }
     impeccable_common::proc::detach(&mut cmd);
-    // Detached: never waited on. A failed spawn shows up as a missing state file.
-    let _ = cmd.spawn();
+    let mut child = match cmd.spawn() {
+        Ok(child) => child,
+        Err(e) => {
+            io.err(&format!("compare：无法启动对比页服务：{}\n", e));
+            return 1;
+        }
+    };
     let deadline = now_ms() + 8000.0;
-    while now_ms() < deadline && !exists(&state_file(qdir, &key)) {
-        sleep_ms(100);
-    }
-    let Some(state) = read_state(qdir, &key) else {
+    let state = loop {
+        if let Some(state) = read_state(qdir, &key)
+            .filter(|s| s.get("pid").and_then(Value::as_u64) == Some(u64::from(child.id())))
+        {
+            break Some(state);
+        }
+        match child.try_wait() {
+            Ok(None) if now_ms() < deadline => sleep_ms(100),
+            _ => break None,
+        }
+    };
+    let Some(state) = state else {
+        // A late child must not publish a service after its caller reports failure.
+        let _ = child.kill();
+        let _ = child.wait();
         let tail = safe_read(&log_file)
             .map(|t| {
                 let lines: Vec<&str> = js_trim(&t).split('\n').collect();
@@ -475,6 +499,39 @@ fn serve_detached(a: &Args, io: &mut Io, cwd: &str, qdir: String) -> i32 {
     let Some(round) = load_round(io, cwd, &pp) else {
         return 1;
     };
+    let lock = match std::fs::create_dir_all(&qdir).and_then(|()| {
+        std::fs::File::options()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(jsp::join(&[&qdir, &format!("{}.lock", key)]))
+    }) {
+        Ok(file) => file,
+        Err(e) => {
+            io.err(&format!("compare：无法打开启动锁：{}\n", e));
+            return 1;
+        }
+    };
+    match lock.try_lock() {
+        Ok(()) => {}
+        Err(std::fs::TryLockError::WouldBlock) => {
+            io.err(&format!(
+                "compare：键 {} 已有运行中的对比页；换一个键或先 --stop。\n",
+                key
+            ));
+            return 1;
+        }
+        Err(e) => {
+            io.err(&format!("compare：无法锁定键 {}：{}\n", key, e));
+            return 1;
+        }
+    }
+    // Keep this inode and hold its OS lock through serving. Process exit releases
+    // ownership even after a crash; unlinking it would let a second inode be locked.
+    if !key_available(io, &qdir, &key) {
+        return 1;
+    }
     let idle = seconds(a, "idle-grace", 600.0);
     let opts = server::Options {
         qdir,
@@ -483,5 +540,7 @@ fn serve_detached(a: &Args, io: &mut Io, cwd: &str, qdir: String) -> i32 {
         idle_grace_ms: (if idle > 0.0 { idle } else { 600.0 }) * 1000.0,
         open: !a.has("no-open"),
     };
-    server::serve(round, opts, io)
+    let result = server::serve(round, opts, io);
+    drop(lock);
+    result
 }

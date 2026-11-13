@@ -108,6 +108,8 @@ When an action finishes with nothing visible to show for it (copying to the clip
 - Use scroll-driven motion only when the scroll relationship itself carries meaning, with a robust fallback.
 - Do not add a dependency for an effect the existing stack can express cleanly.
 
+Keep the selected state and its content independent of animation completion. On completion or interruption, settle visibility and remove temporary effects before dropping their handles: a finished Web Animation with `fill: forwards` or `both` still overrides the element's styles until cancelled. A new selection must invalidate old completion callbacks and render the latest matching content, including when reduced motion is enabled mid-transition; counts, selection, and visible rows must agree.
+
 Keep content visible in the default state so failed scripts do not hide the page. Avoid casually animating layout-driving properties such as `width`, `height`, `top`, `left`, and margins; use FLIP, transforms, or grid techniques when appropriate. Bound blur, filter, shadow, canvas, and shader work to isolated regions. Apply `will-change` only during known animation. Measure on target viewports and devices rather than assuming transform means fast.
 
 ## Accessibility and control

@@ -4,6 +4,126 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
 
+#[test]
+fn concurrent_starts_have_one_owner_and_the_key_can_be_reused_after_exit() {
+    let dir = std::env::temp_dir().join(format!("phoenix-compare-start-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("a.html"), "<p>A</p>").unwrap();
+    std::fs::write(dir.join("b.html"), "<p>B</p>").unwrap();
+    std::fs::write(dir.join("round.json"), r#"{"proposals":[{"id":"a","name":"A","source":"a.html"},{"id":"b","name":"B","source":"b.html"}]}"#).unwrap();
+    let command = || {
+        let mut cmd = std::process::Command::new(env!("CARGO_BIN_EXE_phoenix-ui"));
+        cmd.current_dir(&dir)
+            .env("PHOENIX_UI_QUESTION_FORCE", "1")
+            .env_remove("PHOENIX_UI_QUESTION_DISABLED");
+        cmd
+    };
+    let start = || {
+        command()
+            .args([
+                "compare",
+                "--start",
+                "--key",
+                "shared",
+                "--payload",
+                "round.json",
+                "--timeout",
+                "10",
+            ])
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .unwrap()
+    };
+    let children: Vec<_> = (0..8).map(|_| start()).collect();
+    let outputs: Vec<_> = children
+        .into_iter()
+        .map(|c| c.wait_with_output().unwrap())
+        .collect();
+    let result = std::panic::catch_unwind(|| {
+        assert_eq!(
+            outputs.iter().filter(|o| o.status.success()).count(),
+            1,
+            "{outputs:?}"
+        );
+        for output in outputs.iter().filter(|o| !o.status.success()) {
+            assert_eq!(output.status.code(), Some(1));
+            assert!(
+                String::from_utf8_lossy(&output.stderr).contains("已有运行中的对比页"),
+                "{output:?}"
+            );
+        }
+        let state: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(dir.join(".phoenix-ui/compare/shared.state.json")).unwrap(),
+        )
+        .unwrap();
+        let port = state["port"].as_u64().unwrap() as u16;
+        let winner = outputs.iter().find(|o| o.status.success()).unwrap();
+        assert!(String::from_utf8_lossy(&winner.stdout).contains(state["url"].as_str().unwrap()));
+        let origin = format!("http://127.0.0.1:{port}");
+        assert_eq!(
+            raw_request(
+                port,
+                "POST",
+                "/answer?key=shared",
+                &[("Content-Type", "application/json"), ("Origin", &origin)],
+                Some(r#"{"proposalId":"b"}"#)
+            )
+            .0,
+            200
+        );
+        let waiting = command()
+            .args(["compare", "--wait", "--key", "shared", "--poll", "1"])
+            .output()
+            .unwrap();
+        assert!(waiting.status.success());
+        assert!(String::from_utf8_lossy(&waiting.stdout).contains(r#""proposalId":"b""#));
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
+        while TcpStream::connect(("127.0.0.1", port)).is_ok()
+            && std::time::Instant::now() < deadline
+        {
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        assert!(TcpStream::connect(("127.0.0.1", port)).is_err());
+        assert!(
+            start().wait_with_output().unwrap().status.success(),
+            "key remains reusable"
+        );
+    });
+    let _ = command()
+        .args(["compare", "--stop", "--key", "shared"])
+        .output();
+    // Also end any duplicate service exposed by the regression's failing version.
+    for output in &outputs {
+        if let Some(url) = String::from_utf8_lossy(&output.stdout)
+            .lines()
+            .find_map(|l| l.strip_prefix("COMPARE URL: "))
+        {
+            if let Some(port) = url
+                .trim_end_matches('/')
+                .rsplit(':')
+                .next()
+                .and_then(|p| p.parse::<u16>().ok())
+            {
+                if TcpStream::connect(("127.0.0.1", port)).is_ok() {
+                    let origin = format!("http://127.0.0.1:{port}");
+                    raw_request(
+                        port,
+                        "POST",
+                        "/answer?key=shared",
+                        &[("Origin", &origin), ("Content-Type", "application/json")],
+                        Some(r#"{"proposalId":"a"}"#),
+                    );
+                }
+            }
+        }
+    }
+    std::fs::remove_dir_all(&dir).unwrap();
+    if let Err(panic) = result {
+        std::panic::resume_unwind(panic);
+    }
+}
+
 fn raw_request(
     port: u16,
     method: &str,
