@@ -212,17 +212,17 @@ REVIEW @progress_consistency:
 - 最近完成：M5 修复后收口；F-01–F-03 已修复并验证，22 份真实产物内联及浏览器补验通过
 - 下一步：无
 - 当前阻塞：无
-- 代码基线：功能提交 `63ec4961`/`bfd626b5`，记录提交 `2fb94fb6`/`6ca033cd`/`f4e83113`；本轮修复待提交；开发引擎 `local/phoenix-diagram/elintp-p3-final`
+- 代码基线：功能提交 `63ec4961`/`bfd626b5`，记录提交 `2fb94fb6`/`6ca033cd`/`f4e83113`；本轮修复 `cdc6ea52`；开发引擎 `local/phoenix-diagram/elintp-p3-final`
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-13T15:13+08:00 | 静态 SVG、两字体策略与 `static` 命令完成；V-1 自动门与无效输入、原 Rust 测试通过，静态 CLI 行为另有场景证据；看图与打印亮色已补验 | [M1 记录](ELINTP-VISUALS-P3.records/M1.md) | 63ec4961 |
-| M2 | 已完成 | 2026-11-13T15:13+08:00 | 宿主页双覆盖浏览器检查与登记完成；V-2 恢复提示、缺观察拒绝、10 条覆盖证据齐备 | [M2 记录](ELINTP-VISUALS-P3.records/M2.md) | 63ec4961 |
-| M3 | 已完成 | 2026-11-13T15:13+08:00 | Reader 两张/比较六张；F-03 重复流程已删除并同步 bundle，相关元数据与引用检查通过 | [M3 记录](ELINTP-VISUALS-P3.records/M3.md) | 63ec4961 |
-| M4 | 已完成 | 2026-11-13T15:13+08:00 | F-01/F-02 已修复；22 件真实产物内联、18 项 render/review 检查通过；真实 360px 无页面横向溢出 | [M4 记录](ELINTP-VISUALS-P3.records/M4.md) | bfd626b5 |
-| M5 | 已完成 | 2026-11-13T15:13+08:00 | 修复后集成与浏览器补验通过；未改引擎的全量、Reader 字节、44 张审核与 V-6 安装证据复用 | [M5 记录](ELINTP-VISUALS-P3.records/M5.md) | 2fb94fb6 |
+| M1 | 已完成 | 2026-11-13T15:13+08:00 | 静态 SVG、两字体策略与 `static` 命令完成；V-1 自动门与无效输入、原 Rust 测试通过，静态 CLI 行为另有场景证据；看图与打印亮色已补验 | [M1 记录](ELINTP-VISUALS-P3.records/M1.md) | 63ec4961；修复 cdc6ea52 |
+| M2 | 已完成 | 2026-11-13T15:13+08:00 | 宿主页双覆盖浏览器检查与登记完成；V-2 恢复提示、缺观察拒绝、10 条覆盖证据齐备 | [M2 记录](ELINTP-VISUALS-P3.records/M2.md) | 63ec4961；修复 cdc6ea52 |
+| M3 | 已完成 | 2026-11-13T15:13+08:00 | Reader 两张/比较六张；F-03 重复流程已删除并同步 bundle，相关元数据与引用检查通过 | [M3 记录](ELINTP-VISUALS-P3.records/M3.md) | 63ec4961；修复 cdc6ea52 |
+| M4 | 已完成 | 2026-11-13T15:13+08:00 | F-01/F-02 已修复；22 件真实产物内联、18 项 render/review 检查通过；真实 360px 无页面横向溢出 | [M4 记录](ELINTP-VISUALS-P3.records/M4.md) | bfd626b5；修复 cdc6ea52 |
+| M5 | 已完成 | 2026-11-13T15:13+08:00 | 修复后集成与浏览器补验通过；未改引擎的全量、Reader 字节、44 张审核与 V-6 安装证据复用 | [M5 记录](ELINTP-VISUALS-P3.records/M5.md) | 2fb94fb6；修复 cdc6ea52 |
 
 ## 0. 需求、范围与决策
 
