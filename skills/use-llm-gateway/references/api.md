@@ -35,8 +35,11 @@ API Key 不能因能调用 `/v1/models` 就被当作管理目录 TDT。目录 ki
 | `Idempotency-Key` | 可选，1–200个非空格可见 ASCII；仅非流式调用 POST，不能与 stream:true 同用 |
 | `X-Gateway-Failover` | default / refused-only，默认 default；显式发送必须带键，与该意图绑定 |
 | `Prefer` | 媒体交付选 respond-async 或 wait=正整数秒；不能重复/同时指定，已知格式错误为400 |
+| 会话头 | 可选，对话调用的会话标识。网关按 `x-opencode-session`、`x-session-affinity`、`x-session-id`、`session_id`、`session-id`、`x-claude-code-session-id`、`x-conversation-id`、`x-deepseek-harness-session-id` 的顺序取第一个非空值（截128字符）；子代理另带 `x-claude-code-agent-id`。不发上游、不授权、不校验格式 |
 
-没有值时省略可选头；头值不作 trim。不要把中文正文、敏感信息或带空格描述直接当标记。网关不提供按标记的额度和业务汇总，由调用方维护。
+没有值时省略可选头；头值不作 trim。不要把中文正文、敏感信息或带空格描述直接当标记。网关不按标记设置额度；门户调用洞察可按标记筛选和排行供核对，业务结算与额度由调用方维护。
+
+**会话亲和**：同一会话的后续对话调用留在上次的渠道和Key，提示缓存可持续命中；绑定按「租户 + 调用主体（Key/App）+ 模型 + 会话」隔离，空闲1小时失效，管理员可按模型关闭。不带会话头时以首条用户消息为依据，开场相同的不同对话会共用绑定——多会话并发的后端应为每段对话带稳定的 `x-session-id`。会话标识与消息只进绑定键哈希，不写日志。
 
 default 可在失败后重试/换候选，可能产生多次供应商费用。refused-only 只在明确工作前拒绝时换候选；超时、断连、5xx或开始工作后的拒绝停止。它不禁止推理的业务修复或审核的多条目调用，不承诺整单只请求一次供应商。
 
