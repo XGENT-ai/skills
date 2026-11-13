@@ -95,8 +95,8 @@
     },
     {
       "path": "references/delivery-contract.md",
-      "size": 8849,
-      "sha256": "af54ac1db5dbd83b870ee7df68456179f76f1e7c144785aee037e560d487ba9e",
+      "size": 8993,
+      "sha256": "1ad889a9be6f71469f04a065ddbdb587062a1930e6d96771d2c37a5c2102cc00",
       "mode": 420
     },
     {
@@ -125,8 +125,8 @@
     },
     {
       "path": "references/static-figure.md",
-      "size": 2737,
-      "sha256": "0cfc90e880d7c730b638a7676a3558fc76e886412a61e479f8fe970512b2839d",
+      "size": 2946,
+      "sha256": "4b6dbc3eb96ea8eb34a613f3437927217dd53628d33a06ef9f663a29b33ffa6a",
       "mode": 420
     },
     {

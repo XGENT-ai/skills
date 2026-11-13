@@ -71,6 +71,9 @@ test('SVG rejects executable elements, handlers, style and external resources', 
 });
 
 const staticFigure = (body, policy = 'embedded') => `<svg xmlns="http://www.w3.org/2000/svg" id="pd12345678-${policy}-figure" data-phoenix-static="" data-font-policy="${policy}" data-diagram-type="workflow" data-preset="classic" lang="en" viewBox="0 0 20 20" width="20" height="20" role="img" aria-label="Queue">\n${body}\n</svg>`;
+const xmlEscape = text => text.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+const cardJson = cards => xmlEscape(JSON.stringify(cards));
+const cardMeta = cards => `<metadata data-phoenix-cards="">${cardJson(cards)}</metadata>`;
 
 test('static SVG rejects unmarked and forged-marker inputs without replacing an old page', t => {
   const w = workspace(t);
@@ -104,6 +107,15 @@ test('static SVG rejects unmarked and forged-marker inputs without replacing an 
     ['host font family', staticFigure('<style>@font-face { font-family: system-ui; src: url(data:font/woff2;base64,d09GMg==); }</style>'), /font-family|字体族/],
     ['system font face', staticFigure('<style>@font-face { font-family: x; src: url(data:font/woff2;base64,d09GMg==); }</style>', 'system'), /system.*@font-face|@font-face.*system/],
     ['system image font', staticFigure('<style>svg[data-phoenix-static] text { font-family: "JetBrains Mono"; }</style>', 'system'), /system.*JetBrains|JetBrains.*system/],
+    ['card meta outside root', staticFigure('<g><metadata data-phoenix-cards="">[]</metadata></g>'), /卡片数据须为根下唯一/],
+    ['two card metas', staticFigure(`<metadata data-phoenix-cards="">${cardJson([{ dot: 'emerald', title: 't', items: ['a'] }])}</metadata><metadata data-phoenix-cards="">[]</metadata>`), /卡片数据须为根下唯一/],
+    ['card meta extra attribute', staticFigure('<metadata data-phoenix-cards="" data-x="">[]</metadata>'), /卡片数据须为根下唯一/],
+    ['card meta embedded tag', staticFigure(`<metadata data-phoenix-cards="">${cardJson([{ dot: 'emerald', title: 't', items: ['a'] }])}<rect/></metadata>`), /卡片数据须为纯文本/],
+    ['card meta invalid JSON', staticFigure('<metadata data-phoenix-cards="">not-json</metadata>'), /卡片数据结构不合约/],
+    ['card meta extra key', staticFigure(`<metadata data-phoenix-cards="">${cardJson([{ dot: 'emerald', title: 't', items: [], note: 'x' }])}</metadata>`), /卡片数据结构不合约/],
+    ['card meta bad dot', staticFigure(`<metadata data-phoenix-cards="">${cardJson([{ dot: 'gold', title: 't', items: [] }])}</metadata>`), /卡片数据结构不合约/],
+    ['card meta non-string item', staticFigure(`<metadata data-phoenix-cards="">${cardJson([{ dot: 'emerald', title: 't', items: [3] }])}</metadata>`), /卡片数据结构不合约/],
+    ['card meta empty title', staticFigure(`<metadata data-phoenix-cards="">${cardJson([{ dot: 'emerald', title: '', items: [] }])}</metadata>`), /卡片数据结构不合约/],
   ];
   for (const [label, source, pattern] of attacks) {
     fs.writeFileSync(path.join(w.dir, 'figure.svg'), source);
@@ -116,6 +128,24 @@ test('static SVG rejects unmarked and forged-marker inputs without replacing an 
   const review = spawnSync(process.execPath, [reviewScript, 'draft.md', 'review.html', 'result.json', '--no-open'], { cwd: w.dir, encoding: 'utf8' });
   assert.equal(review.status, 2, review.stderr);
   assert.equal(fs.existsSync(path.join(w.dir, 'review.html')), false);
+});
+
+test('static SVG card data renders as escaped page cards; no data means no card area', t => {
+  const w = workspace(t);
+  const cards = [{ dot: 'emerald', title: 'Queue rules', items: ['Shows <b> & plain', 'Keep <script>alert(1)</script> out'] }];
+  fs.writeFileSync(path.join(w.dir, 'figure.svg'), staticFigure(`${cardMeta(cards)}<rect width="20" height="20"/>`));
+  const result = w.run(draft(':::figure Queue\nstatic: figure.svg\n:::'));
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(w.output, 'utf8');
+  assert.match(html, /<div class="figure-cards">/);
+  assert.match(html, /<p class="figure-card-title">Queue rules<\/p>/);
+  assert.match(html, /<li>Shows &lt;b&gt; &amp; plain<\/li>/);
+  assert.match(html, /<li>Keep &lt;script&gt;alert\(1\)&lt;\/script&gt; out<\/li>/);
+  assert.doesNotMatch(html, /data-phoenix-cards/);
+  fs.writeFileSync(path.join(w.dir, 'plain.svg'), staticFigure('<rect width="20" height="20"/>'));
+  const plain = w.run(draft(':::figure Queue\nstatic: plain.svg\n:::'));
+  assert.equal(plain.status, 0, plain.stderr);
+  assert.doesNotMatch(fs.readFileSync(w.output, 'utf8'), /<div class="figure-cards">/);
 });
 
 test('static SVG preserves namespaced drawing and renders in final and review pages', async t => {

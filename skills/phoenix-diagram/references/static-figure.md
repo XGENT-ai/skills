@@ -23,11 +23,11 @@
 
 `static` 依次执行 validate → static → browser-check，写出三类文件：
 
-- `OUTPUT.svg`：单个无脚本、无外部资源的静态 SVG，含主图、关系、标签与图内图例；不含 Reader 页面标题、摘要卡片、节点索引或交互控件。
+- `OUTPUT.svg`：单个无脚本、无外部资源的静态 SVG，含主图、关系、标签与图内图例；不含 Reader 页面标题、节点索引或交互控件；卡片以 `<metadata data-phoenix-cards="">` JSON（每项 `dot`、`title`、`items`，顺序同 Reader）随 SVG 交付，不画进图面，由宿主显示。
 - `NAME.static-summary.json`：固定字段的交付 summary。
 - `NAME.static.1440x900.light.png` 与 `NAME.static.1440x900.dark.png` 两张截图；`--out-dir` 可指定截图目录。
 
-宿主约定：`<html data-theme="light|dark">` 优先控制亮暗；没有有效属性时跟随系统偏好；打印为亮色。静态 SVG 自带候选与策略派生的 ID 前缀和本地引用，可与其他图同页共存。
+宿主约定：`<html data-theme="light|dark">` 优先控制亮暗；没有有效属性时跟随系统偏好；打印为亮色。静态 SVG 自带候选与策略派生的 ID 前缀和本地引用，可与其他图同页共存。要显示卡片的宿主读取 `<metadata data-phoenix-cards>`。
 
 ## 看图与登记
 

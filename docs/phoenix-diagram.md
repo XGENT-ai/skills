@@ -98,7 +98,7 @@ review-record 只接受自动三门已通过、产物仍与 summary 记录一致
 
 `--font-policy embedded|system` 默认为 `embedded`，内嵌 JetBrains Mono；明确要求系统字体时选 `system`，不内嵌字体、不含 JetBrains Mono 或 `@font-face`，只使用 `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`。两种策略均须按实际输出字体通过浏览器检查与看图，静态 SVG 字节数不得超过同一 candidate Reader HTML 的 50%。
 
-`static` 依次执行 validate、static、browser-check，写出静态 SVG、SVG 旁的 `NAME.static-summary.json` 和 `NAME.static.1440x900.light.png`、`NAME.static.1440x900.dark.png` 两张截图。SVG 无脚本、无外部资源，只含主图、关系、标签与图内图例，不含 Reader 页面标题、摘要卡片、节点索引或交互控件。宿主 `<html data-theme="light|dark">` 优先控制亮暗，没有有效属性时跟随系统偏好，打印为亮色。取静态图不改变同名 Reader HTML 及其 finalize summary 或截图。
+`static` 依次执行 validate、static、browser-check，写出静态 SVG、SVG 旁的 `NAME.static-summary.json` 和 `NAME.static.1440x900.light.png`、`NAME.static.1440x900.dark.png` 两张截图。SVG 无脚本、无外部资源，图面只含主图、关系、标签与图内图例，不含 Reader 页面标题、节点索引或交互控件；卡片以 `<metadata data-phoenix-cards="">` JSON（每项 `dot`、`title`、`items`，顺序同 Reader）随 SVG 交付，不画进图面，由宿主显示。宿主 `<html data-theme="light|dark">` 优先控制亮暗，没有有效属性时跟随系统偏好，打印为亮色。取静态图不改变同名 Reader HTML 及其 finalize summary 或截图。
 
 实际打开 static summary 列出的两张截图，逐张写实际观察，再用 `review-record OUTPUT.svg --record review.json --json` 登记。审核记录必须与 summary 的截图一一对应；自动门未过或 SVG 已变化时重跑 `static`，然后重新看图登记。只有自动门通过、视觉审核 passed 且 `deliveryStatus: complete` 才完成。完整边界与失败语义见[交付合同](../skills/phoenix-diagram/references/delivery-contract.md#静态图)与[静态图参考](../skills/phoenix-diagram/references/static-figure.md)。
 

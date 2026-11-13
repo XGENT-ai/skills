@@ -199,7 +199,7 @@ node <skill 目录>/scripts/render.mjs <当前内容稿.md> <终稿.html> --asse
 
 调用方或作者明确要求内联图、内联 SVG 或零网络阅读面时，页面里每张图都用 phoenix-diagram 的静态图，以 `:::figure` 的 `static:` 引用，不用 `reader:`；静态图的生成、看图与审核登记按 phoenix-diagram 的流程，这里不复述。没有这类要求时默认仍用 `reader:`。字体要求独立识别：summarize 或作者明确要求系统字体时，取图必须传 `--font-policy system`；其他静态图默认 `embedded`。系统字体产物必须在该策略下完成浏览器检查与实际看图，不能在 elintp 删除字体后冒用 embedded 产物的审核记录。已安装的 phoenix-diagram 没有静态图命令或按其流程无法交付静态图时，同样改用自绘 `svg:` 并在交付说明写明原因。
 
-**合并后仍是一个离线 HTML**：用 `:::figure` 的 `reader:` 引用 phoenix-diagram 交付的自包含 HTML，由脚本嵌入带标题的 `iframe srcdoc`；不使用指向另一个文件的 `iframe src`。`static:` 的静态 SVG 先经宿主安全解析，再保留原 ID 内联到自身的横向滚动区域，不用 iframe。自绘 SVG 经白名单校验后内联，写法见格式参考。截图用 `![说明](本地路径)`，脚本以 data URI 嵌入；只用已存在的本地图片，不生成图片，缺失如实标注。手写降级时也遵循相同的离线嵌入要求。嵌入区域要有足够高度和移动端宽内容滚动，不能裁掉图、标签或图例。合并后检查最终 HTML 的图和截图是否完整显示；phoenix-diagram 原图的校验结果不能代替最终页面检查。
+**合并后仍是一个离线 HTML**：用 `:::figure` 的 `reader:` 引用 phoenix-diagram 交付的自包含 HTML，由脚本嵌入带标题的 `iframe srcdoc`；不使用指向另一个文件的 `iframe src`。`static:` 的静态 SVG 先经宿主安全解析，再保留原 ID 内联到自身的横向滚动区域，不用 iframe；SVG 带卡片数据时，卡片随图显示为页面卡片。自绘 SVG 经白名单校验后内联，写法见格式参考。截图用 `![说明](本地路径)`，脚本以 data URI 嵌入；只用已存在的本地图片，不生成图片，缺失如实标注。手写降级时也遵循相同的离线嵌入要求。嵌入区域要有足够高度和移动端宽内容滚动，不能裁掉图、标签或图例。合并后检查最终 HTML 的图和截图是否完整显示；phoenix-diagram 原图的校验结果不能代替最终页面检查。
 
 ## 交付前自检
 

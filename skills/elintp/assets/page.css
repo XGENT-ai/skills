@@ -112,6 +112,9 @@ figure svg { display: block; width: 100%; height: auto; max-width: 100%; color: 
 iframe { display: block; width: 100%; height: min(82vh, 760px); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 figcaption { color: var(--muted); font-size: 14px; margin-top: 12px; }
 figcaption p { margin: 8px 0 0; }
+.figure-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }
+.figure-card { padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.figure-card-title { margin: 0 0 6px; font-weight: 650; }
 .missing-image { padding: 32px 24px; border: 1px dashed var(--line); background: var(--surface); }
 .sources { border-top: 1px solid var(--line); padding-top: 24px; color: var(--muted); font-size: 13px; }
 .sources h2 { font-size: 15px; margin: 0 0 12px; }
@@ -145,7 +148,7 @@ figcaption p { margin: 8px 0 0; }
   th, td { min-width: 0; padding: 6px; }
   pre { white-space: pre-wrap; overflow-wrap: anywhere; }
   h2, h3 { break-after: avoid; }
-  figure, .metrics, aside { break-inside: avoid; }
+  figure, .figure-card, .metrics, aside { break-inside: avoid; }
   /* Paper cannot scroll a frame and is narrower than the reader's full layout: print the reader at its
      desktop width in this page (840px) and at its content height (set by page.js), scaled to the paper. */
   .reader-frame { container-type: inline-size; aspect-ratio: 840 / var(--reader-height, 760); overflow: hidden; }

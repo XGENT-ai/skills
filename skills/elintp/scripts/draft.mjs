@@ -6,7 +6,8 @@ export const escapeHTML = text => String(text).replace(/[&<>"']/g, char => ({ '&
 
 const SVG_ELEMENTS = new Set('svg g defs title desc path rect circle ellipse line polyline polygon text tspan marker linearGradient radialGradient stop clipPath use'.split(' '));
 const SVG_ATTRIBUTES = new Set(('id class role aria-label aria-labelledby aria-describedby xmlns xmlns:xlink viewBox width height x y x1 x2 y1 y2 cx cy r rx ry d points transform fill fill-opacity fill-rule stroke stroke-width stroke-opacity stroke-linecap stroke-linejoin stroke-dasharray stroke-dashoffset stroke-miterlimit opacity color font-family font-size font-weight font-style text-anchor dominant-baseline alignment-baseline dx dy textLength lengthAdjust letter-spacing word-spacing marker-start marker-mid marker-end markerWidth markerHeight refX refY orient markerUnits gradientUnits gradientTransform offset stop-color stop-opacity fx fy fr spreadMethod clip-path clip-rule clipPathUnits mask filter href xlink:href preserveAspectRatio vector-effect').split(' '));
-const STATIC_SVG_ELEMENTS = new Set([...SVG_ELEMENTS, ...'style image pattern mask filter feBlend feColorMatrix feComponentTransfer feComposite feConvolveMatrix feDiffuseLighting feDisplacementMap feDistantLight feDropShadow feFlood feFuncA feFuncB feFuncG feFuncR feGaussianBlur feMerge feMergeNode feMorphology feOffset fePointLight feSpecularLighting feSpotLight feTile feTurbulence'.split(' ')]);
+const STATIC_SVG_ELEMENTS = new Set([...SVG_ELEMENTS, ...'style image pattern mask filter feBlend feColorMatrix feComponentTransfer feComposite feConvolveMatrix feDiffuseLighting feDisplacementMap feDistantLight feDropShadow feFlood feFuncA feFuncB feFuncG feFuncR feGaussianBlur feMerge feMergeNode feMorphology feOffset fePointLight feSpecularLighting feSpotLight feTile feTurbulence metadata'.split(' ')]);
+const CARD_DOTS = new Set('cyan emerald violet amber rose orange slate'.split(' '));
 const STATIC_SVG_ATTRIBUTES = new Set([...SVG_ATTRIBUTES, ...'style pointer-events lang aria-hidden patternUnits patternTransform primitiveUnits filterUnits in in2 result stdDeviation mode type values operator k1 k2 k3 k4 radius edgeMode kernelMatrix order targetX targetY divisor bias preserveAlpha surfaceScale diffuseConstant specularConstant specularExponent scale xChannelSelector yChannelSelector baseFrequency numOctaves seed stitchTiles tableValues slope intercept amplitude exponent flood-color flood-opacity lighting-color azimuth elevation pointsAtX pointsAtY pointsAtZ limitingConeAngle kernelUnitLength color-interpolation-filters'.split(' ')]);
 const STATIC_CSS_PROPERTIES = new Set(('color color-scheme fill fill-opacity fill-rule stroke stroke-width stroke-opacity stroke-linecap stroke-linejoin stroke-dasharray stroke-dashoffset stroke-miterlimit opacity display visibility overflow font font-family font-size font-weight font-style line-height letter-spacing word-spacing font-variant-numeric text-anchor dominant-baseline alignment-baseline text-transform text-rendering white-space paint-order shape-rendering vector-effect filter clip-path clip-rule mask marker marker-start marker-mid marker-end rx ry transform transform-origin width height min-width max-width flex flex-direction flex-wrap align-items justify-content gap pointer-events transform-box').split(' '));
 const STATIC_CSS_FUNCTIONS = new Set('var color-mix calc min max clamp rgb rgba hsl hsla hwb lab lch oklab oklch color drop-shadow blur brightness contrast grayscale hue-rotate invert opacity saturate sepia matrix translate translatex translatey scale scalex scaley rotate skew skewx skewy'.split(' '));
@@ -303,12 +304,24 @@ function parseStaticCSS(css, policy, rootId, fail) {
   return rules(0, cleaned.length, true);
 }
 
-function inlineSVG(source, title, prefix, report, staticMode = false) {
+function inlineSVG(source, title, prefix, report, staticMode = false, onCards) {
   if (staticMode) source = source.replace(/^\uFEFF/, '');
   let failed = false, staticPolicy = 'embedded', staticRootId = '';
+  let cards = null, cardText = null;
   const bad = (at, tag, problem) => {
     failed = true;
     report(`SVG L${source.slice(0, at).split('\n').length} ${tag}：${problem}`);
+  };
+  const parseCards = at => {
+    let parsed;
+    try { parsed = JSON.parse(cardText); } catch { parsed = null; }
+    cardText = null;
+    const valid = Array.isArray(parsed) && parsed.every(card => card && typeof card === 'object' && !Array.isArray(card)
+      && Object.keys(card).length === 3 && ['dot', 'title', 'items'].every(key => Object.hasOwn(card, key))
+      && CARD_DOTS.has(card.dot) && typeof card.title === 'string' && card.title
+      && Array.isArray(card.items) && card.items.every(item => typeof item === 'string'));
+    if (!valid) { bad(at, 'metadata', '卡片数据结构不合约'); return; }
+    cards = parsed;
   };
   function decode(value, at, tag) {
     return value.replace(/&([^;\s]*);?/g, (whole, entity) => {
@@ -335,6 +348,8 @@ function inlineSVG(source, title, prefix, report, staticMode = false) {
       if (staticMode && stack.at(-1) === 'style') {
         const css = decode(token, at, 'style');
         output += parseStaticCSS(css, staticPolicy, staticRootId, (offset, problem) => bad(at + offset, 'style', problem));
+      } else if (staticMode && stack.at(-1) === 'metadata') {
+        cardText += decode(token, at, 'metadata');
       } else output += escapeHTML(decode(token, at, 'text'));
       continue;
     }
@@ -344,9 +359,11 @@ function inlineSVG(source, title, prefix, report, staticMode = false) {
     if (!(staticMode ? STATIC_SVG_ELEMENTS : SVG_ELEMENTS).has(name)) { bad(at, name, '元素不在白名单'); continue; }
     if (closing) {
       if (raw.trim() || selfClosing || stack.pop() !== name) bad(at, name, '闭合标签不匹配');
+      if (staticMode && name === 'metadata') { parseCards(at); continue; }
       output += `</${name}>`;
       continue;
     }
+    if (staticMode && cardText !== null) { bad(at, name, '卡片数据须为纯文本'); continue; }
     if (staticMode && name === 'svg' && stack.length) bad(at, name, '静态图不允许嵌套 svg');
     if (staticMode && name === 'style' && !['svg', 'defs'].includes(stack.at(-1))) bad(at, name, 'style 只能位于静态根或 defs 内');
     const attrs = new Map();
@@ -406,10 +423,18 @@ function inlineSVG(source, title, prefix, report, staticMode = false) {
       const declarations = cssDeclarations(attrs.get('style'), (offset, problem) => bad(at + offset, name, `style ${problem}`), { policy: staticPolicy, inline: true });
       attrs.set('style', declarations);
     }
-    output += `<${name}${[...attrs].map(([key, value]) => ` ${key}="${escapeHTML(value)}"`).join('')}${selfClosing ? '/>' : '>'}`;
+    if (staticMode && name === 'metadata') {
+      if (stack.length !== 1 || cards !== null || cardText !== null
+        || attrs.size !== 1 || attrs.get('data-phoenix-cards') !== '') bad(at, name, '卡片数据须为根下唯一的 metadata[data-phoenix-cards]');
+      else if (selfClosing) bad(at, name, '卡片数据结构不合约');
+      else cardText = '';
+    } else {
+      output += `<${name}${[...attrs].map(([key, value]) => ` ${key}="${escapeHTML(value)}"`).join('')}${selfClosing ? '/>' : '>'}`;
+    }
     if (!selfClosing) stack.push(name);
   }
   if (end !== source.length || stack.length || roots !== 1) bad(end, 'svg', '根元素缺失或标签未闭合');
+  if (!failed && staticMode && onCards) onCards(cards || []);
   return failed ? '' : output;
 }
 
@@ -601,12 +626,14 @@ export function parseDraft(text, { cwd, assets = null }) {
           catch { error(content[0].line, `无法读取图文件 ${file}`, '确认本地路径存在且可读'); continue; }
           // Host styles cannot hide a reader control across the iframe boundary when scripts are disabled.
           if (type === 'reader') data = data.replace(/<\/head>/i, '<noscript><style>#btn-theme{display:none!important}</style></noscript></head>');
+          let cards = null;
           const graphic = type === 'reader'
             ? `<div class="reader-frame"><iframe srcdoc="${escapeHTML(data)}" title="${escapeHTML(title)}" loading="lazy"></iframe></div>`
             : type === 'static'
-              ? `<div class="image-scroll" role="region" tabindex="0" aria-label="${escapeHTML(title)}">${inlineSVG(data, title, '', problem => error(content[0].line, problem, '按 phoenix-diagram 静态 SVG/CSS、作用域与资源白名单修正源文件，或重新用 static 命令生成'), true)}</div>`
+              ? `<div class="image-scroll" role="region" tabindex="0" aria-label="${escapeHTML(title)}">${inlineSVG(data, title, '', problem => error(content[0].line, problem, '按 phoenix-diagram 静态 SVG/CSS、作用域与资源白名单修正源文件，或重新用 static 命令生成'), true, parsed => { cards = parsed; })}</div>`
               : inlineSVG(data, title, `fig${++svgNumber}-`, problem => error(content[0].line, problem, '按 SVG 元素、属性与本地片段白名单修正源文件'));
-          result.push(`<figure class="diagram">${graphic}<figcaption><strong>${escapeHTML(title)}</strong>${content.slice(1).map(row => `<p>${inline(row.value, row.line)}</p>`).join('')}</figcaption></figure>`);
+          const cardsHtml = cards?.length ? `<div class="figure-cards">${cards.map(card => `<section class="figure-card"><p class="figure-card-title">${escapeHTML(card.title)}</p><ul>${card.items.map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ul></section>`).join('')}</div>` : '';
+          result.push(`<figure class="diagram">${graphic}${cardsHtml}<figcaption><strong>${escapeHTML(title)}</strong>${content.slice(1).map(row => `<p>${inline(row.value, row.line)}</p>`).join('')}</figcaption></figure>`);
         } else {
           const body = blocks(rows.slice(start + 1, i - 1), false, true);
           result.push(`<aside class="${kind}">${title ? `<h3>${inline(title, line)}</h3>` : ''}${body.join('')}</aside>`);

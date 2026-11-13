@@ -83,7 +83,7 @@ review-record 只接受自动三门已通过、产物仍与 summary 记录一致
 
 `static` 的顺序为 `validate → static → browser-check`，首个非 pass 阶段后的阶段保持 `not-run`。校验或静态渲染未过时不写或覆盖 SVG；浏览器不可用时已写出的 SVG 保留并如实记录 `unavailable`。stdout 是 `command: "static"` 的 JSON，同时写出：
 
-- `OUTPUT.svg`：单个无脚本、无外部资源的静态 SVG，包含主图、关系、标签与图内图例，不包含 Reader 页面标题、摘要卡片、节点索引或交互控件。
+- `OUTPUT.svg`：单个无脚本、无外部资源的静态 SVG，包含主图、关系、标签与图内图例，不包含 Reader 页面标题、节点索引或交互控件；卡片以 `<metadata data-phoenix-cards="">` JSON（每项 `dot`、`title`、`items`，顺序同 Reader）随 SVG 交付，不画进图面，由宿主显示。
 - SVG 旁的 `NAME.static-summary.json`。
 - `NAME.static.1440x900.light.png` 与 `NAME.static.1440x900.dark.png` 两张截图；`--out-dir` 可指定截图目录。
 

@@ -1298,6 +1298,24 @@ impl SvgConversion<'_> {
     }
 
     fn write_common(&mut self, output: &mut String) {
+        if !self.scene.cards.is_empty() {
+            let cards: Vec<_> = self
+                .scene
+                .cards
+                .iter()
+                .map(|card| {
+                    serde_json::json!({
+                        "dot": &card.authored.facts["dot"],
+                        "title": &card.authored.facts["title"],
+                        "items": &card.authored.facts["items"],
+                    })
+                })
+                .collect();
+            let cards = serde_json::to_string(&cards).expect("serializable cards");
+            output.push_str("<metadata data-phoenix-cards=\"\">");
+            output.push_str(&super::escape_text(&cards));
+            output.push_str("</metadata>");
+        }
         output.push_str("<style>");
         output.push_str(&self.viewer);
         output.push_str("</style>");
