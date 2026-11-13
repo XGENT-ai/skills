@@ -207,12 +207,12 @@ REVIEW @progress_consistency:
 ### 恢复快照
 
 - 最近更新：2026-11-14 00:04 +08:00
-- 当前进度：5/5 个里程碑验收完成，最终提交与 SHA 回填进行中
+- 当前进度：5/5 个里程碑完成
 - 当前状态：M1–M5 退出检查已完成；F-01/G-01 的修复与完整 A2 已核实，同候选四平台及 Node 18 的 V-9 通过
 - 最近完成：M5 · 构建同步、真实使用验收与四平台候选终验
-- 下一步：完成收口记录提交和最终 SHA 回填
+- 下一步：无
 - 当前缺口：无验收缺口；正常速度主观手感未核对，按原规则披露，不冒充已验证
-- 代码基线：main / `968b6539f83f190145bacb7aafa0fb5e284d9eef` 已推送；最终收口仅改记录文件
+- 代码基线：main / `968b6539f83f190145bacb7aafa0fb5e284d9eef` 已推送；最终收口 `0eda22cd`，仅改记录文件
 
 ### 完成记录
 
@@ -222,7 +222,7 @@ REVIEW @progress_consistency:
 | M2 | 已完成 | 2026-11-12 23:24 +08:00 | 对比页界面；V-1 十步实拍逐张查看通过，V-2、V-3 与 lint 通过 | [M2 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M2.md) | `0a49480` |
 | M3 | 已完成 | 2026-11-13 10:24 +08:00 | 六份参考与触发句；V-4 通过，V-5 的 R2–R6 符合，R1 按“回复清单后等用户回复”的流程复验通过；R5 页面标注修订已通过定向复验 | [M3 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M3.md) | `3adeb8a`；修订 `28a51d5`、`c93dec5`、`0279aec`；修复 `a18e025b` |
 | M4 | 已完成 | 2026-11-13 10:24 +08:00 | 引擎命令表、docs、README、evals、声明文字；V-4 通过，交付后下一步经 V-7 A2、A3 验证，与 M3 共用的 R1 复验通过；R5 页面标注缺口已关闭 | [M4 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M4.md) | `d2fe94b`；修订 `28a51d5`、`c93dec5`、`0279aec`；修复 `a18e025b` |
-| M5 | 已完成 | 2026-11-14 00:04 +08:00 | V-6–V-9 完成；同候选四平台与 Node 18 通过；A2 结果含同会话报告修正，限制见记录；最终收口待提交 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M5.md) | 候选 `968b6539`；收口待提交；修复 `5e2f7554`；历史候选 `55fdfdfd`、`90045192`、`4844a90`；动效修订 `18852ff1`；修复 `a18e025b` |
+| M5 | 已完成 | 2026-11-14 00:04 +08:00 | V-6–V-9 完成；同候选四平台与 Node 18 通过；A2 结果含同会话报告修正，限制见记录；最终收口已提交 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M5.md) | 候选 `968b6539`；收口 `0eda22cd`；修复 `5e2f7554`；历史候选 `55fdfdfd`、`90045192`、`4844a90`；动效修订 `18852ff1`；修复 `a18e025b` |
 
 ## 0. 需求、范围与决策
 
@@ -733,7 +733,7 @@ V-1 在本机由 Agent 执行并亲自看图；V-5、V-7 的 A2、A3 需要已�
 | M2 | 对比页界面 | M1 的路由与页面数据格式（§5.4 的 `GET /`） | 批 1 后半，连续实施。`page.html`、`page.css`、`page.js`★（§6.1）与 `server.rs` 里对它们和套件、字体的内嵌；`crates/cli/tests/compare.rs`★。同构：套件与字体的内嵌、数据块的转义照 crates/comp-verbs/src/map_inspection.rs:403-431 与 `map_inspection.html` 的页头写法；开关组与心跳照决策页模板（crates/context/src/question_page.rs 的 `bp-switch` 与 `beat()`）；浏览器级测试的跳过与二进制调用照 crates/cli/tests/capture.rs:23、:68-88。页面三个文件的可写路径与 M1 的 Rust 文件不重叠，可交给 subagent 与 M1 并行开发，接口以 §5.4 与 §6.1 为准 | 批末 V-1、V-2、V-3 通过；回写「实施进度」 |
 | M3 | 四组指引与对比页用法（skill） | §0.6 I-2–I-6 已核对；命令接口以 §5 为准，文本开发不依赖批 1 完成；V-5 需 V-1 通过 | 批 2 前半。`reference/compare.md`★、`reference/vague-feedback.md`★、`animate.md`、`craft-floor.md`、`routing.md`、`new-work.md` 与 `SKILL.src.md` 的「How to design」一条和 Routing 两条（§6.2–§6.7）；运行渲染并提交生成物。同构：new-work.md:55 对决策页命令的写法、:147 对 capture 命令行的写法；typeset.md 的「Chinese copy」一节作为“在现有参考里加一组规则”的样子。可写路径 `skills/phoenix-ui/src/reference`，可交给 subagent；`SKILL.src.md` 由主 agent 单人修改 | 与 M4 同批，V-4、V-5；回写「实施进度」 |
 | M4 | 复述终验、文档与声明文字 | §0.6 I-7 已核对；M3 的参考文件名已定 | 批 2 后半，连续实施。`SKILL.src.md` 的「Engine commands」表（§6.8）、`skills/phoenix-ui/evals/scenarios.md`（§6.10）、`docs/phoenix-ui.md`、`README.md`、`tools/phoenix-ui/docs/ENGINE.md`（§6.9）、`NOTICE.md` 与 `THIRD-PARTY-NOTICES.md` 的文字（§6.10）；再渲染一次并提交生成物。同构：docs/phoenix-ui.md「素材命令（media）」一节的写法；README「素材与图片」一条；evals 第 15–24 条。`docs/phoenix-ui.md`、`README.md`、`SKILL.src.md` 由主 agent 单人修改 | 批末 V-4、V-5 通过；回写「实施进度」 |
-| M5 | 已完成 | 2026-11-14 00:04 +08:00 | V-6–V-9 完成；同候选四平台与 Node 18 通过；A2 结果含同会话报告修正，限制见记录；最终收口待提交 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M5.md) | 候选 `968b6539`；收口待提交；修复 `5e2f7554`；历史候选 `55fdfdfd`、`90045192`、`4844a90`；动效修订 `18852ff1`；修复 `a18e025b` |
+| M5 | 已完成 | 2026-11-14 00:04 +08:00 | V-6–V-9 完成；同候选四平台与 Node 18 通过；A2 结果含同会话报告修正，限制见记录；最终收口已提交 | [M5 记录](PHOENIX-UI-EVIDENCE-CRAFT-P4.records/M5.md) | 候选 `968b6539`；收口 `0eda22cd`；修复 `5e2f7554`；历史候选 `55fdfdfd`、`90045192`、`4844a90`；动效修订 `18852ff1`；修复 `a18e025b` |
 
 提交点：M1、M2、M3、M4 各自交付后分别提交（M1 与 M2 同批、M3 与 M4 同批，不等批末检查；M3、M4 的提交含渲染生成物）；M5 的⑥通过后做候选提交；全部里程碑完成后最终提交一次并回填 SHA。推送仅在用户授权时进行（C-10）。
 
