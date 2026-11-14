@@ -90,6 +90,14 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
         }
         out.push_str("</g>");
     }
+    // The pie order note doubles as the non-colour key for reading the ring.
+    for caption in of_kind(scene, "chart-caption") {
+        for text in &caption.text {
+            write!(out, "<text x=\"{}\" y=\"{}\" class=\"t-muted\" font-size=\"{}\" text-anchor=\"{}\">{}</text>",
+                number(text.position.x), number(text.position.y), number(text.font_size),
+                escape_text(&text.anchor), escape_text(&text.content)).unwrap();
+        }
+    }
     for axis in of_kind(scene, "chart-axis") {
         if let Some([start, end]) = axis.rule {
             write!(out, "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" class=\"ch-axis\" stroke-width=\"1\"/>",
@@ -106,6 +114,28 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
             if tick.authored.facts["zero"] == true { " ch-zero" } else { "" },
             number(label.position.x), number(label.position.y), number(label.font_size),
             escape_text(&label.anchor), escape_text(&label.content)).unwrap();
+    }
+    // Series polylines read before the rows so points sit on top.
+    for line in of_kind(scene, "chart-series") {
+        let points = line.authored.facts["points"].as_array().map_or(&[][..], Vec::as_slice);
+        if points.len() < 2 {
+            continue;
+        }
+        let tone = line.authored.facts["tone"].as_str().unwrap_or("external");
+        let mut d = String::new();
+        for (index, point) in points.iter().enumerate() {
+            let (x, y) = (
+                number(point[0].as_f64().unwrap_or_default()),
+                number(point[1].as_f64().unwrap_or_default()),
+            );
+            if index == 0 {
+                write!(d, "M {x} {y}").unwrap();
+            } else {
+                write!(d, " L {x} {y}").unwrap();
+            }
+        }
+        write!(out, "<path d=\"{d}\" class=\"t-{tone} ch-line\" data-chart-series=\"{}\"/>",
+            line.authored.facts["series"].as_u64().unwrap_or_default()).unwrap();
     }
     for (order, node) in scene.nodes.iter().enumerate() {
         if let Some(row) = of_kind(scene, "chart-row").find(|row| row.authored.id == node.authored.id)
@@ -143,6 +173,12 @@ fn write_row(locale: &Locale, order: usize, node: &Node, row: &Container, out: &
             .map(|value| js_to_string(value.as_f64().unwrap_or_default()))
             .collect();
         write!(out, " data-chart-values=\"{}\"", escape_text(&joined.join(","))).unwrap();
+    } else if facts["limit"].as_f64().is_some() {
+        // limits rows carry value/limit/over for the Reader and the checks.
+        write!(out, " data-chart-value=\"{}\" data-chart-limit=\"{}\" data-chart-over=\"{}\"",
+            escape_text(&facts["value"].as_f64().map(js_to_string).unwrap_or_default()),
+            escape_text(&js_to_string(facts["limit"].as_f64().unwrap_or_default())),
+            facts["over"] == true).unwrap();
     }
     write!(
         out,
@@ -157,35 +193,84 @@ fn write_row(locale: &Locale, order: usize, node: &Node, row: &Container, out: &
     let dim_class = if dim { " ch-dim" } else { "" };
     for mark in facts["marks"].as_array().map_or(&[][..], Vec::as_slice) {
         let mark_tone = mark["tone"].as_str().unwrap_or(tone);
-        write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"c-{mark_tone} ch-bar{dim_class}\" data-chart-series=\"{}\"/>",
-            number(mark["x"].as_f64().unwrap_or_default()), number(mark["y"].as_f64().unwrap_or_default()),
-            number(mark["width"].as_f64().unwrap_or_default()), number(mark["height"].as_f64().unwrap_or_default()),
-            mark["series"].as_u64().unwrap_or_default()).unwrap();
+        match mark["kind"].as_str().unwrap_or("bar") {
+            "point" => write!(out, "<circle cx=\"{}\" cy=\"{}\" r=\"3.5\" class=\"t-{mark_tone} ch-point{dim_class}\" data-chart-series=\"{}\"/>",
+                number(mark["cx"].as_f64().unwrap_or_default()), number(mark["cy"].as_f64().unwrap_or_default()),
+                mark["series"].as_u64().unwrap_or_default()).unwrap(),
+            "slice" => write!(out, "<path d=\"{}\" class=\"c-{mark_tone} ch-slice{dim_class}\" fill-rule=\"evenodd\" data-chart-sweep=\"{}\"/>",
+                escape_text(&mark["path"].as_str().unwrap_or_default()),
+                js_to_string(mark["sweep"].as_f64().unwrap_or_default())).unwrap(),
+            "track" => write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"ch-track\"/>",
+                number(mark["x"].as_f64().unwrap_or_default()), number(mark["y"].as_f64().unwrap_or_default()),
+                number(mark["width"].as_f64().unwrap_or_default()), number(mark["height"].as_f64().unwrap_or_default())).unwrap(),
+            "fill" => write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"c-{mark_tone} ch-fill{dim_class}\"/>",
+                number(mark["x"].as_f64().unwrap_or_default()), number(mark["y"].as_f64().unwrap_or_default()),
+                number(mark["width"].as_f64().unwrap_or_default()), number(mark["height"].as_f64().unwrap_or_default())).unwrap(),
+            "limit-line" => write!(out, "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" class=\"ch-limit{dim_class}\" stroke-width=\"1.5\"/>",
+                number(mark["x"].as_f64().unwrap_or_default()), number(mark["y1"].as_f64().unwrap_or_default()),
+                number(mark["x"].as_f64().unwrap_or_default()), number(mark["y2"].as_f64().unwrap_or_default())).unwrap(),
+            _ => write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"c-{mark_tone} ch-bar{dim_class}\" data-chart-series=\"{}\"/>",
+                number(mark["x"].as_f64().unwrap_or_default()), number(mark["y"].as_f64().unwrap_or_default()),
+                number(mark["width"].as_f64().unwrap_or_default()), number(mark["height"].as_f64().unwrap_or_default()),
+                mark["series"].as_u64().unwrap_or_default()).unwrap(),
+        }
     }
+    let note = facts["note"].as_str().unwrap_or_default();
+    let form_name = facts["form"].as_str().unwrap_or("bar");
     for (index, text) in node.text.iter().enumerate() {
         if index == 0 {
             write!(out, "<text data-node-label=\"\" x=\"{}\" y=\"{}\" class=\"t-primary\" font-size=\"{}\" font-weight=\"{}\" text-anchor=\"{}\">{}</text>",
                 number(text.position.x), number(text.position.y), number(text.font_size),
                 if highlight { 750 } else { 500 },
                 escape_text(&text.anchor), escape_text(&text.content)).unwrap();
-        } else {
-            write!(out, "<text data-chart-value-label=\"{}\" x=\"{}\" y=\"{}\" class=\"t-primary ch-num{}\" font-size=\"{}\" font-weight=\"600\" text-anchor=\"{}\">{}</text>",
-                index - 1, number(text.position.x), number(text.position.y), dim_class,
-                number(text.font_size), escape_text(&text.anchor), escape_text(&text.content)).unwrap();
+            continue;
         }
+        // Ordinal numbers and limits notes are context text, not annotations.
+        let is_context = (form_name == "pie" && index == 1)
+            || (form_name == "limits" && !note.is_empty() && index == 1);
+        if is_context {
+            write!(out, "<text x=\"{}\" y=\"{}\" class=\"t-muted\" font-size=\"{}\" text-anchor=\"{}\">{}</text>",
+                number(text.position.x), number(text.position.y), number(text.font_size),
+                escape_text(&text.anchor), escape_text(&text.content)).unwrap();
+            continue;
+        }
+        let mut ordinal = index - 1;
+        if form_name == "pie" {
+            ordinal -= 1;
+        }
+        if form_name == "limits" && !note.is_empty() {
+            ordinal -= 1;
+        }
+        let class = if form_name == "pie" && ordinal == 1 { "t-muted" } else { "t-primary" };
+        let weight = if form_name == "limits" && ordinal == 1 { 750 } else { 600 };
+        write!(out, "<text data-chart-value-label=\"{}\" x=\"{}\" y=\"{}\" class=\"{class} ch-num{}\" font-size=\"{}\" font-weight=\"{weight}\" text-anchor=\"{}\">{}</text>",
+            ordinal, number(text.position.x), number(text.position.y), dim_class,
+            number(text.font_size), escape_text(&text.anchor), escape_text(&text.content)).unwrap();
     }
     out.push_str("</g>");
 }
 
 fn legend_glyph(_scene: &CompiledDiagram, legend: &Card, baseline: f64, out: &mut String) {
     let facts = &legend.authored.facts;
-    let Some(key) = legend.authored.kind.strip_prefix("series:") else {
+    let kind = legend.authored.kind.as_str();
+    if let Some(key) = kind.strip_prefix("series:") {
+        // A series entry pairs its colour block with the key letter.
+        write!(out, "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"c-{} ch-bar\" stroke-width=\"1.2\"/><text x=\"{}\" y=\"{}\" class=\"t-primary\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\">{}</text>",
+            number(legend.bounds.x), number(baseline - 10.0), facts["tone"].as_str().unwrap_or("external"),
+            number(legend.bounds.x + 7.0), number(baseline - 1.5), escape_text(key)).unwrap();
         return;
-    };
-    // A series entry pairs its colour block with the key letter.
-    write!(out, "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"c-{} ch-bar\" stroke-width=\"1.2\"/><text x=\"{}\" y=\"{}\" class=\"t-primary\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\">{}</text>",
-        number(legend.bounds.x), number(baseline - 10.0), facts["tone"].as_str().unwrap_or("external"),
-        number(legend.bounds.x + 7.0), number(baseline - 1.5), escape_text(key)).unwrap();
+    }
+    if kind == "limits-limit" {
+        // The limit reads as a vertical stroke over the track.
+        write!(out, "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" class=\"ch-limit\" stroke-width=\"2\"/>",
+            number(legend.bounds.x + 7.0), number(baseline - 12.0),
+            number(legend.bounds.x + 7.0), number(baseline + 2.0)).unwrap();
+        return;
+    }
+    if kind == "limits-current" || kind == "limits-over" {
+        write!(out, "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"c-{} ch-bar\" stroke-width=\"1.2\"/>",
+            number(legend.bounds.x), number(baseline - 10.0), facts["tone"].as_str().unwrap_or("external")).unwrap();
+    }
 }
 
 // The reader's data table: the same cells the static figure ships as data.

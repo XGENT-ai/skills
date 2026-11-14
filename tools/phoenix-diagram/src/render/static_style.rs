@@ -1316,6 +1316,14 @@ impl SvgConversion<'_> {
             output.push_str(&super::escape_text(&cards));
             output.push_str("</metadata>");
         }
+        // Numeric charts ship their data table as data: the host renders it
+        // next to the figure; other types write no table.
+        if let crate::scene::DiagramFacts::Chart { table, .. } = &self.scene.facts {
+            let table = serde_json::to_string(table).expect("serializable table");
+            output.push_str("<metadata data-phoenix-table=\"\">");
+            output.push_str(&super::escape_text(&table));
+            output.push_str("</metadata>");
+        }
         output.push_str("<style>");
         output.push_str(&self.viewer);
         output.push_str("</style>");

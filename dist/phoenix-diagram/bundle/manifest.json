@@ -107,20 +107,20 @@
     },
     {
       "path": "references/delivery-contract.md",
-      "size": 8993,
-      "sha256": "1ad889a9be6f71469f04a065ddbdb587062a1930e6d96771d2c37a5c2102cc00",
+      "size": 9137,
+      "sha256": "ca25fe675b4216a810b3fbb99f983cb0cac588348e217a0ca64c93f578458ef9",
       "mode": 420
     },
     {
       "path": "references/extending-types.md",
       "size": 2053,
-      "sha256": "2860fcf83c635b8ff88650dad95b69fb9f41d795a1d3a493058273fdcbee463c",
+      "sha256": "ea49b310f8a3be52ef771c78975c4856e89b70fa0e1aac13ab7a10bf88461c55",
       "mode": 420
     },
     {
       "path": "references/preview.md",
       "size": 4121,
-      "sha256": "3906b5068295b6d282bc6efd2bd55c86152b17b90957760bf77ddb31bf5665a3",
+      "sha256": "09f573d7e08dc850b9f002a637a8df880909f2295f5fca516e82e47bec709b6a",
       "mode": 420
     },
     {
@@ -137,20 +137,20 @@
     },
     {
       "path": "references/static-figure.md",
-      "size": 2946,
-      "sha256": "4b6dbc3eb96ea8eb34a613f3437927217dd53628d33a06ef9f663a29b33ffa6a",
+      "size": 3090,
+      "sha256": "383512c1423c8d5d399a850526d057d99281533676253cdab6a6640ed9685b49",
       "mode": 420
     },
     {
       "path": "references/viewer-runtime.md",
       "size": 3348,
-      "sha256": "9328b152a42d10b1046520067cd17ce078173db02b93ff88c7006ac847018360",
+      "sha256": "ea6dcf7c323e413e4d24ccea22786c9967044df31fd98eefc82f86f98bd15c45",
       "mode": 420
     },
     {
       "path": "schemas/README.md",
-      "size": 2094,
-      "sha256": "d0b541add334e7d87b5dd9dfae209e6f87dcc3967a5a37538f0be592d335c881",
+      "size": 2183,
+      "sha256": "5eb8804215cde23db5c8e5454fe6fe0f4ba6fb5f3153cbec628786831ebad310",
       "mode": 420
     },
     {

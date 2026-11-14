@@ -23,7 +23,7 @@
 
 `static` 依次执行 validate → static → browser-check，写出三类文件：
 
-- `OUTPUT.svg`：单个无脚本、无外部资源的静态 SVG，含主图、关系、标签与图内图例；不含 Reader 页面标题、节点索引或交互控件；卡片以 `<metadata data-phoenix-cards="">` JSON（每项 `dot`、`title`、`items`，顺序同 Reader）随 SVG 交付，不画进图面，由宿主显示。
+- `OUTPUT.svg`：单个无脚本、无外部资源的静态 SVG，含主图、关系、标签与图内图例；不含 Reader 页面标题、节点索引或交互控件；卡片以 `<metadata data-phoenix-cards="">` JSON（每项 `dot`、`title`、`items`，顺序同 Reader）随 SVG 交付，不画进图面，由宿主显示。数值图表另带 `<metadata data-phoenix-table="">` JSON（`columns` 与 `rows`，单元格均为字符串），由宿主显示成数据表。
 - `NAME.static-summary.json`：固定字段的交付 summary。
 - `NAME.static.1440x900.light.png` 与 `NAME.static.1440x900.dark.png` 两张截图；`--out-dir` 可指定截图目录。
 

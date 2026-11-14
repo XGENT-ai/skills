@@ -1,6 +1,6 @@
 # Phoenix Diagram
 
-Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall、statechart 十一类的原生生成、独立 HTML 阅读与导出、可内联静态 SVG，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。输入按各类型 schema 校验，`meta` 中未列出的字段直接拒绝。statechart 从有限模型穷举状态、判定规则并画出最短出错路径。仓库以 phoenix-diagram 为唯一活跃图解入口。数值图表、仪表盘及其他 infographic 不在范围内。
+Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall、statechart、chart 十二类的原生生成、独立 HTML 阅读与导出、可内联静态 SVG，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。输入按各类型 schema 校验，`meta` 中未列出的字段直接拒绝。statechart 从有限模型穷举状态、判定规则并画出最短出错路径。chart 承载数值图表的柱状图、折线图、饼图与限额对比图四种形态，每张图附带可展开的数据表。仓库以 phoenix-diagram 为唯一活跃图解入口。仪表盘、多图联动及其他 infographic 不在范围内。
 
 UI 与 Diagram 共用 [Phoenix CI](../.github/workflows/phoenix.yml)：同一次运行完成两个工具的检查，发布仍使用同一个 `@xgent-ai/skills` npm 包。
 
@@ -112,6 +112,6 @@ review-record 只接受自动三门已通过、产物仍与 summary 记录一致
 
 ## 阅读与导出
 
-HTML 内置 Reader、字体与必要资源，可离线阅读。支持主题/风格、平移缩放、标签/id/来源路径搜索及详情；首次为 Still，用户选择 Live 后才保存偏好。十一类都可做语义筛选、概览定位、展示模式和深链接；有关系的九类（statechart 的箭头由模型推导）可找 Route 与上/下游 Reach，并导出标明范围、非 canonical 的范围卡片；树可折叠分支，导出与打印始终为完整树。详情按已核对、待核实（附原因）、未提供来源三态显示来源。界面语言按 `meta.locale` 选择五种之一，其他标签回退英文，finalize 回执的 `locale` 记录结果。缩减动画、页面隐藏、打印和导出临时暂停，静态图仍保留含义。页面可按声明的可读纵向画布滚动，不能用水平裁切或内部滚动掩盖内容。
+HTML 内置 Reader、字体与必要资源，可离线阅读。支持主题/风格、平移缩放、标签/id/来源路径搜索及详情；首次为 Still，用户选择 Live 后才保存偏好。十二类都可做语义筛选、概览定位、展示模式和深链接；有关系的九类（statechart 的箭头由模型推导）可找 Route 与上/下游 Reach，并导出标明范围、非 canonical 的范围卡片；树可折叠分支，导出与打印始终为完整树。详情按已核对、待核实（附原因）、未提供来源三态显示来源。界面语言按 `meta.locale` 选择五种之一，其他标签回退英文，finalize 回执的 `locale` 记录结果。缩减动画、页面隐藏、打印和导出临时暂停，静态图仍保留含义。页面可按声明的可读纵向画布滚动，不能用水平裁切或内部滚动掩盖内容。
 
 支持 PNG/JPEG/WebP、主题 SVG、WebM 和 PNG 复制。能力/权限拒绝、空 Blob、编码/录制失败都应返回明确失败与可用替代动作；格式实际可用性以当前浏览器结果为准。字体许可随独立 HTML/SVG 保留。源码与第三方许可位于独立发行目录 LICENSE、NOTICE、THIRD-PARTY.json/NOTICES/LICENSES；参考归属与 Phoenix 修改单列。

@@ -1,5 +1,5 @@
 use super::{number, selector, visible_text, ContentFinding};
-use crate::format::number::js_to_string;
+use crate::format::number::{js_round, js_to_string};
 use scraper::ElementRef;
 use serde_json::{json, Value};
 
@@ -9,6 +9,17 @@ fn finding(code: &'static str, path: &str, message: &str, evidence: Value) -> Co
 
 fn text_of(element: ElementRef<'_>) -> String {
     visible_text(&element.text().collect::<String>())
+}
+
+// Unit text right after a number, matching the layout's written form.
+fn unit_suffix(unit: &str) -> String {
+    if unit.is_empty() {
+        String::new()
+    } else if unit == "%" {
+        "%".into()
+    } else {
+        format!(" {unit}")
+    }
 }
 
 // Rows keep their label, annotation texts and numeric attributes; bars and
@@ -56,25 +67,42 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
             ));
         }
         if form == "limits" {
-            continue; // limits attributes join in M2
+            continue; // limits rows carry value/limit/over, checked in limits_checks
         }
-        let values = row["values"].as_array().map_or(&[][..], Vec::as_slice);
-        let expected: Vec<String> = values
-            .iter()
-            .enumerate()
-            .map(|(k, value)| {
-                let text = js_to_string(value.as_f64().unwrap_or_default());
-                if series.len() >= 2 {
-                    format!(
-                        "{} {}",
-                        series[k]["key"].as_str().unwrap_or_default(),
+        let suffix = unit_suffix(facts["unit"].as_str().unwrap_or_default());
+        let expected: Vec<String> = if form == "pie" {
+            let total: f64 = rows
+                .iter()
+                .map(|row| row["values"][0].as_f64().unwrap_or_default())
+                .sum();
+            let v = row["values"][0].as_f64().unwrap_or_default();
+            let mut expected = vec![format!("{}{}", js_to_string(v), suffix)];
+            if facts["unit"].as_str() != Some("%") {
+                expected.push(format!(
+                    "{}%",
+                    js_to_string(js_round(v / total * 100.0 * 10.0) / 10.0)
+                ));
+            }
+            expected
+        } else {
+            let values = row["values"].as_array().map_or(&[][..], Vec::as_slice);
+            values
+                .iter()
+                .enumerate()
+                .map(|(k, value)| {
+                    let text = js_to_string(value.as_f64().unwrap_or_default());
+                    if series.len() >= 2 {
+                        format!(
+                            "{} {}",
+                            series[k]["key"].as_str().unwrap_or_default(),
+                            text
+                        )
+                    } else {
                         text
-                    )
-                } else {
-                    text
-                }
-            })
-            .collect();
+                    }
+                })
+                .collect()
+        };
         let actual: Vec<String> = (0..expected.len())
             .map(|k| {
                 group
@@ -96,7 +124,9 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
                 json!({"expected": expected}),
             ));
         }
-        let expected_attr: String = values
+        let expected_attr: String = row["values"]
+            .as_array()
+            .map_or(&[][..], Vec::as_slice)
             .iter()
             .map(|value| js_to_string(value.as_f64().unwrap_or_default()))
             .collect::<Vec<_>>()
@@ -115,8 +145,12 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
             ));
         }
     }
-    if form == "bar" {
-        bar_scale(svg, facts, &mut findings);
+    match form {
+        "bar" => bar_scale(svg, facts, &mut findings),
+        "line" => line_scale(svg, facts, &mut findings),
+        "pie" => pie_checks(svg, facts, &mut findings),
+        "limits" => limits_checks(svg, metadata, &mut findings),
+        _ => {}
     }
     let badge = svg
         .select(&selector("g[data-chart-evidence]"))
@@ -288,6 +322,272 @@ fn bar_scale(svg: ElementRef<'_>, facts: &Value, findings: &mut Vec<ContentFindi
                     json!({"value": v, "zero": zero, "outer": outer}),
                 ));
             }
+        }
+    }
+}
+
+// Line points read against the tick scale; the axis need not include zero.
+fn line_scale(svg: ElementRef<'_>, facts: &Value, findings: &mut Vec<ContentFinding>) {
+    let vertical = facts["orientation"].as_str() != Some("horizontal");
+    let mut ticks: Vec<(f64, f64)> = Vec::new();
+    for tick in svg.select(&selector("line[data-chart-tick]")) {
+        let value = tick
+            .value()
+            .attr("data-chart-tick")
+            .and_then(|value| value.parse::<f64>().ok())
+            .unwrap_or(f64::NAN);
+        let position = if vertical {
+            number(tick, "y1", f64::NAN)
+        } else {
+            number(tick, "x1", f64::NAN)
+        };
+        ticks.push((value, position));
+    }
+    let scale = ticks.iter().find_map(|(value, position)| {
+        ticks
+            .iter()
+            .find(|(other_value, _)| *other_value != *value)
+            .and_then(|(other_value, other_position)| {
+                let candidate = (other_position - position) / (other_value - value);
+                candidate.is_finite().then_some(candidate)
+            })
+    });
+    let Some(scale) = scale else {
+        findings.push(finding(
+            "artifact/semantic-relation",
+            "/metadata/facts/rows",
+            "A line axis needs two ticks to fix its scale",
+            Value::Null,
+        ));
+        return;
+    };
+    let (anchor_value, anchor_position) = ticks[0];
+    for (index, row) in facts["rows"]
+        .as_array()
+        .map_or(&[][..], Vec::as_slice)
+        .iter()
+        .enumerate()
+    {
+        let id = row["id"].as_str().unwrap_or_default();
+        let Some(group) = svg
+            .select(&selector("g[data-node-id]"))
+            .find(|group| group.value().attr("data-node-id") == Some(id))
+        else {
+            continue;
+        };
+        for (k, value) in row["values"]
+            .as_array()
+            .map_or(&[][..], Vec::as_slice)
+            .iter()
+            .enumerate()
+        {
+            let v = value.as_f64().unwrap_or_default();
+            let path = format!("/metadata/facts/rows/{index}/values/{k}");
+            let Some(point) = group
+                .children()
+                .filter_map(ElementRef::wrap)
+                .find(|child| {
+                    child.value().name() == "circle"
+                        && child.value().attr("data-chart-series") == Some(k.to_string().as_str())
+                })
+            else {
+                findings.push(finding(
+                    "artifact/semantic-relation",
+                    &path,
+                    "A line point is missing for its value",
+                    json!({"id": id, "series": k}),
+                ));
+                continue;
+            };
+            let position = if vertical {
+                number(point, "cy", f64::NAN)
+            } else {
+                number(point, "cx", f64::NAN)
+            };
+            let expected = anchor_position + (v - anchor_value) * scale;
+            if (position - expected).abs() > 0.05 {
+                findings.push(finding(
+                    "artifact/semantic-relation",
+                    &path,
+                    "A line point is not on the shared linear scale",
+                    json!({"value": v, "expected": expected}),
+                ));
+            }
+        }
+    }
+}
+
+// Pie sectors and the list must both read from the same values.
+fn pie_checks(svg: ElementRef<'_>, facts: &Value, findings: &mut Vec<ContentFinding>) {
+    let rows = facts["rows"].as_array().map_or(&[][..], Vec::as_slice);
+    let unit = facts["unit"].as_str().unwrap_or_default();
+    let suffix = unit_suffix(unit);
+    let total: f64 = rows
+        .iter()
+        .map(|row| row["values"][0].as_f64().unwrap_or_default())
+        .sum();
+    let mut sweep_sum = 0.0f64;
+    for (index, row) in rows.iter().enumerate() {
+        let id = row["id"].as_str().unwrap_or_default();
+        let path = format!("/metadata/facts/rows/{index}");
+        let Some(group) = svg
+            .select(&selector("g[data-node-id]"))
+            .find(|group| group.value().attr("data-node-id") == Some(id))
+        else {
+            continue;
+        };
+        let v = row["values"][0].as_f64().unwrap_or_default();
+        let sector = group
+            .children()
+            .filter_map(ElementRef::wrap)
+            .find(|child| child.value().attr("data-chart-sweep").is_some());
+        if v > 0.0 {
+            let expected = v / total * 360.0;
+            let sweep = sector
+                .and_then(|sector| sector.value().attr("data-chart-sweep"))
+                .and_then(|sweep| sweep.parse::<f64>().ok());
+            match sweep {
+                Some(sweep) if (sweep - expected).abs() <= 0.5 => {}
+                _ => findings.push(finding(
+                    "artifact/semantic-relation",
+                    &path,
+                    "A sector sweep differs from its share of the whole",
+                    json!({"value": v, "expected": expected}),
+                )),
+            }
+            if let Some(sweep) = sweep {
+                sweep_sum += sweep;
+            }
+        } else if sector.is_some() {
+            findings.push(finding(
+                "artifact/semantic-relation",
+                &path,
+                "A zero value must not draw a sector",
+                json!({"id": id}),
+            ));
+        }
+        let expected_value = format!("{}{}", js_to_string(v), suffix);
+        let actual_value = group
+            .select(&selector("text[data-chart-value-label='0']"))
+            .next()
+            .map(text_of)
+            .unwrap_or_default();
+        if actual_value != visible_text(&expected_value) {
+            findings.push(finding(
+                "artifact/semantic-text",
+                &path,
+                "A pie list value differs from its facts",
+                json!({"expected": expected_value}),
+            ));
+        }
+        if unit != "%" {
+            let expected_share = format!(
+                "{}%",
+                js_to_string(js_round(v / total * 100.0 * 10.0) / 10.0)
+            );
+            let actual_share = group
+                .select(&selector("text[data-chart-value-label='1']"))
+                .next()
+                .map(text_of)
+                .unwrap_or_default();
+            if actual_share != visible_text(&expected_share) {
+                findings.push(finding(
+                    "artifact/semantic-text",
+                    &path,
+                    "A pie list share differs from its facts",
+                    json!({"expected": expected_share}),
+                ));
+            }
+        }
+    }
+    if total > 0.0 && (sweep_sum - 360.0).abs() > 1.0 {
+        findings.push(finding(
+            "artifact/semantic-relation",
+            "/metadata/facts/rows",
+            "The sector sweeps must cover the whole ring",
+            json!({"sum": sweep_sum}),
+        ));
+    }
+}
+
+// Limits read fill-to-track ratios, the limit line and the over note.
+fn limits_checks(svg: ElementRef<'_>, metadata: &Value, findings: &mut Vec<ContentFinding>) {
+    let facts = &metadata["facts"];
+    let locale = crate::i18n::resolve(&metadata["meta"]);
+    let over_text = visible_text(&locale.text("chart.limit.over", &[]));
+    let rows = facts["rows"].as_array().map_or(&[][..], Vec::as_slice);
+    for (index, row) in rows.iter().enumerate() {
+        let id = row["id"].as_str().unwrap_or_default();
+        let path = format!("/metadata/facts/rows/{index}");
+        let Some(group) = svg
+            .select(&selector("g[data-node-id]"))
+            .find(|group| group.value().attr("data-node-id") == Some(id))
+        else {
+            continue;
+        };
+        let value = row["value"].as_f64();
+        let limit = row["limit"].as_f64().unwrap_or_default();
+        let expected_value = value.map(js_to_string).unwrap_or_default();
+        let actual_value = group.value().attr("data-chart-value").unwrap_or_default();
+        let actual_limit = group.value().attr("data-chart-limit").unwrap_or_default();
+        let actual_over = group.value().attr("data-chart-over").unwrap_or_default();
+        if actual_value != expected_value
+            || actual_limit != js_to_string(limit)
+            || actual_over != row["over"].as_bool().unwrap_or_default().to_string()
+        {
+            findings.push(finding(
+                "artifact/semantic-relation",
+                &path,
+                "A limits row's numeric attributes differ from its facts",
+                json!({"id": id}),
+            ));
+        }
+        let track = group.select(&selector("rect.ch-track")).next();
+        let fill = group.select(&selector("rect.ch-fill")).next();
+        let line = group.select(&selector("line.ch-limit")).next();
+        let (Some(track), Some(fill), Some(line)) = (track, fill, line) else {
+            findings.push(finding(
+                "artifact/semantic-relation",
+                &path,
+                "A limits row is missing its track, fill or limit line",
+                json!({"id": id}),
+            ));
+            continue;
+        };
+        let full = value.unwrap_or(limit).max(limit) * 1.25;
+        let expected_ratio = value.unwrap_or(limit) / full;
+        let track_width = number(track, "width", f64::NAN);
+        let fill_width = number(fill, "width", f64::NAN);
+        let actual_ratio = fill_width / track_width;
+        if !actual_ratio.is_finite() || (actual_ratio - expected_ratio).abs() > 0.01 {
+            findings.push(finding(
+                "artifact/semantic-relation",
+                &path,
+                "A limits fill is not proportional to its track scale",
+                json!({"expected": expected_ratio, "actual": actual_ratio}),
+            ));
+        }
+        let expected_x = number(track, "x", f64::NAN) + limit / full * track_width;
+        let line_x = number(line, "x1", f64::NAN);
+        if (line_x - expected_x).abs() > 0.05 {
+            findings.push(finding(
+                "artifact/semantic-relation",
+                &path,
+                "The limit line is not at the authored limit",
+                json!({"expected": expected_x, "actual": line_x}),
+            ));
+        }
+        let has_over_text = group
+            .select(&selector("text"))
+            .any(|text| text_of(text).contains(&over_text));
+        let over_expected = value.is_some_and(|v| v > limit);
+        if has_over_text != over_expected {
+            findings.push(finding(
+                "artifact/semantic-text",
+                &path,
+                "The over note must appear exactly when the value exceeds the limit",
+                json!({"over": over_expected}),
+            ));
         }
     }
 }

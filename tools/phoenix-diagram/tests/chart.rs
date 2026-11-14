@@ -28,9 +28,14 @@ fn text_of(element: ElementRef<'_>) -> String {
 
 fn compile(document: Value) -> phoenix_diagram::scene::CompiledDiagram {
     let options = CompileOptions::default();
-    let input =
-        parse_input(&serde_json::to_vec(&document).unwrap(), DiagramType::Chart, &options).unwrap();
-    layout::compile(&input, &options).unwrap()
+    let input = parse_input(
+        &serde_json::to_vec(&document).unwrap(),
+        DiagramType::Chart,
+        &options,
+    )
+    .unwrap_or_else(|errors| panic!("parse failed: {errors:?}"));
+    layout::compile(&input, &options)
+        .unwrap_or_else(|errors| panic!("layout failed: {errors:?}"))
 }
 
 fn html(scene: &phoenix_diagram::scene::CompiledDiagram) -> String {
@@ -320,4 +325,311 @@ fn sourced_evidence_draws_no_badge_and_still_passes_the_artifact_check() {
         "{:?}",
         result.diagnostics
     );
+}
+
+#[test]
+fn line_axis_follows_data_and_points_stay_on_scale() {
+    let scene = compile(json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title":"T","evidence":"sourced"},
+        "form": "line",
+        "rows": [
+            {"id":"a","label":"A","values":[10]},
+            {"id":"b","label":"B","values":[20]},
+        ],
+    }));
+    let document = Html::parse_document(&html(&scene));
+    let svg = document.select(&select("svg")).next().unwrap();
+    // The axis follows the data: all-positive rows need no zero tick.
+    assert!(svg.select(&select("line[data-chart-tick='0']")).next().is_none());
+    let ticks: Vec<(f64, f64)> = svg
+        .select(&select("line[data-chart-tick]"))
+        .map(|tick| (
+            tick.value().attr("data-chart-tick").unwrap().parse().unwrap(),
+            tick.value().attr("y1").unwrap().parse().unwrap(),
+        ))
+        .collect();
+    let (v0, y0) = ticks[0];
+    let (v1, y1) = ticks[1];
+    let scale = (y1 - y0) / (v1 - v0);
+    for (id, value) in [("a", 10.0), ("b", 20.0)] {
+        let group = document
+            .select(&select(&format!("g[data-node-id='{id}']")))
+            .next()
+            .unwrap();
+        let cy: f64 = group
+            .select(&select("circle[data-chart-series='0']"))
+            .next()
+            .unwrap()
+            .value()
+            .attr("cy")
+            .unwrap()
+            .parse()
+            .unwrap();
+        let expected = y0 + (value - v0) * scale;
+        assert!((cy - expected).abs() < 0.06, "{id}: {cy} vs {expected}");
+    }
+}
+
+#[test]
+fn line_annotations_stack_with_minimum_spacing() {
+    let scene = compile(json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title":"T","evidence":"sourced"},
+        "form": "line",
+        "series": [
+            {"id":"x","name":"X"},
+            {"id":"y","name":"Y"},
+            {"id":"z","name":"Z"},
+        ],
+        "rows": [{"id":"a","label":"A","values":[10, 10.02, 10.04]}],
+    }));
+    let document = Html::parse_document(&html(&scene));
+    // A single row draws points only, no polylines.
+    assert!(document.select(&select("path.ch-line")).next().is_none());
+    let mut ys: Vec<f64> = (0..3)
+        .map(|k| {
+            document
+                .select(&select(&format!("text[data-chart-value-label='{k}']")))
+                .next()
+                .unwrap()
+                .value()
+                .attr("y")
+                .unwrap()
+                .parse()
+                .unwrap()
+        })
+        .collect();
+    ys.sort_by(|a, b| a.total_cmp(b));
+    assert!(ys[1] - ys[0] >= 13.0 - 0.01, "{ys:?}");
+    assert!(ys[2] - ys[1] >= 13.0 - 0.01, "{ys:?}");
+}
+
+#[test]
+fn line_label_room_is_reported_for_a_row_that_cannot_fit() {
+    let series: Vec<Value> = (0..27)
+        .map(|index| json!({"id": format!("s{index}"), "name": format!("S{index}")}))
+        .collect();
+    let values: Vec<f64> = vec![10.0; 27];
+    // label-room is a layout-stage error: run the compile, not just the parse.
+    let options = CompileOptions::default();
+    let input = parse_input(
+        &serde_json::to_vec(&json!({
+            "schema_version": 1, "diagram_type": "chart",
+            "meta": {"title":"T","evidence":"sourced"},
+            "form": "line",
+            "series": series,
+            "rows": [{"id":"a","label":"A","values": values}],
+        }))
+        .unwrap(),
+        DiagramType::Chart,
+        &options,
+    )
+    .unwrap();
+    let errors = layout::compile(&input, &options).unwrap_err();
+    assert!(
+        errors
+            .iter()
+            .any(|error| error.code == "chart/label-room"
+                && error.subject.path == "/rows/0"
+                && error.stage == "layout"),
+        "{errors:?}"
+    );
+}
+
+#[test]
+fn pie_sectors_and_list_match_facts() {
+    let scene = compile(json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title":"T","evidence":"sourced"},
+        "form": "pie",
+        "rows": [
+            {"id":"a","label":"A","values":[2]},
+            {"id":"b","label":"B","values":[1]},
+            {"id":"c","label":"C","values":[1]},
+            {"id":"z","label":"Zero","values":[0]},
+        ],
+    }));
+    let document = Html::parse_document(&html(&scene));
+    let svg = document.select(&select("svg")).next().unwrap();
+    // The order note is the non-colour key for reading the ring.
+    assert!(svg
+        .select(&select("text"))
+        .any(|text| text.text().collect::<String>().contains("clockwise")));
+    for (id, expected_sweep, expected_share) in [
+        ("a", Some(180.0), "50%"),
+        ("b", Some(90.0), "25%"),
+        ("c", Some(90.0), "25%"),
+        ("z", None, "0%"),
+    ] {
+        let group = document
+            .select(&select(&format!("g[data-node-id='{id}']")))
+            .next()
+            .unwrap();
+        let sector = group.select(&select("path[data-chart-sweep]")).next();
+        match expected_sweep {
+            Some(expected) => {
+                let sweep: f64 = sector
+                    .unwrap()
+                    .value()
+                    .attr("data-chart-sweep")
+                    .unwrap()
+                    .parse()
+                    .unwrap();
+                assert!((sweep - expected).abs() <= 0.5, "{id}: {sweep}");
+                let share = group
+                    .select(&select("text[data-chart-value-label='1']"))
+                    .next()
+                    .unwrap();
+                assert_eq!(text_of(share), expected_share, "{id}");
+            }
+            None => assert!(sector.is_none(), "{id} must not draw a sector"),
+        }
+    }
+}
+
+#[test]
+fn pie_percent_unit_omits_share() {
+    let scene = compile(json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title":"T","evidence":"sourced","unit":"%"},
+        "form": "pie",
+        "rows": [
+            {"id":"a","label":"A","values":[45]},
+            {"id":"b","label":"B","values":[55]},
+        ],
+    }));
+    let document = Html::parse_document(&html(&scene));
+    assert!(document
+        .select(&select("text[data-chart-value-label='1']"))
+        .next()
+        .is_none());
+    assert_eq!(
+        text_of(
+            document
+                .select(&select("text[data-chart-value-label='0']"))
+                .next()
+                .unwrap()
+        ),
+        "45%"
+    );
+}
+
+#[test]
+fn limits_fill_ratio_limit_line_and_over_mark() {
+    let scene = compile(json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title":"T","evidence":"sourced","unit":"req/s"},
+        "form": "limits",
+        "rows": [
+            {"id":"ok","label":"OK","value":13,"limit":20},
+            {"id":"over","label":"Over","value":25,"limit":20},
+            {"id":"only","label":"Only","limit":20},
+        ],
+    }));
+    let document = Html::parse_document(&html(&scene));
+    // Within limit: fill ratio 13/25, limit line at 20/25 of the track.
+    let ok = document.select(&select("g[data-node-id='ok']")).next().unwrap();
+    let track = ok.select(&select("rect.ch-track")).next().unwrap();
+    let track_w: f64 = track.value().attr("width").unwrap().parse().unwrap();
+    let track_x: f64 = track.value().attr("x").unwrap().parse().unwrap();
+    let fill_w: f64 = ok
+        .select(&select("rect.ch-fill"))
+        .next()
+        .unwrap()
+        .value()
+        .attr("width")
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!((fill_w / track_w - 13.0 / 25.0).abs() < 0.01);
+    let limit_x: f64 = ok
+        .select(&select("line.ch-limit"))
+        .next()
+        .unwrap()
+        .value()
+        .attr("x1")
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!((limit_x - (track_x + 20.0 / 25.0 * track_w)).abs() < 0.05);
+    assert!(ok
+        .select(&select("text"))
+        .all(|text| !text.text().collect::<String>().contains("Over limit")));
+    // Over limit: security fill and the over note, exactly once.
+    let over = document.select(&select("g[data-node-id='over']")).next().unwrap();
+    assert!(over
+        .select(&select("rect.ch-fill"))
+        .next()
+        .unwrap()
+        .value()
+        .attr("class")
+        .unwrap()
+        .contains("c-security"));
+    assert_eq!(over.value().attr("data-chart-over"), Some("true"));
+    assert!(over
+        .select(&select("text"))
+        .any(|text| text.text().collect::<String>().contains("Over limit")));
+    // Limit-only row fills to the limit with an empty value attribute.
+    let only = document.select(&select("g[data-node-id='only']")).next().unwrap();
+    assert_eq!(only.value().attr("data-chart-value"), Some(""));
+    let only_fill_w: f64 = only
+        .select(&select("rect.ch-fill"))
+        .next()
+        .unwrap()
+        .value()
+        .attr("width")
+        .unwrap()
+        .parse()
+        .unwrap();
+    let only_track_w: f64 = only
+        .select(&select("rect.ch-track"))
+        .next()
+        .unwrap()
+        .value()
+        .attr("width")
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!((only_fill_w / only_track_w - 0.8).abs() < 0.01);
+}
+
+#[test]
+fn three_forms_pass_the_artifact_check() {
+    for (form, rows) in [
+        (
+            "line",
+            json!([
+                {"id":"a","label":"A","values":[3]},
+                {"id":"b","label":"B","values":[5]},
+            ]),
+        ),
+        (
+            "pie",
+            json!([
+                {"id":"a","label":"A","values":[2]},
+                {"id":"b","label":"B","values":[1]},
+            ]),
+        ),
+        (
+            "limits",
+            json!([
+                {"id":"a","label":"A","value":13,"limit":20},
+                {"id":"b","label":"B","limit":20},
+            ]),
+        ),
+    ] {
+        let scene = compile(json!({
+            "schema_version": 1, "diagram_type": "chart",
+            "meta": {"title":"T","evidence":"illustrative","locale":"en","unit":"ms"},
+            "form": form,
+            "rows": rows,
+        }));
+        let result = check::check_html(html(&scene).as_bytes(), scene.quality);
+        assert!(
+            result.diagnostics.is_empty(),
+            "{form}: {:?}",
+            result.diagnostics
+        );
+    }
 }
