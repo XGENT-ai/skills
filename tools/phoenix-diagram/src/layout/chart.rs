@@ -15,6 +15,8 @@ use super::waterfall::tick_step;
 const MARGIN: f64 = 28.0;
 // The illustrative badge lives in the same header band as the waterfall's.
 const HEADER_H: f64 = 52.0;
+// Also the minimum width of vertical plots: narrow screens scale the canvas to
+// full width, and a portrait canvas would then overflow the page.
 const PLOT_H: f64 = 240.0;
 const BAR_W: f64 = 22.0;
 const BAR_GAP: f64 = 4.0;
@@ -320,11 +322,11 @@ pub fn compile(
                     .fold(0.0, f64::max);
                 label_w.max(annot_w) + 16.0
             })
-            .fold(f64::NEG_INFINITY, f64::max);
+            .fold(PLOT_H / rows.len() as f64, f64::max);
         let plot_w = slot_w * rows.len() as f64;
         let (lo, hi, step) = {
             let (min_v, max_v) = value_range(&rows, n);
-            axis_scale(min_v, max_v, plot_w, VERTICAL_MIN_TICK)?
+            axis_scale(min_v, max_v, PLOT_H, VERTICAL_MIN_TICK)?
         };
         let tick_values = ticks(lo, hi, step);
         let tick_room = tick_values
@@ -609,10 +611,13 @@ pub fn compile(
         let pitch = 28.0;
         let band_h = 18.0;
         let caption_y = ring_cy + ring_r_out + 24.0;
+        let caption = locale.text("chart.pie.order", &[]);
+        let caption_w = text_units(&caption) * TICK_FONT * ADVANCE * 1.04;
         content_bottom = caption_y.max(list_top + rows.len() as f64 * pitch) + 4.0;
         width = (list_x + list_w + MARGIN)
             .ceil()
-            .max(ring_cx + ring_r_out + MARGIN);
+            .max(ring_cx + ring_r_out + MARGIN)
+            .max((MARGIN * 2.0 + caption_w).ceil());
         let mut angle = -std::f64::consts::FRAC_PI_2;
         for row in &rows {
             let v = row.values[0].as_f64().unwrap_or_default();
@@ -745,7 +750,7 @@ pub fn compile(
             None,
             vec![text(
                 "/meta".into(),
-                &locale.text("chart.pie.order", &[]),
+                &caption,
                 MARGIN,
                 caption_y,
                 TICK_FONT,
@@ -966,11 +971,11 @@ pub fn compile(
                 let label_w = text_units(row.label) * LABEL_FONT * ADVANCE * 1.04;
                 bars.max(label_w) + SLOT_PAD
             })
-            .fold(f64::NEG_INFINITY, f64::max);
+            .fold(PLOT_H / rows.len() as f64, f64::max);
         let plot_w = slot_w * rows.len() as f64;
         let (lo, hi, step) = {
             let (min_v, max_v) = value_range(&rows, n);
-            axis_scale(min_v.min(0.0), max_v.max(0.0), plot_w, VERTICAL_MIN_TICK)?
+            axis_scale(min_v.min(0.0), max_v.max(0.0), PLOT_H, VERTICAL_MIN_TICK)?
         };
         let tick_values = ticks(lo, hi, step);
         let tick_room = tick_values
@@ -1238,10 +1243,10 @@ pub fn compile(
                     annots.push(text(
                         annot_path,
                         &number_text(k, v),
-                        zero_x,
-                        center_y - 6.0,
+                        zero_x + 4.0,
+                        center_y + 3.8,
                         VALUE_FONT,
-                        "middle",
+                        "start",
                     ));
                     continue;
                 }

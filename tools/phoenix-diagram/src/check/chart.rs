@@ -218,10 +218,13 @@ fn bar_scale(svg: ElementRef<'_>, facts: &Value, findings: &mut Vec<ContentFindi
         ));
         return;
     };
-    let scale = ticks.iter().find_map(|(value, position)| {
-        let candidate = (position - zero) / value;
-        candidate.is_finite().then_some(candidate)
-    });
+    // The farthest tick fixes the scale so coordinate rounding near zero is
+    // not multiplied across the rest of the axis.
+    let scale = ticks
+        .iter()
+        .filter(|(value, position)| ((position - zero) / value).is_finite())
+        .max_by(|a, b| a.0.abs().total_cmp(&b.0.abs()))
+        .map(|(value, position)| (position - zero) / value);
     let Some(scale) = scale else {
         findings.push(finding(
             "artifact/semantic-relation",
@@ -294,7 +297,9 @@ fn bar_scale(svg: ElementRef<'_>, facts: &Value, findings: &mut Vec<ContentFindi
             } else {
                 (number(mark, "x", f64::NAN), number(mark, "width", f64::NAN))
             };
-            let outer = zero + v * scale;
+            // Layout keeps every non-zero bar at least 1 px long so it stays visible.
+            let exact = v * scale;
+            let outer = zero + exact.signum() * exact.abs().max(1.0);
             let (near, far) = match (vertical, v > 0.0) {
                 (true, true) | (false, false) => (start + length, start),
                 (true, false) | (false, true) => (start, start + length),
@@ -328,14 +333,18 @@ fn line_scale(svg: ElementRef<'_>, facts: &Value, findings: &mut Vec<ContentFind
         };
         ticks.push((value, position));
     }
-    let scale = ticks.iter().find_map(|(value, position)| {
+    // Measure against the farthest tick so coordinate rounding is not multiplied.
+    let scale = ticks.first().and_then(|(value, position)| {
         ticks
             .iter()
-            .find(|(other_value, _)| *other_value != *value)
-            .and_then(|(other_value, other_position)| {
+            .filter_map(|(other_value, other_position)| {
                 let candidate = (other_position - position) / (other_value - value);
-                candidate.is_finite().then_some(candidate)
+                candidate
+                    .is_finite()
+                    .then_some(((other_value - value).abs(), candidate))
             })
+            .max_by(|a, b| a.0.total_cmp(&b.0))
+            .map(|(_, candidate)| candidate)
     });
     let Some(scale) = scale else {
         findings.push(finding(

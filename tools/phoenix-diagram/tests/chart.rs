@@ -223,6 +223,88 @@ fn bar_axis_covers_zero_and_bars_follow_the_sign() {
 }
 
 #[test]
+fn wide_and_mixed_magnitude_charts_keep_spaced_ticks_and_pass_the_artifact_check() {
+    let tick_gap = |html: &str| {
+        let document = Html::parse_document(html);
+        let mut ys: Vec<f64> = document
+            .select(&select("line[data-chart-tick]"))
+            .map(|tick| number(&tick, "y1"))
+            .collect();
+        ys.sort_by(f64::total_cmp);
+        ys.windows(2)
+            .map(|pair| pair[1] - pair[0])
+            .fold(f64::INFINITY, f64::min)
+    };
+    let wide_bar = json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title": "T", "evidence": "sourced", "unit": "ms"},
+        "form": "bar",
+        "series": [{"id":"a","name":"A"},{"id":"b","name":"B"},{"id":"c","name":"C"}],
+        "rows": (0..6).map(|i| json!({
+            "id": format!("r{i}"), "label": format!("Row {i}"),
+            "values": [100000 + i * 41000, 120000 + i * 37000, 305000 - i * 20000],
+        })).collect::<Vec<_>>(),
+    });
+    let wide_line = json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title": "T", "evidence": "sourced"},
+        "form": "line",
+        "rows": (0..20).map(|i| json!({
+            "id": format!("p{i}"), "label": format!("P{i}"), "values": [100 + i * 37],
+        })).collect::<Vec<_>>(),
+    });
+    for document in [wide_bar, wide_line] {
+        let scene = compile(document);
+        let html = html(&scene);
+        assert!(tick_gap(&html) >= 40.0 - 0.01, "gap {}", tick_gap(&html));
+        let result = check::check_html(html.as_bytes(), scene.quality);
+        assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    }
+    // A value far below one pixel of the axis still draws the 1 px minimum bar.
+    for (small, orientation) in [
+        (1.0, "vertical"),
+        (0.334971, "vertical"),
+        (1.0, "horizontal"),
+    ] {
+        let mut document = bar(json!([
+            {"id":"a","label":"Almost none","values":[small]},
+            {"id":"b","label":"All of it","values":[1000]},
+        ]));
+        document["orientation"] = json!(orientation);
+        let scene = compile(document);
+        let result = check::check_html(html(&scene).as_bytes(), scene.quality);
+        assert!(
+            result.diagnostics.is_empty(),
+            "{small} {orientation}: {:?}",
+            result.diagnostics
+        );
+    }
+    // The minimum does not excuse a bar drawn longer than both rules allow.
+    let mut scene = compile(bar(json!([
+        {"id":"a","label":"Almost none","values":[1]},
+        {"id":"b","label":"All of it","values":[1000]},
+    ])));
+    let row = scene
+        .containers
+        .iter_mut()
+        .find(|container| container.authored.id == "a" && container.authored.kind == "chart-row")
+        .unwrap();
+    let mark = &mut row.authored.facts["marks"][0];
+    let bottom = mark["y"].as_f64().unwrap() + mark["height"].as_f64().unwrap();
+    mark["y"] = json!(bottom - 4.0);
+    mark["height"] = json!(4.0);
+    let result = check::check_html(html(&scene).as_bytes(), scene.quality);
+    assert!(
+        result
+            .diagnostics
+            .iter()
+            .any(|error| error.message.contains("shared linear scale from zero")),
+        "{:?}",
+        result.diagnostics
+    );
+}
+
+#[test]
 fn values_are_written_exactly_as_authored() {
     let scene = compile(bar(json!([
         {"id":"a","label":"A","values":[12]},

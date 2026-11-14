@@ -125,7 +125,7 @@ fn cli_help_and_engine_probe_work_without_writing_project_files() {
 }
 
 #[test]
-fn cli_guide_routes_the_eleven_types_and_lists_alternatives_when_ambiguous() {
+fn cli_guide_routes_the_twelve_types_and_lists_alternatives_when_ambiguous() {
     let guide = |scenario: &str| {
         let output = run(&[flag("guide"), flag(scenario), flag("--json")]);
         assert!(output.status.success());
