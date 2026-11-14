@@ -206,11 +206,11 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-14 15:21 +0800
-- 当前进度：3/5 个里程碑完成
-- 当前状态：M4 实施中
-- 最近完成：M3 · 静态图数据表数据与接口文字同步（与 M2 同批批末检查通过）
-- 下一步：M4 · elintp 选用数值图表并显示数据表（§6，V-3 与 V-4 elintp 部分）
+- 最近更新：2026-11-14 16:29 +0800
+- 当前进度：4/5 个里程碑完成
+- 当前状态：M5 实施中
+- 最近完成：M4 · elintp 选用数值图表并显示数据表（V-3 浏览器五查 13/13 PASS 与 V-4 elintp 部分通过）
+- 下一步：M5 · 阶段收口（V-5 全量回归与兼容 + V-6 真实使用验收）
 - 当前阻塞：无
 - 代码基线：`3889a9ae`（工作区 dirty，未提交改动不在本计划改动面）
 
@@ -221,6 +221,7 @@ REVIEW @progress_consistency:
 | M1 | 已完成 | 2026-11-14 14:27 +0800 | chart 图型与两种柱状图打通：基线十一类逐一相同，V-1 三份交付 complete，V-4 全绿；guide 场景词按 @implementation_route 修订 | [M1 记录](ELINTP-VISUALS-P4.records/M1.md) | 1d9e3f57 |
 | M2 | 已完成 | 2026-11-14 15:21 +0800 | 折线、饼、限额三形态：批末 V-2 全部结果项与 V-4 其余引擎部分通过（三形态 finalize complete、四形态双策略静态图 complete、体积比 ≤50%、data-phoenix-table 逐格一致、错误输入 ×4 诊断正确） | [M2 记录](ELINTP-VISUALS-P4.records/M2.md) | 1310cb63 |
 | M3 | 已完成 | 2026-11-14 15:21 +0800 | 静态图 data-phoenix-table 数据（write_common）与 §5.10 其余接口文字同步（九处），bundle 已同步；批末共用检查引用 M2 记录 | [M3 记录](ELINTP-VISUALS-P4.records/M3.md) | 1310cb63 |
+| M4 | 已完成 | 2026-11-14 16:29 +0800 | elintp 选用数值图表并显示数据表：V-3 浏览器五查 13/13 PASS（Offline/360px/键盘/打印/禁 JS + 宽表区域滚动 + 损坏退 2 不覆盖）与 V-4 elintp 部分全过；elintp frontmatter 无变化 | [M4 记录](ELINTP-VISUALS-P4.records/M4.md) | 待提交 |
 
 ## 0. 需求、范围与决策
 

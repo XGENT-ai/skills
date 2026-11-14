@@ -176,7 +176,7 @@ static: /absolute/path/queue.static.svg
 
 `:::figure` 后的标题必填；首个非空行只能是一个 `reader:`、`svg:` 或 `static:` 来源，其后是图注。`reader:` 只引用 phoenix-diagram 已交付的自包含 HTML；脚本嵌入完整阅读器，并加入无脚本时隐藏主题按钮的规则，不修改源图文件、不替图工具做审核。图文件不存在或读不了是格式错误。启用脚本时，阅读器自己的主题控件独立于宿主页面。
 
-`static:` 只引用 phoenix-diagram `static` 命令交付的 SVG。脚本先检查根标记、静态元素与属性、CSS 作用域、主题/打印规则及 URL 位置，再安全重序列化并内联到自身的横向滚动区域；`data-phoenix-static` 只用于分派，不代表来源可信，伪造标记仍须通过全部检查。静态图保留原 ID 和本地引用，跟随页面亮暗与系统偏好，打印为亮色，不修改源文件，也不替图工具做 candidate/图型语义校验或实际看图审核。SVG 带卡片数据时，脚本把卡片显示在图与图注之间；没有时不显示。
+`static:` 只引用 phoenix-diagram `static` 命令交付的 SVG。脚本先检查根标记、静态元素与属性、CSS 作用域、主题/打印规则及 URL 位置，再安全重序列化并内联到自身的横向滚动区域；`data-phoenix-static` 只用于分派，不代表来源可信，伪造标记仍须通过全部检查。静态图保留原 ID 和本地引用，跟随页面亮暗与系统偏好，打印为亮色，不修改源文件，也不替图工具做 candidate/图型语义校验或实际看图审核。SVG 带卡片数据时，脚本把卡片显示在图与图注之间；没有时不显示。数值图表的静态图带数据表数据时，数据表随图显示为可展开的表格。
 
 静态图字体策略是 `embedded`（默认，内嵌 WOFF2）或 `system`（系统字体栈，不带字体资源）。summarize 或作者明确要求系统字体时，必须在取图时使用 `--font-policy system`，不能在 elintp 中删字体或复用另一策略的审核记录。安全错误会同时指出内容稿行号和内部 SVG 位置；按诊断修正 SVG/CSS、资源 MIME 或 URL 位置，或重新用 phoenix-diagram `static` 生成，不改内容稿来绕过检查，失败时旧页面保持不动。
 
@@ -283,5 +283,6 @@ No further completion claim can be made from this source.
 | 表格列数不对 | 按表头补齐或删去多余列 |
 | 容器或代码块未闭合 | 加单独一行 `:::` 或三个反引号 |
 | 图来源不止一行 | 每张图单独一个 `:::figure`；每个只有一个来源 |
+| 数据表结构不合约 | 重新用 phoenix-diagram `static` 生成，不手改 SVG |
 | SVG 白名单失败 | 按错误中的 SVG 行号改标签或属性，外部引用改成本地片段 |
 | 不是 phoenix-diagram 静态图 | `static:` 改用 `static` 命令交付且带根标记的 SVG；普通自绘 SVG 改用 `svg:` |

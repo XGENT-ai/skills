@@ -304,10 +304,11 @@ function parseStaticCSS(css, policy, rootId, fail) {
   return rules(0, cleaned.length, true);
 }
 
-function inlineSVG(source, title, prefix, report, staticMode = false, onCards) {
+function inlineSVG(source, title, prefix, report, staticMode = false, onData) {
   if (staticMode) source = source.replace(/^\uFEFF/, '');
   let failed = false, staticPolicy = 'embedded', staticRootId = '';
   let cards = null, cardText = null;
+  let table = null, tableText = null;
   const bad = (at, tag, problem) => {
     failed = true;
     report(`SVG L${source.slice(0, at).split('\n').length} ${tag}：${problem}`);
@@ -322,6 +323,17 @@ function inlineSVG(source, title, prefix, report, staticMode = false, onCards) {
       && Array.isArray(card.items) && card.items.every(item => typeof item === 'string'));
     if (!valid) { bad(at, 'metadata', '卡片数据结构不合约'); return; }
     cards = parsed;
+  };
+  const parseTable = at => {
+    let parsed;
+    try { parsed = JSON.parse(tableText); } catch { parsed = null; }
+    tableText = null;
+    const valid = parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      && Object.keys(parsed).length === 2 && ['columns', 'rows'].every(key => Object.hasOwn(parsed, key))
+      && Array.isArray(parsed.columns) && parsed.columns.length > 0 && parsed.columns.every(column => typeof column === 'string')
+      && Array.isArray(parsed.rows) && parsed.rows.every(row => Array.isArray(row) && row.length === parsed.columns.length && row.every(cell => typeof cell === 'string'));
+    if (!valid) { bad(at, 'metadata', '数据表结构不合约'); return; }
+    table = parsed;
   };
   function decode(value, at, tag) {
     return value.replace(/&([^;\s]*);?/g, (whole, entity) => {
@@ -349,7 +361,8 @@ function inlineSVG(source, title, prefix, report, staticMode = false, onCards) {
         const css = decode(token, at, 'style');
         output += parseStaticCSS(css, staticPolicy, staticRootId, (offset, problem) => bad(at + offset, 'style', problem));
       } else if (staticMode && stack.at(-1) === 'metadata') {
-        cardText += decode(token, at, 'metadata');
+        if (tableText !== null) tableText += decode(token, at, 'metadata');
+        else cardText += decode(token, at, 'metadata');
       } else output += escapeHTML(decode(token, at, 'text'));
       continue;
     }
@@ -359,11 +372,11 @@ function inlineSVG(source, title, prefix, report, staticMode = false, onCards) {
     if (!(staticMode ? STATIC_SVG_ELEMENTS : SVG_ELEMENTS).has(name)) { bad(at, name, '元素不在白名单'); continue; }
     if (closing) {
       if (raw.trim() || selfClosing || stack.pop() !== name) bad(at, name, '闭合标签不匹配');
-      if (staticMode && name === 'metadata') { parseCards(at); continue; }
+      if (staticMode && name === 'metadata') { if (tableText !== null) parseTable(at); else parseCards(at); continue; }
       output += `</${name}>`;
       continue;
     }
-    if (staticMode && cardText !== null) { bad(at, name, '卡片数据须为纯文本'); continue; }
+    if (staticMode && (cardText !== null || tableText !== null)) { bad(at, name, cardText !== null ? '卡片数据须为纯文本' : '数据表须为纯文本'); continue; }
     if (staticMode && name === 'svg' && stack.length) bad(at, name, '静态图不允许嵌套 svg');
     if (staticMode && name === 'style' && !['svg', 'defs'].includes(stack.at(-1))) bad(at, name, 'style 只能位于静态根或 defs 内');
     const attrs = new Map();
@@ -424,17 +437,21 @@ function inlineSVG(source, title, prefix, report, staticMode = false, onCards) {
       attrs.set('style', declarations);
     }
     if (staticMode && name === 'metadata') {
-      if (stack.length !== 1 || cards !== null || cardText !== null
-        || attrs.size !== 1 || attrs.get('data-phoenix-cards') !== '') bad(at, name, '卡片数据须为根下唯一的 metadata[data-phoenix-cards]');
-      else if (selfClosing) bad(at, name, '卡片数据结构不合约');
-      else cardText = '';
+      const isCards = attrs.get('data-phoenix-cards') === '';
+      const isTable = attrs.get('data-phoenix-table') === '';
+      if (stack.length !== 1 || attrs.size !== 1 || (!isCards && !isTable)
+        || (isCards && (cards !== null || cardText !== null))
+        || (isTable && (table !== null || tableText !== null))) bad(at, name, '静态图数据须为根下的 metadata[data-phoenix-cards] 或 metadata[data-phoenix-table]，各至多一个');
+      else if (selfClosing) bad(at, name, '静态图数据须为根下的 metadata[data-phoenix-cards] 或 metadata[data-phoenix-table]，各至多一个');
+      else if (isCards) cardText = '';
+      else tableText = '';
     } else {
       output += `<${name}${[...attrs].map(([key, value]) => ` ${key}="${escapeHTML(value)}"`).join('')}${selfClosing ? '/>' : '>'}`;
     }
     if (!selfClosing) stack.push(name);
   }
   if (end !== source.length || stack.length || roots !== 1) bad(end, 'svg', '根元素缺失或标签未闭合');
-  if (!failed && staticMode && onCards) onCards(cards || []);
+  if (!failed && staticMode && onData) onData({ cards: cards || [], table });
   return failed ? '' : output;
 }
 
@@ -626,14 +643,15 @@ export function parseDraft(text, { cwd, assets = null }) {
           catch { error(content[0].line, `无法读取图文件 ${file}`, '确认本地路径存在且可读'); continue; }
           // Host styles cannot hide a reader control across the iframe boundary when scripts are disabled.
           if (type === 'reader') data = data.replace(/<\/head>/i, '<noscript><style>#btn-theme{display:none!important}</style></noscript></head>');
-          let cards = null;
+          let cards = null, table = null;
           const graphic = type === 'reader'
             ? `<div class="reader-frame"><iframe srcdoc="${escapeHTML(data)}" title="${escapeHTML(title)}" loading="lazy"></iframe></div>`
             : type === 'static'
-              ? `<div class="image-scroll" role="region" tabindex="0" aria-label="${escapeHTML(title)}">${inlineSVG(data, title, '', problem => error(content[0].line, problem, '按 phoenix-diagram 静态 SVG/CSS、作用域与资源白名单修正源文件，或重新用 static 命令生成'), true, parsed => { cards = parsed; })}</div>`
+              ? `<div class="image-scroll" role="region" tabindex="0" aria-label="${escapeHTML(title)}">${inlineSVG(data, title, '', problem => error(content[0].line, problem, '按 phoenix-diagram 静态 SVG/CSS、作用域与资源白名单修正源文件，或重新用 static 命令生成'), true, parsed => { cards = parsed.cards; table = parsed.table; })}</div>`
               : inlineSVG(data, title, `fig${++svgNumber}-`, problem => error(content[0].line, problem, '按 SVG 元素、属性与本地片段白名单修正源文件'));
           const cardsHtml = cards?.length ? `<div class="figure-cards">${cards.map(card => `<section class="figure-card"><p class="figure-card-title">${escapeHTML(card.title)}</p><ul>${card.items.map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ul></section>`).join('')}</div>` : '';
-          result.push(`<figure class="diagram">${graphic}${cardsHtml}<figcaption><strong>${escapeHTML(title)}</strong>${content.slice(1).map(row => `<p>${inline(row.value, row.line)}</p>`).join('')}</figcaption></figure>`);
+          const tableHtml = table ? `<details class="figure-data"><summary>${ui.table}</summary><div class="table-scroll" role="region" tabindex="0" aria-label="${ui.table}"><table><thead><tr>${table.columns.map(column => `<th scope="col">${escapeHTML(column)}</th>`).join('')}</tr></thead><tbody>${table.rows.map(row => `<tr><th scope="row">${escapeHTML(row[0])}</th>${row.slice(1).map(cell => `<td>${escapeHTML(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>` : '';
+          result.push(`<figure class="diagram">${graphic}${tableHtml}${cardsHtml}<figcaption><strong>${escapeHTML(title)}</strong>${content.slice(1).map(row => `<p>${inline(row.value, row.line)}</p>`).join('')}</figcaption></figure>`);
         } else {
           const body = blocks(rows.slice(start + 1, i - 1), false, true);
           result.push(`<aside class="${kind}">${title ? `<h3>${inline(title, line)}</h3>` : ''}${body.join('')}</aside>`);

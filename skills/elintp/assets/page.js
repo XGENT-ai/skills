@@ -21,6 +21,7 @@
 
   // Measure each embedded reader the way page.css prints it: 840px wide, with the reader's own print rules applied.
   addEventListener('beforeprint', () => {
+    document.querySelectorAll('details.figure-data').forEach(details => { details.open = true; });
     for (const frame of document.querySelectorAll('.reader-frame iframe')) {
       const doc = frame.contentDocument;
       const printRules = [...doc.styleSheets].flatMap(sheet => [...sheet.cssRules]).filter(rule => rule.media?.mediaText === 'print');

@@ -116,6 +116,9 @@ figcaption p { margin: 8px 0 0; }
 .figure-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 12px; }
 .figure-card { padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .figure-card-title { margin: 0 0 6px; font-weight: 650; }
+.figure-data { margin-top: 12px; }
+.figure-data summary { cursor: pointer; font-weight: 650; }
+.figure-data .table-scroll { margin-top: 8px; }
 .missing-image { padding: 32px 24px; border: 1px dashed var(--line); background: var(--surface); }
 .sources { border-top: 1px solid var(--line); padding-top: 24px; color: var(--muted); font-size: 13px; }
 .sources h2 { font-size: 15px; margin: 0 0 12px; }

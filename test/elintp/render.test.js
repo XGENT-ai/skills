@@ -107,9 +107,9 @@ test('static SVG rejects unmarked and forged-marker inputs without replacing an 
     ['host font family', staticFigure('<style>@font-face { font-family: system-ui; src: url(data:font/woff2;base64,d09GMg==); }</style>'), /font-family|字体族/],
     ['system font face', staticFigure('<style>@font-face { font-family: x; src: url(data:font/woff2;base64,d09GMg==); }</style>', 'system'), /system.*@font-face|@font-face.*system/],
     ['system image font', staticFigure('<style>svg[data-phoenix-static] text { font-family: "JetBrains Mono"; }</style>', 'system'), /system.*JetBrains|JetBrains.*system/],
-    ['card meta outside root', staticFigure('<g><metadata data-phoenix-cards="">[]</metadata></g>'), /卡片数据须为根下唯一/],
-    ['two card metas', staticFigure(`<metadata data-phoenix-cards="">${cardJson([{ dot: 'emerald', title: 't', items: ['a'] }])}</metadata><metadata data-phoenix-cards="">[]</metadata>`), /卡片数据须为根下唯一/],
-    ['card meta extra attribute', staticFigure('<metadata data-phoenix-cards="" data-x="">[]</metadata>'), /卡片数据须为根下唯一/],
+    ['card meta outside root', staticFigure('<g><metadata data-phoenix-cards="">[]</metadata></g>'), /静态图数据须为根下/],
+    ['two card metas', staticFigure(`<metadata data-phoenix-cards="">${cardJson([{ dot: 'emerald', title: 't', items: ['a'] }])}</metadata><metadata data-phoenix-cards="">[]</metadata>`), /静态图数据须为根下/],
+    ['card meta extra attribute', staticFigure('<metadata data-phoenix-cards="" data-x="">[]</metadata>'), /静态图数据须为根下/],
     ['card meta embedded tag', staticFigure(`<metadata data-phoenix-cards="">${cardJson([{ dot: 'emerald', title: 't', items: ['a'] }])}<rect/></metadata>`), /卡片数据须为纯文本/],
     ['card meta invalid JSON', staticFigure('<metadata data-phoenix-cards="">not-json</metadata>'), /卡片数据结构不合约/],
     ['card meta extra key', staticFigure(`<metadata data-phoenix-cards="">${cardJson([{ dot: 'emerald', title: 't', items: [], note: 'x' }])}</metadata>`), /卡片数据结构不合约/],
@@ -145,7 +145,58 @@ test('static SVG card data renders as escaped page cards; no data means no card 
   fs.writeFileSync(path.join(w.dir, 'plain.svg'), staticFigure('<rect width="20" height="20"/>'));
   const plain = w.run(draft(':::figure Queue\nstatic: plain.svg\n:::'));
   assert.equal(plain.status, 0, plain.stderr);
-  assert.doesNotMatch(fs.readFileSync(w.output, 'utf8'), /<div class="figure-cards">/);
+  const plainHtml = fs.readFileSync(w.output, 'utf8');
+  assert.doesNotMatch(plainHtml, /<div class="figure-cards">/);
+  assert.doesNotMatch(plainHtml, /<details class="figure-data"/);
+});
+
+const tableMeta = table => `<metadata data-phoenix-table="">${xmlEscape(JSON.stringify(table))}</metadata>`;
+const tableData = { columns: ['State', 'Notes'], rows: [['<b>Ready</b>', 'a & b'], ['Blocked', '40']] };
+
+test('numeric chart table metadata renders as an escaped expandable figure-data table', t => {
+  const w = workspace(t);
+  fs.writeFileSync(path.join(w.dir, 'figure.svg'), staticFigure(`${cardMeta([{ dot: 'emerald', title: 't', items: ['a'] }])}${tableMeta(tableData)}<rect width="20" height="20"/>`));
+  const result = w.run(draft(':::figure Queue\nstatic: figure.svg\n:::'));
+  assert.equal(result.status, 0, result.stderr);
+  const html = fs.readFileSync(w.output, 'utf8');
+  assert.match(html, /<details class="figure-data"><summary>[^<]+<\/summary>/);
+  assert.match(html, /<div class="table-scroll" role="region" tabindex="0" aria-label="[^"]+"><table><thead><tr><th scope="col">State<\/th><th scope="col">Notes<\/th><\/tr><\/thead><tbody>/);
+  assert.match(html, /<tr><th scope="row">&lt;b&gt;Ready&lt;\/b&gt;<\/th><td>a &amp; b<\/td><\/tr>/);
+  assert.match(html, /<tr><th scope="row">Blocked<\/th><td>40<\/td><\/tr>/);
+  // The table stays out of the outline and carries no caption element.
+  assert.doesNotMatch(html, /<caption/);
+  // Cards still render next to the table.
+  assert.match(html, /<div class="figure-cards">/);
+  // Without table metadata the reader page gains no figure-data block.
+  fs.writeFileSync(path.join(w.dir, 'plain.svg'), staticFigure('<rect width="20" height="20"/>'));
+  const plain = w.run(draft(':::figure Queue\nstatic: plain.svg\n:::'));
+  assert.equal(plain.status, 0, plain.stderr);
+  assert.doesNotMatch(fs.readFileSync(w.output, 'utf8'), /<details class="figure-data"/);
+});
+
+test('table metadata structure violations are format errors without replacing an old page', t => {
+  const w = workspace(t);
+  assert.equal(w.run(draft('Delivered.')).status, 0);
+  const before = fs.readFileSync(w.output);
+  const badTables = [
+    ['not json', '<metadata data-phoenix-table="">not-json</metadata>'],
+    ['missing key', tableMeta({ columns: ['A'] })],
+    ['extra key', tableMeta({ columns: ['A'], rows: [], extra: 1 })],
+    ['empty columns', tableMeta({ columns: [], rows: [] })],
+    ['non-string column', tableMeta({ columns: [1], rows: [] })],
+    ['row not array', tableMeta({ columns: ['A'], rows: ['x'] })],
+    ['row length mismatch', tableMeta({ columns: ['A', 'B'], rows: [['x']] })],
+    ['non-string cell', tableMeta({ columns: ['A'], rows: [[2]] })],
+    ['two table metas', '<metadata data-phoenix-table="">A</metadata><metadata data-phoenix-table="">B</metadata>'],
+    ['tag inside table metadata', `<metadata data-phoenix-table="">${xmlEscape(JSON.stringify(tableData))}<rect/></metadata>`],
+  ];
+  for (const [label, body] of badTables) {
+    fs.writeFileSync(path.join(w.dir, 'figure.svg'), staticFigure(body));
+    const result = w.run(draft(':::figure Queue\nstatic: figure.svg\n:::'));
+    assert.equal(result.status, 2, label + result.stderr);
+    assert.match(result.stderr, /数据表结构不合约|静态图数据须为根下|数据表须为纯文本/, label);
+    assert.deepEqual(fs.readFileSync(w.output), before, label);
+  }
 });
 
 test('static SVG preserves namespaced drawing and renders in final and review pages', async t => {
