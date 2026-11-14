@@ -24,6 +24,7 @@ function batch(report, files) {
   const reportPath = path.join(dir, 'report.json');
   fs.writeFileSync(reportPath, JSON.stringify(report));
   const result = spawnSync(process.execPath, [renderer, reportPath], { encoding: 'utf8' });
+  if (result.status === 0) result.html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
   fs.rmSync(dir, { recursive: true, force: true });
   return result;
 }
@@ -37,6 +38,19 @@ const base = (items, extra = {}) => ({
   ...extra,
 });
 const item = (id, fields = {}) => ({ id, name: id, summary: '说明', ...fields });
+
+test('reader page keeps usage and limits without exposing provenance metadata', () => {
+  const r = batch(base([item('filter', {
+    name: '任务筛选', howTo: ['选择负责人'], limits: ['仅显示有权限的任务'],
+  })], {
+    meta: { source: 'private-plan.md', baseline: 'internal-commit', environment: 'internal-process-evidence' },
+  }), {});
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.html, /选择负责人/);
+  assert.match(r.html, /仅显示有权限的任务/);
+  assert.match(r.html, /href="#filter"/);
+  assert.doesNotMatch(r.html, /private-plan|internal-commit|internal-process-evidence/);
+});
 
 test('accepts files exactly at the per-file limits', () => {
   const r = batch(base([item('a', { video: 'a.webm', chart: 'a.html' })]), { 'a.webm': 100 * MiB, 'a.html': 25 * MiB });

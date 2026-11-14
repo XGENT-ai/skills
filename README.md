@@ -175,7 +175,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | [debugging](skills/debugging/SKILL.md) | 按四阶段流程调查根因、定位问题并验证修复 |
 | [tdd](skills/tdd/SKILL.md) | 先用失败测试复现缺陷再改实现，适用于有明确廉价测试路径的 TDD 与回归测试 |
 | [create-e2e-verification-skill](skills/create-e2e-verification-skill/SKILL.md) | 为用户选定的旅程（未指定时提名代价高、测试碰不到的候选）创建、维护 ODC 写成的 e2e-*：先按提交核查已有覆盖，可用 phoenix-diagram 的 statechart 建模推出场景，从真实入口运行并证明能发现故障；可供 agi-mode 复用 |
-| [feature-demo](skills/feature-demo/SKILL.md) | 从开发计划或 git 范围找出新增的 Web 功能，在运行中的系统上回放固定脚本录成带字幕的视频，可配流程图或状态图，按统一模板生成功能、用法与限制的报告，用户要求时发布为 SPMS 模板报告；检测到 Phoenix UI 时录制前用 `phoenix-ui capture` 开写拦截核对每个待录功能 |
+| [feature-demo](skills/feature-demo/SKILL.md) | 从开发计划或 git 范围找出新增的 Web 功能，在运行中的系统上回放固定脚本录成带字幕的视频，可配流程图或状态图，按统一模板生成以视频、用法与限制为主的报告，执行证据与重录方法留在本地维护记录，用户要求时发布为 SPMS 模板报告；检测到 Phoenix UI 时录制前用 `phoenix-ui capture` 开写拦截核对每个待录功能 |
 | [mcp-release-qa](skills/mcp-release-qa/SKILL.md) | 发布前验证 MCP server：用真实协议会话对照源码与文档核能力，测失败路径并留下可复现证据 |
 | [clean-artifacts](skills/clean-artifacts/SKILL.md) | 清理评审、测试日志和截图等过程文件，处理误入 Git 的文件并补齐忽略规则；保留必要记录，按单独授权执行历史瘦身 |
 | [react](skills/react/SKILL.md) | 编写和评审 React 组件，处理 Hooks、Effects、渲染性能、数据请求与 React 19 迁移 |

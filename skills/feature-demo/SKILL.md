@@ -6,7 +6,7 @@ when_to_use: "用户会说「这次加了什么，录个演示」「vibe coding 
 
 # Feature Demo
 
-代码写得快之后，开发者常说不清系统多了什么、怎么用。本 skill 从计划和实际改动找出新增功能，在运行中的系统上走通，录成短视频，再灌进统一模板，生成一份报告。读者是开发者：可以用技术名词，节奏紧凑。
+代码写得快之后，开发者常说不清系统多了什么、怎么用。本 skill 从计划和实际改动找出新增功能，在运行中的系统上走通，录成短视频，再灌进统一模板，生成一份报告。读者是要使用这些功能的开发者：可以用技术名词，节奏紧凑；页面讲新增能力、入口、操作和必要限制，不展示制作与发布过程。
 
 ```formal
 INTENT:
@@ -33,7 +33,7 @@ RULE @find_additions:
 
 RULE @environment:
   MUST: ["先读项目的启动说明、已有 e2e-* 与登记的账号来源，复用它们的启动和登录方式",
-         "录制前确认实例归属、版本与本次基线一致：看实际监听进程的启动命令，比对运行产物与本地构建的哈希、服务启动时间与最后改动时间；跑的是验收 harness 或测试运行时而非正式入口时，在报告写明；不一致就重新构建或报告阻塞，不换一个能跑的旧版本录。拿不到 SHA 级证据时在报告写明依据",
+         "录制前确认实例归属、版本与本次基线一致：看实际监听进程的启动命令，比对运行产物与本地构建的哈希、服务启动时间与最后改动时间；核验依据记入 <批次>/maintenance.md；跑的是验收 harness 或测试运行时而非正式入口时，在对应功能 note 简短说明演示条件；不一致就重新构建或报告阻塞，不换一个能跑的旧版本录。拿不到 SHA 级证据时在维护记录写明依据",
          =>[writes_not_authorized, "看起来只读的操作也可能写。在 setup 里用 page.context().route 中止并打印非 GET 请求，只放行登录、换票等已核实必要的路径；录制输出出现拦截记录就作废这次录制"],
          "凭据只从项目登记的来源经环境变量传入，交付时只写变量名；没有登记的来源时向用户要",
          "只清理本轮启动的服务和创建的数据"]
@@ -79,7 +79,7 @@ RULE @review_video:
 RULE @charts:
   # 视频演示一条路径，图说明这条路径在全局的位置。
   MUST: ["已安装 phoenix-diagram 时读它的 skill，为有分支、等待或多页面流转的功能各生成一张图，放进批次目录并写入 chart；整批有共同主线时再加 overviewChart",
-         "页面流转用 workflow；功能的核心是状态变化时才用 statechart，它要先写清规则，规则判定结果写进 limits",
+         "页面流转用 workflow；功能的核心是状态变化时才用 statechart，它要先写清规则，规则判定记录写进 maintenance.md，只把影响使用的状态约束写进 limits",
          "图从 @find_additions 核对过的实际行为来画，不只照抄计划",
          =>[phoenix_diagram_unavailable, "不生成图，交付时说明，录制和报告照常"]]
   MUST_NOT: ["未经用户同意安装图解引擎", "把图嵌进别的 HTML 文件；每张图保持独立文件"]
@@ -87,10 +87,11 @@ RULE @charts:
 RULE @report:
   MUST: ["读 references/report-format.md，按模板写 <批次>/report.json，不手写 HTML",
          "每个功能写清解决什么、入口和操作、限制；不可录的功能进 sections，也写用法，并标明是否实跑过",
-         "三类功能的后两类和细小修复进 sections；项目特有的内容也用 sections 表达",
+         "三类功能的后两类和细小修复进 sections；只收录影响读者使用或理解功能的内容，详情见 report-format 的内容边界",
+         "发布与录制记录、版本核验、哈希和进程、工具检查、账号来源与重录命令放 <批次>/maintenance.md，不放 report.json 的正文，也不换标题塞进 sections、summary、note 或 limits；维护记录不自动发布",
          "运行 render-report.mjs 生成 index.html；报错就改数据，不改生成结果",
-         "做过录制前核对时，meta.environment 写明“录制前核对用了 phoenix-ui capture <capture-report.json 的 tool.version>”；precheck/ 不列进交付",
-         "在浏览器打开 index.html（headless 也可以），确认每个视频有时长且能播放，图正常显示"]
+         "meta 只填协议要求的简短来源、版本和演示条件；做过录制前核对时，在 maintenance.md 写工具版本、capture 结果和证据路径；precheck/ 不列进读者交付",
+         "在浏览器打开 index.html（headless 也可以），确认桌面与窄屏下首屏能找到功能和视频、正文易读、没有横向溢出；每个视频有时长且能播放，展开的图正常显示"]
 
 RULE @publish:
   # 发布让没有本地环境的同事在 SPMS 项目报告里直接看；同一 batchId 再发布原位替换，链接不变。
@@ -102,9 +103,9 @@ RULE @publish:
   MUST_NOT: ["未经用户明确要求就发布", "改动批次目录里的文件来让发布通过，或绕过脚本手工上传"]
 
 RULE @handoff:
-  MUST: ["给出 index.html 和 report.json 的路径，按三类列功能，报告录制基线、环境和数据来源",
+  MUST: ["给出 index.html 和 report.json 的路径，简述新增能力与用法；基线、环境证据和重录方法指向 maintenance.md，不复述执行日志",
          "列出发现的产品问题、未录制项及原因、用到的额度或写入",
-         "说明视频未打码且体积较大，是否提交由用户决定；看报告只需要 report.json、index.html、视频和图，.mjs 只用于重录"]
+         "仅有实际可见范围或分享风险时在交付消息中提醒；看报告只需要 report.json、index.html、视频和图，.mjs 与 maintenance.md 仅供维护；未经要求不提交视频"]
   MUST_NOT: commit_or_publish_without_request
 ```
 

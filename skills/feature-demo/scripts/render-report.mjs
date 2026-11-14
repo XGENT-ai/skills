@@ -16,29 +16,64 @@ const MAX_DATA_BYTES = 2 * MiB;
 const MAX_TOTAL_BYTES = 500 * MiB;
 
 const STYLE = `
-  :root { color-scheme: light dark; --bg:#f6f7f9; --paper:#fff; --ink:#1b2029; --muted:#5a6473; --line:#dbe0e7; --warn:#a15c00; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#14181f; --paper:#1d232c; --ink:#eef1f6; --muted:#a9b3c1; --line:#333c49; --warn:#f0b35a; } }
+  :root { color-scheme:light dark; --bg:#fafaf8; --paper:#fff; --ink:#202c29; --muted:#576761; --line:#d5ded8; --accent:#28634d; --soft:#eaf1ec; }
+  @media (prefers-color-scheme:dark) { :root { --bg:#151c19; --paper:#1c2520; --ink:#ecf1ed; --muted:#adbbb2; --line:#39483e; --accent:#a4d8b8; --soft:#273c30; } }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 system-ui,sans-serif; }
-  main { max-width:1280px; margin:0 auto; padding:32px 16px 64px; }
-  h1 { font-size:28px; margin:0 0 8px; }
-  h2 { font-size:20px; margin:0 0 8px; }
-  h3 { font-size:14px; margin:16px 0 4px; color:var(--muted); }
-  p, ul, ol { margin:8px 0; }
-  a { color:inherit; }
-  .meta { color:var(--muted); font-size:14px; }
-  .meta dt { font-weight:600; }
-  .meta dd { margin:0 0 4px; overflow-wrap:anywhere; }
-  article, section { background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:20px; margin-top:20px; }
-  .media { display:grid; gap:12px; margin-top:12px; }
-  .media > * { min-width:0; }
-  @media (min-width:1100px) { .media.both { grid-template-columns:1fr 1fr; align-items:start; } }
-  video, iframe { display:block; width:100%; border:1px solid var(--line); border-radius:6px; }
-  video { background:#000; }
-  iframe { height:480px; background:#fff; }
-  .expand { font-size:14px; }
-  .note { color:var(--warn); font-size:14px; }
-  code { font-size:14px; overflow-wrap:anywhere; }
+  html { scroll-padding-top:24px; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.7 system-ui,"PingFang SC","Microsoft YaHei",sans-serif; overflow-wrap:anywhere; }
+  ::selection { background:var(--accent); color:var(--bg); }
+  main { max-width:1248px; margin:0 auto; padding:40px 40px 64px; }
+  h1,h2,h3 { text-wrap:balance; line-height:1.3; }
+  h1 { font-size:28px; letter-spacing:-.025em; margin:0; }
+  h2 { font-size:22px; letter-spacing:-.015em; margin:0 0 12px; }
+  h3 { font-size:16px; margin:0 0 12px; }
+  p,ul,ol { margin:0; }
+  p,li { text-wrap:pretty; }
+  ul,ol { padding-inline-start:24px; }
+  li + li { margin-top:10px; }
+  a { color:var(--accent); text-underline-offset:4px; }
+  a:hover { text-decoration-thickness:2px; }
+  :focus-visible { outline:3px solid var(--accent); outline-offset:5px; }
+  .intro { max-width:800px; }
+  .lead { color:var(--muted); font-size:17px; margin-top:12px; max-width:38em; }
+  nav { margin-top:32px; border-block:1px solid var(--line); padding:12px 0; }
+  nav ul { display:flex; flex-wrap:wrap; gap:4px 24px; padding:0; list-style:none; }
+  nav li + li { margin:0; }
+  nav a { display:block; padding:10px 0; text-decoration:none; font-weight:600; }
+  nav a:hover { text-decoration:underline; }
+  article { padding:48px 0; border-bottom:1px solid var(--line); scroll-margin-top:24px; }
+  .feature-summary { color:var(--muted); max-width:40em; margin-bottom:24px; }
+  .feature-body { display:grid; gap:32px; align-items:start; }
+  .feature-body > * { min-width:0; }
+  .media { display:grid; gap:24px; }
+  video,iframe { display:block; width:100%; border:1px solid var(--line); border-radius:12px; }
+  video { background:#000; aspect-ratio:16/9; object-fit:contain; }
+  iframe { height:480px; background:var(--paper); }
+  .guide { max-width:40em; }
+  .guide > div + div { margin-top:28px; }
+  .guide li::marker { color:var(--accent); font-weight:600; }
+  .limits { color:var(--muted); font-size:14px; }
+  .note { background:var(--soft); padding:12px 16px; border-radius:8px; font-size:14px; margin-top:20px; }
+  details { border-top:1px solid var(--line); padding-top:12px; }
+  summary { cursor:pointer; color:var(--accent); font-weight:600; padding:8px 0; }
+  details[open] summary { margin-bottom:12px; }
+  .expand a { display:inline-block; padding:10px 0; font-size:14px; }
+  .overview { margin-top:32px; }
+  .extra { padding-top:40px; max-width:800px; }
+  .extra h2 { font-size:22px; }
+  code { background:var(--soft); padding:2px 5px; border-radius:4px; font-size:.9em; }
+  @media (min-width:960px) { .feature-body.has-media.has-guide { grid-template-columns:minmax(0,2fr) minmax(240px,1fr); } }
+  @media (max-width:600px) {
+    main { padding:24px 20px 48px; }
+    h1 { font-size:24px; }
+    h2 { font-size:20px; }
+    .lead { font-size:16px; margin-top:12px; }
+    nav { margin-top:24px; }
+    nav ul { gap:0 20px; }
+    article { padding:32px 0; }
+    .feature-body { gap:24px; }
+    iframe { height:360px; }
+  }
 `;
 
 function fail(lines) {
@@ -138,38 +173,44 @@ const chart = (file, title) => `<div><iframe sandbox="allow-scripts" src="${attr
 
 function renderItem(item) {
   const media = [];
-  if (item.video) media.push(`<video src="${attr(item.video)}" controls preload="metadata"></video>`);
-  if (item.chart) media.push(chart(item.chart, `${item.name} 的图`));
+  if (item.video) media.push(`<video src="${attr(item.video)}" aria-label="${attr(item.name)}操作演示" controls playsinline preload="metadata"></video>`);
+  if (item.chart) media.push(`<details><summary>查看流程图</summary>${chart(item.chart, `${item.name} 的图`)}</details>`);
+  const guide = [
+    item.howTo ? `<div><h3>怎么用</h3>${list('ol', item.howTo)}</div>` : '',
+    item.limits ? `<div class="limits"><h3>使用限制</h3>${list('ul', item.limits)}</div>` : '',
+    item.note ? `<p class="note">${inline(item.note)}</p>` : '',
+  ].filter(Boolean).join('');
   return `<article id="${attr(item.id)}">
     <h2>${inline(item.name)}</h2>
-    <p>${inline(item.summary)}</p>
-    ${item.howTo ? `<h3>怎么用</h3>${list('ol', item.howTo)}` : ''}
-    ${item.note ? `<p class="note">${inline(item.note)}</p>` : ''}
-    ${media.length ? `<div class="media${media.length === 2 ? ' both' : ''}">${media.join('')}</div>` : ''}
-    ${item.limits ? `<h3>限制</h3>${list('ul', item.limits)}` : ''}
+    <p class="feature-summary">${inline(item.summary)}</p>
+    <div class="feature-body${media.length ? ' has-media' : ''}${guide ? ' has-guide' : ''}">
+      ${media.length ? `<div class="media">${media.join('')}</div>` : ''}
+      ${guide ? `<div class="guide">${guide}</div>` : ''}
+    </div>
   </article>`;
 }
 
 function render(report) {
   return `<!doctype html>
 <html lang="zh-CN">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(report.title)}</title>
 <style>${STYLE}</style>
+</head>
+<body>
 <main>
-  <h1>${inline(report.title)}</h1>
-  ${report.summary ? `<p>${inline(report.summary)}</p>` : ''}
-  <dl class="meta">
-    <dt>来源</dt><dd>${inline(report.meta.source)}</dd>
-    <dt>基线</dt><dd>${inline(report.meta.baseline)}</dd>
-    <dt>环境与数据</dt><dd>${inline(report.meta.environment)}</dd>
-  </dl>
-  <nav><ul>${report.items.map(item => `<li><a href="#${attr(item.id)}">${escapeHtml(item.name)}</a></li>`).join('')}</ul></nav>
-  ${report.overviewChart ? `<section><h2>总览</h2>${chart(report.overviewChart, '总览图')}</section>` : ''}
+  <header class="intro">
+    <h1>${inline(report.title)}</h1>
+    ${report.summary ? `<p class="lead">${inline(report.summary)}</p>` : ''}
+  </header>
+  <nav aria-label="功能导航"><ul>${report.items.map(item => `<li><a href="#${attr(item.id)}">${escapeHtml(item.name)}</a></li>`).join('')}</ul></nav>
+  ${report.overviewChart ? `<details class="overview"><summary>查看功能总览</summary>${chart(report.overviewChart, '总览图')}</details>` : ''}
   ${report.items.map(renderItem).join('\n')}
-  ${(report.sections ?? []).map(section => `<section><h2>${inline(section.title)}</h2>${list('ul', section.items)}</section>`).join('\n')}
+  ${(report.sections ?? []).map(section => `<section class="extra"><h2>${inline(section.title)}</h2>${list('ul', section.items)}</section>`).join('\n')}
 </main>
+</body>
 </html>
 `;
 }
