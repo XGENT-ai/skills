@@ -120,7 +120,7 @@ fn cli_help_and_engine_probe_work_without_writing_project_files() {
     }
     assert!(text.starts_with("phoenix-diagram 0.2.0\n"));
     assert!(text.contains(
-        "Types: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart."
+        "Types: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart, chart."
     ));
 }
 
@@ -142,6 +142,7 @@ fn cli_guide_routes_the_eleven_types_and_lists_alternatives_when_ambiguous() {
         ("仓库目录结构", "tree"),
         ("事故复盘时间线", "timeline"),
         ("一次请求的耗时瀑布", "waterfall"),
+        ("对比两组数值的趋势", "chart"),
         ("检查结账流程会不会死锁、找出违规路径", "statechart"),
         ("convert this erDiagram", "erd"),
         ("convert this classDiagram", "class"),
@@ -153,7 +154,7 @@ fn cli_guide_routes_the_eleven_types_and_lists_alternatives_when_ambiguous() {
         parsed(&output)["matches"][0]["schema"],
         "schemas/class.schema.json"
     );
-    assert_eq!(guide("something vague").len(), 11);
+    assert_eq!(guide("something vague").len(), 12);
 }
 
 #[test]

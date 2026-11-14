@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "diagram_type": "chart",
+  "meta": { "title": "Build time by stage", "output": "minimal.chart.html", "quality_profile": "showcase", "locale": "en", "evidence": "illustrative", "unit": "ms" },
+  "form": "bar",
+  "series": [
+    { "id": "before", "name": "Before" },
+    { "id": "after", "name": "After" }
+  ],
+  "rows": [
+    { "id": "install", "label": "Install", "values": [4200, 2600] },
+    { "id": "build", "label": "Build", "values": [8900, 5400], "highlight": true },
+    { "id": "test", "label": "Test", "values": [3100, 3100] }
+  ]
+}

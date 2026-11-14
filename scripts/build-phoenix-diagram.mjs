@@ -103,7 +103,7 @@ export function bundleFiles(repoRoot = root) {
     files.set(name, bytes); descriptors.push({ path: name, ...identity(bytes), mode });
   }
   for (const name of ['SKILL.md', 'scripts/phoenix-diagram', 'scripts/phoenix-launcher.cjs', 'scripts/phoenix-bootstrap.cjs',
-    ...['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall', 'statechart'].map(kind => `schemas/${kind}.schema.json`)]) {
+    ...['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall', 'statechart', 'chart'].map(kind => `schemas/${kind}.schema.json`)]) {
     assert(files.has(name), `Missing required diagram bundle source: ${name}`);
   }
   const manifest = { schemaVersion: 1, tool: TOOL, version: TOOL_VERSION, files: descriptors }, bytes = pretty(manifest);

@@ -140,7 +140,7 @@ fn collection(kind: DiagramType) -> Option<&'static str> {
         DiagramType::Class => "types",
         DiagramType::Timeline => "events",
         DiagramType::Waterfall => "spans",
-        DiagramType::Statechart => return None,
+        DiagramType::Statechart | DiagramType::Chart => return None,
     })
 }
 

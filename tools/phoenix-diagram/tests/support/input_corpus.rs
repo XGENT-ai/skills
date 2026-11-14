@@ -272,6 +272,13 @@ fn minimal(kind: DiagramType) -> Value {
                 "deadlock": {"ends":{"eq":[{"var":"phase"},"b"]}},
             },
         }),
+        DiagramType::Chart => {
+            document["meta"]["evidence"] = json!("illustrative");
+            json!({
+                "form": "bar",
+                "rows": [{"id":"a","label":"A","values":[10]},{"id":"b","label":"B","values":[4]}],
+            })
+        }
     };
     document
         .as_object_mut()
@@ -293,6 +300,7 @@ fn collections(kind: DiagramType) -> (&'static str, &'static str) {
         DiagramType::Timeline => ("events", "relationships"),
         DiagramType::Waterfall => ("spans", "relationships"),
         DiagramType::Statechart => ("variables", "actions"),
+        DiagramType::Chart => ("rows", "relationships"),
     }
 }
 

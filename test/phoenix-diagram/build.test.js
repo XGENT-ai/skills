@@ -123,7 +123,7 @@ test('bundle excludes derived ENGINE and Finder metadata without weakening its a
   const api = await moduleReady, directory = sourceFixture(t), skill = 'skills/phoenix-diagram';
   write(directory, `${skill}/SKILL.md`, '---\nname: phoenix-diagram\ndescription: Build inventory fixture\n---\n');
   for (const name of ['phoenix-diagram', 'phoenix-launcher.cjs', 'phoenix-bootstrap.cjs']) write(directory, `${skill}/scripts/${name}`, fs.readFileSync(path.join(root, skill, 'scripts', name)), name === 'phoenix-bootstrap.cjs' ? 0o644 : 0o755);
-  for (const kind of ['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall', 'statechart']) write(directory, `${skill}/schemas/${kind}.schema.json`, fs.readFileSync(path.join(root, skill, 'schemas', `${kind}.schema.json`)));
+  for (const kind of ['common', 'architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall', 'statechart', 'chart']) write(directory, `${skill}/schemas/${kind}.schema.json`, fs.readFileSync(path.join(root, skill, 'schemas', `${kind}.schema.json`)));
   write(directory, `${skill}/ENGINE.json`, '{"derived":true}\n');
   const bundle = api.bundleFiles(directory);
   assert.ok(bundle.files.has('SKILL.md')); assert.ok(!bundle.files.has('ENGINE.json'));

@@ -2388,6 +2388,47 @@ html[data-preset="blueprint"] .node-finder-results { border-radius: 0.18rem; }
   overflow-wrap: anywhere;
 }
 
+/* The chart data table speaks the card language: same panel and border, one
+   full-width member of .cards, numerals aligned for copying and the table
+   itself scrolling inside its own region on narrow rails. */
+.chart-data {
+  grid-column: 1 / -1;
+  background: var(--panel);
+  border-radius: 0.75rem;
+  border: 1px solid var(--panel-border);
+  padding: 0.75rem 1rem;
+}
+.chart-data summary {
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.chart-data-scroll {
+  margin-top: 0.5rem;
+  overflow-x: auto;
+}
+.chart-data table {
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+.chart-data th,
+.chart-data td {
+  border: 1px solid var(--panel-border);
+  overflow-wrap: anywhere;
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+}
+.chart-data td {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.chart-data thead th {
+  color: var(--text-muted);
+}
+
 html[data-preset="signal-flow"] .card {
   background: linear-gradient(145deg, rgba(10, 24, 43, 0.86), rgba(5, 12, 24, 0.92));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);

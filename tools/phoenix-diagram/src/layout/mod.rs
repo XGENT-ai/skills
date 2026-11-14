@@ -1,6 +1,7 @@
 pub mod architecture;
 pub mod class;
 pub mod dataflow;
+pub mod chart;
 pub mod erd;
 pub mod lifecycle;
 pub(crate) mod router;
@@ -44,6 +45,7 @@ pub fn compile(
         DiagramType::Timeline => timeline::compile(input, options),
         DiagramType::Waterfall => waterfall::compile(input, options),
         DiagramType::Statechart => statechart::compile(input, options),
+        DiagramType::Chart => chart::compile(input, options),
     }?;
     clear_sigil_labels(&mut diagram.nodes);
     attach_brands(&mut diagram, input)?;

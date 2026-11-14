@@ -159,11 +159,11 @@ fn timing_failure(evidence: Value) -> Diagnostics {
     vec![diagnostic]
 }
 
-fn tick_step(wall: f64, axis_width: f64) -> f64 {
+pub(crate) fn tick_step(wall: f64, axis_width: f64, min_tick_px: f64) -> f64 {
     if wall == 0.0 {
         return 1.0;
     }
-    let target = (MIN_TICK_PX / axis_width) * wall;
+    let target = (min_tick_px / axis_width) * wall;
     let mut magnitude: f64 = format!("1e{}", target.log10().floor())
         .parse()
         .expect("a power of ten");
@@ -302,7 +302,7 @@ pub fn compile(
     }
     let x_of = |t: f64| js_round((axis_x0 + (t - t0) * scale) * 100.0) / 100.0;
     let rows_top = TOP + AXIS_H;
-    let step = tick_step(wall, axis_width);
+    let step = tick_step(wall, axis_width, MIN_TICK_PX);
     let first_tick = (t0 / step).ceil() * step;
     let tick_count = (((t1 - first_tick) / step + 1e-9).floor() + 1.0).max(0.0) as usize;
     // Large timestamps can round adjacent ticks to the same double; iterate

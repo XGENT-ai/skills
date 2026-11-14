@@ -9,6 +9,7 @@ use crate::scene::{Card, CompiledDiagram, DiagramFacts, Point, Rect, Text};
 use serde_json::{json, Value};
 use std::fmt::Write;
 
+mod chart;
 mod class;
 mod erd;
 mod statechart;
@@ -51,6 +52,7 @@ fn type_renderer(kind: DiagramType) -> Option<TypeRenderer> {
         DiagramType::Timeline => Some(timeline::RENDERER),
         DiagramType::Waterfall => Some(waterfall::RENDERER),
         DiagramType::Statechart => Some(statechart::RENDERER),
+        DiagramType::Chart => Some(chart::RENDERER),
         _ => None,
     }
 }
@@ -1451,6 +1453,9 @@ fn render_with_layers(
             }
         }
         cards.push_str("</ul></div>");
+    }
+    if let DiagramFacts::Chart { table, .. } = &scene.facts {
+        cards.push_str(&chart::data_table(&crate::i18n::resolve(&scene.meta), table));
     }
     cards.push_str("</div>");
     let mut public_metadata = json!({"tool":"phoenix-diagram","meta":scene.meta,"diagramType":scene.diagram_type,"schemaVersion":scene.schema_version,"quality":scene.quality,"readerFit":scene.reader_fit,

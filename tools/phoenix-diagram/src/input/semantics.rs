@@ -110,6 +110,7 @@ pub(super) fn validate(document: &Value, kind: DiagramType) -> Result<(), Diagno
         DiagramType::Tree => ("nodes", "relationships"),
         DiagramType::Timeline => ("events", "relationships"),
         DiagramType::Waterfall => ("spans", "relationships"),
+        DiagramType::Chart => ("rows", "relationships"),
         // A statechart has no authored entity collections; its model rules
         // are checked by the statechart module.
         DiagramType::Statechart => {
@@ -230,6 +231,7 @@ pub(super) fn validate(document: &Value, kind: DiagramType) -> Result<(), Diagno
         DiagramType::Tree => parent_checks(nodes, "nodes", "tree", true, &mut checks),
         DiagramType::Timeline => timeline_checks(document, nodes, &mut checks),
         DiagramType::Waterfall => waterfall_checks(nodes, &mut checks),
+        DiagramType::Chart => chart_checks(document, nodes, &mut checks),
         _ => {}
     }
     if checks.errors.is_empty() {
@@ -841,4 +843,119 @@ fn waterfall_checks(spans: &[Value], checks: &mut Checks) {
         }
     }
     parent_checks(spans, "spans", "waterfall", false, checks);
+}
+
+// The form decides which value fields a row may carry, and every row states
+// exactly as many numbers as there are series.
+fn chart_checks(document: &Value, rows: &[Value], checks: &mut Checks) {
+    let form = document["form"].as_str().unwrap_or_default();
+    let series = array(document, "series");
+    let mut seen_series = HashMap::new();
+    checks.unique(series, "/series", &mut seen_series);
+    let expected = series.len().max(1);
+    if form != "bar" && !document["orientation"].is_null() {
+        checks.error(
+            "chart/form-fields",
+            "/orientation",
+            format!("Only bar takes orientation, but the form is {form}"),
+        );
+    }
+    if form == "limits" {
+        if !series.is_empty() {
+            checks.error(
+                "chart/form-fields",
+                "/series",
+                format!(
+                    "A limits row carries no series, but {} series are declared",
+                    series.len()
+                ),
+            );
+        }
+        for (index, row) in rows.iter().enumerate() {
+            let path = format!("/rows/{index}");
+            if row["limit"].as_f64().is_none() {
+                checks.error(
+                    "chart/form-fields",
+                    &path,
+                    "A limits row states limit (the upper bound); none was found",
+                );
+            }
+            if !row["values"].is_null() {
+                checks.error(
+                    "chart/form-fields",
+                    &format!("{path}/values"),
+                    "A limits row states value and limit, not a values array",
+                );
+            }
+        }
+    } else {
+        for (index, row) in rows.iter().enumerate() {
+            let path = format!("/rows/{index}");
+            let Some(values) = row["values"].as_array() else {
+                checks.error(
+                    "chart/form-fields",
+                    &path,
+                    format!("A {form} row states values (one number per series); none were found"),
+                );
+                continue;
+            };
+            if values.len() != expected {
+                checks.error(
+                    "chart/series-count",
+                    &format!("{path}/values"),
+                    format!(
+                        "Row {} states {} values but {} series are declared",
+                        index + 1,
+                        values.len(),
+                        expected
+                    ),
+                );
+            }
+            for field in ["value", "limit", "unit", "note"] {
+                if !row[field].is_null() {
+                    checks.error(
+                        "chart/form-fields",
+                        &format!("{path}/{field}"),
+                        format!("A {form} row carries no {field}"),
+                    );
+                }
+            }
+        }
+    }
+    if form == "pie" {
+        if series.len() > 1 {
+            checks.error(
+                "chart/pie-value",
+                "/series",
+                format!(
+                    "A pie compares one value per row, but {} series are declared",
+                    series.len()
+                ),
+            );
+        }
+        let mut all_zero = true;
+        for (index, row) in rows.iter().enumerate() {
+            let value = row["values"][0].as_f64().unwrap_or_default();
+            if value < 0.0 {
+                checks.error(
+                    "chart/pie-value",
+                    &format!("/rows/{index}/values/0"),
+                    format!(
+                        "A pie sector cannot be negative, but row {} states {value}",
+                        index + 1
+                    ),
+                );
+            }
+            if value != 0.0 {
+                all_zero = false;
+            }
+        }
+        if all_zero {
+            checks.error(
+                "chart/pie-value",
+                "/rows",
+                "Every pie value is 0; a pie needs at least one non-zero sector",
+            );
+        }
+    }
 }

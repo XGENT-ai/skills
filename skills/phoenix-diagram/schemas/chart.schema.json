@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/XGENT-ai/skills/schemas/phoenix-diagram/chart.schema.json",
+  "title": "Phoenix Diagram Numeric Chart",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "diagram_type",
+    "meta",
+    "form",
+    "rows"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "diagram_type": {
+      "const": "chart"
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "evidence"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locale": {
+          "$ref": "common.schema.json#/$defs/locale"
+        },
+        "translations": {
+          "$ref": "common.schema.json#/$defs/translations"
+        },
+        "subtitle": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "animation": {
+          "$ref": "common.schema.json#/$defs/animation"
+        },
+        "visual_preset": {
+          "$ref": "common.schema.json#/$defs/visualPreset"
+        },
+        "quality_profile": {
+          "$ref": "common.schema.json#/$defs/qualityProfile"
+        },
+        "evidence": {
+          "enum": [
+            "sourced",
+            "illustrative"
+          ],
+          "description": "Whether the numbers come from the commissioned material or are explicitly illustrative; illustrative draws a badge on the canvas."
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unit of every value; defaults to none."
+        }
+      }
+    },
+    "form": {
+      "enum": [
+        "bar",
+        "line",
+        "pie",
+        "limits"
+      ],
+      "description": "Which numeric form the rows draw; the pairing of form and row fields is checked by input semantics."
+    },
+    "orientation": {
+      "enum": [
+        "vertical",
+        "horizontal"
+      ],
+      "description": "Bar orientation; defaults to vertical and only applies to bar."
+    },
+    "series": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "values": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "number"
+            },
+            "description": "One number per series, in series order."
+          },
+          "value": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Current value of a limits row; optional when the row only states a limit."
+          },
+          "limit": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Upper bound of a limits row."
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Row-level unit of a limits row; defaults to meta.unit."
+          },
+          "note": {
+            "type": "string",
+            "description": "Note of a limits row, shown under its label and in the data table."
+          },
+          "highlight": {
+            "type": "boolean",
+            "description": "Draw this row emphasized and dim the others."
+          }
+        }
+      }
+    },
+    "cards": {
+      "$ref": "common.schema.json#/$defs/cards"
+    }
+  }
+}

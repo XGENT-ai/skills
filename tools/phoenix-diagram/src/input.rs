@@ -20,10 +20,11 @@ pub enum DiagramType {
     Timeline,
     Waterfall,
     Statechart,
+    Chart,
 }
 
 impl DiagramType {
-    pub const ALL: [Self; 11] = [
+    pub const ALL: [Self; 12] = [
         Self::Architecture,
         Self::Workflow,
         Self::Sequence,
@@ -35,6 +36,7 @@ impl DiagramType {
         Self::Timeline,
         Self::Waterfall,
         Self::Statechart,
+        Self::Chart,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -50,6 +52,7 @@ impl DiagramType {
             Self::Timeline => "timeline",
             Self::Waterfall => "waterfall",
             Self::Statechart => "statechart",
+            Self::Chart => "chart",
         }
     }
 

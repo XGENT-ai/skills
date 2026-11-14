@@ -18,7 +18,7 @@ use std::{
     process::ExitCode,
 };
 
-const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\nstatic <type> <candidate.json> <output.svg> [--quality standard|showcase] [--font-policy embedded|system] [--out-dir DIR] [--repo-root DIR] [--brand-cache DIR] --json\ncheck <output.html> --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html|output.svg> --record <review.json> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
+const HELP: &str = "phoenix-diagram 0.2.0\n\nengine-probe\nbrands [query] --json\nbrands capture URL [--brand-cache DIR] --json\ninstall --project DIR --bundle-root DIR [--providers claude,codex] [--dry-run] --json\ndoctor --json\nguide <scenario> --json\nvalidate <type> <candidate.json> [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] [--layout-json] --json\ndeliver <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] --json\nstatic <type> <candidate.json> <output.svg> [--quality standard|showcase] [--font-policy embedded|system] [--out-dir DIR] [--repo-root DIR] [--brand-cache DIR] --json\ncheck <output.html> --json\nbrowser-check <output.html> [--out-dir DIR] --json\nvisual-check <output.html> [--out-dir DIR] --json\nfinalize <type> <candidate.json> <output.html> [compile options] [--repo-root DIR] [--out-dir DIR] --json\nreview-record <output.html|output.svg> --record <review.json> --json\ncompare architecture BASE HEAD OUTPUT [--receipt PATH] [--quality standard|showcase] [--repo-root DIR] [--brand-cache DIR] --json\npreview <type> INPUT OUTPUT [compile options] [--brand-cache DIR] [--port 0..65535] [--open] --json\n\nTypes: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart, chart.\n--repo-root names the local Git checkout that cited sources are checked against; read evidence.status, exit 0 does not mean sources were verified.\nFinal delivery requires automatic checks and an actual image review.\n";
 
 struct Arguments {
     positional: Vec<OsString>,
@@ -247,6 +247,25 @@ fn guide(scenario: &str) -> Value {
                 "违规路径",
                 "死锁",
                 "反例",
+            ][..],
+        ),
+        (
+            DiagramType::Chart,
+            &[
+                "chart",
+                "bar chart",
+                "line chart",
+                "pie",
+                "quota",
+                "limit",
+                "柱状图",
+                "折线图",
+                "饼图",
+                "占比",
+                "限额",
+                "配额",
+                "数值对比",
+                "趋势",
             ][..],
         ),
     ];

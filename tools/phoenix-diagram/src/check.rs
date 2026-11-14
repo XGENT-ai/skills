@@ -8,6 +8,7 @@ use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 
 pub mod anchors;
+mod chart;
 mod class;
 mod erd;
 pub mod path;
@@ -943,6 +944,11 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
             }
         }
         let authored_nodes = metadata.pointer("/graph/nodes").and_then(Value::as_array);
+        if inspection.kind == Some(DiagramType::Chart) {
+            for (code, path, message, evidence) in chart::table(&document, metadata) {
+                content_errors.push(inspection.diagnostic(code, &path, message, evidence));
+            }
+        }
         let authored_relations = metadata
             .pointer("/graph/relations")
             .and_then(Value::as_array);
@@ -1041,6 +1047,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
             Some(DiagramType::Timeline) => timeline::content(svg, metadata),
             Some(DiagramType::Waterfall) => waterfall::content(svg, metadata),
             Some(DiagramType::Statechart) => statechart::content(svg, metadata),
+            Some(DiagramType::Chart) => chart::content(svg, metadata),
             _ => Vec::new(),
         };
         for (code, path, message, evidence) in findings {

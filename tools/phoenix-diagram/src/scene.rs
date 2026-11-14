@@ -208,6 +208,17 @@ pub enum DiagramFacts {
         arrows: Vec<Value>,
         model: Value,
     },
+    /// Numeric rows as authored, the resolved series (id, name, key) and the
+    /// one table shared by the reader details and the static figure data.
+    Chart {
+        form: String,
+        orientation: String,
+        unit: String,
+        evidence: String,
+        series: Vec<Value>,
+        rows: Vec<Value>,
+        table: Value,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

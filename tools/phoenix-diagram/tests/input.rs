@@ -23,7 +23,7 @@ fn rejects(bytes: &[u8], options: CompileOptions, code: &str, path: &str) {
 
 #[test]
 fn unsupported_types_are_rejected_before_reading_input() {
-    for kind in ["unknown", "Sequence", "ERD", "chart", "dashboard"] {
+    for kind in ["unknown", "Sequence", "ERD", "dashboard"] {
         let diagnostic = kind.parse::<DiagramType>().unwrap_err().remove(0);
         assert_eq!(diagnostic.code, "input/unsupported-type");
     }

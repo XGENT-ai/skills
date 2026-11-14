@@ -5,14 +5,20 @@
   "files": [
     {
       "path": "SKILL.md",
-      "size": 18947,
-      "sha256": "0f9024ba0cbd2362e21d89f0adfbe4ced34c72a33a83df2b59db7b0bba35c19b",
+      "size": 19277,
+      "sha256": "1273d68a3b1a70a7a4c58b55c98d954a09865691afdc5c3a5f8113ce117f46c5",
       "mode": 420
     },
     {
       "path": "examples/minimal.architecture.json",
       "size": 520,
       "sha256": "49979a352210b7e5c6b085e1381ce3cfe802c9acf8e69fc6dfc6d1279a6a5426",
+      "mode": 420
+    },
+    {
+      "path": "examples/minimal.chart.json",
+      "size": 569,
+      "sha256": "d5905c4a5a63725e80e562eab00be4f3460d9911df08a1866583c70b5f09ec7d",
       "mode": 420
     },
     {
@@ -94,6 +100,12 @@
       "mode": 420
     },
     {
+      "path": "references/chart.md",
+      "size": 1363,
+      "sha256": "90fd97651c9e4ff9828efeb0c177185f72ec9cc03a4db2eb161c685be5333e0f",
+      "mode": 420
+    },
+    {
       "path": "references/delivery-contract.md",
       "size": 8993,
       "sha256": "1ad889a9be6f71469f04a065ddbdb587062a1930e6d96771d2c37a5c2102cc00",
@@ -145,6 +157,12 @@
       "path": "schemas/architecture.schema.json",
       "size": 7869,
       "sha256": "8e0fbeb91ccb0733b9c687cc07752217873e68778a9994aca22c49c93fe459b6",
+      "mode": 420
+    },
+    {
+      "path": "schemas/chart.schema.json",
+      "size": 4131,
+      "sha256": "3d4de7a8eb3c1599e58720f53aaf75b7c9a41852bfb9b82b60393b0712041108",
       "mode": 420
     },
     {
