@@ -38,10 +38,10 @@ S="$SKILL_DIR/scripts/onebox.sh"
 > `<你的门户地址>`。真实地址只作为**值**写进你自己那份 `.xgent-registry.env`
 > （`MANIFEST_STORE` / `TARGET_XGENT_PLATFORM`）。
 
-## 一套就够：一台机器只起一盒
+## 一套就够：共享一盒保持完整
 
 一盒是**全机共用**的联调底座，compose 项目名固定 `xgent-onebox`——它不属于某个 App，
-你在本机调的所有 App 都接进这**同一套**。`docker compose ls` 已经能看到一套在跑时，
+常规联调的所有 App 都接进这**同一套**。`docker compose ls` 已经能看到一套在跑时，
 **别再 `init` 第二套**（init 检测到本机已有别的一盒会直接停下）：
 
 - 要拉平台侧的别的 App 进来陪调：`onebox.sh add <key>`（§2.1），它进的就是这套。
@@ -49,6 +49,13 @@ S="$SKILL_DIR/scripts/onebox.sh"
   复用那套栈跑 `register-app` / `dc`；宿主上的 dev 后端则直连一盒的 pg/redis/RustFS/Kafka（§5）。
 - 不用担心端口打架：init 挑宿主端口时逐个探测退让，一盒的 pg/redis/RustFS/Kafka 落位永远避开
   你本地 dev 栈的 5432/6379/9000-9001/9092（见 §5 的直连表）。
+
+### 版本一致与临时隔离测试
+
+- **维护完整的共享底座。** 门户、基础服务、路由和数据依赖应属于同一套环境，禁止共享服务接到另一套 onebox 或临时测试环境。同一 runtime 提供的基础服务使用同一版本，proxy 和部署资产与之匹配；独立发布的 App 保持自己的版本。多个服务容器不等于多套 onebox。
+- **单服务改动不能留下长期版本混用。** 升级或修复后清除失效的历史镜像覆盖，核对 Compose 最终配置与实际运行镜像、路由，并验证受影响的调用链；不能仅更新部分服务就宣称整盒已升级，也不能用改标签或健康检查代替版本一致性核对。确需临时替换共享服务时，结束后恢复原配置或纳入统一版本。
+- **隔离测试是临时例外。** 仅当共享环境不能满足具体测试隔离需求时，说明用途和清理范围，另用独立项目名、端口、网络及测试数据卷；不得复用共享项目名、接管共享服务或读写共享数据。此例外不改变 `init` 的单盒检测，也不允许把第二套变成常驻联调底座。
+- **测试结束必须清理，包括失败或取消。** 停止临时进程，删除本次创建的容器、网络、测试卷、无引用临时镜像及覆盖配置；恢复并验证本次改动的共享入口。只清理测试专属资源，保留共享数据和仍被使用的资源；不能安全清理的项目须报告原因，不得无说明地遗留环境。
 
 ## 0. 先备齐三样
 
@@ -550,10 +557,10 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 > 却仍 `unhealthy` ⇒ **真红**，去看 `"$S" dc logs <服务>`。
 > 判活以 `"$S" smoke` 的宿主侧探测为准；pg/redis/RustFS 的 healthy 检查对应服务。Kafka 看 `doctor`，其 TCP healthy 不代表 App 凭据与 ACL 已可用。
 
-> **`COMPOSE_PROJECT_NAME` 固定是 `xgent-onebox`，别靠改名来「并存」两套。** 同机两套 compose
+> **共享一盒的 `COMPOSE_PROJECT_NAME` 固定是 `xgent-onebox`，别靠改名常驻第二套。** 同机两套 compose
 > 项目名相同，compose 会认为它们是同一项目——容器互相接管、命名卷共享，症状是「我起了一盒，
-> 结果把另一套的容器停了」。一台机器本来就只该有一套一盒（见文首「一套就够」）：init 检测到
-> 本机已有别的一盒会停下，第二个 App 要联调就接进现有那套。
+> 结果把另一套的容器停了」。第二个 App 要联调就接进现有那套，init 检测到本机已有别的一盒会停下。
+> 必要的临时隔离测试按文首「版本一致与临时隔离测试」执行，必须独立命名并在结束后清理。
 
 ## 5. 后端想跑在宿主上（保留热重载）
 
@@ -572,7 +579,7 @@ services:
 然后 `XGENT_ONEBOX_HOME=portal-onebox "$S" dc -f portal-onebox/host-backend.yml up -d app-backend`。
 此时 `APP_IMAGE` 不再被用到（compose 仍要求它有值，随便填一个）；`APP_KEY` 照旧——别名还是靠它。
 
-**外部 App 本地调试必须复用共享一盒的 PostgreSQL、Redis、RustFS（S3）和 Kafka，不要另起独立实例，也不要连接 portal 仓自己的独立开发环境。** 后者只用于门户仓自身开发；这条同时适用于宿主上的 dev server、另一个 repo 的服务和临时排查脚本。
+**外部 App 常规本地调试必须复用共享一盒的 PostgreSQL、Redis、RustFS（S3）和 Kafka，不要另起独立实例，也不要连接 portal 仓自己的独立开发环境。** 后者只用于门户仓自身开发；这条同时适用于宿主上的 dev server、另一个 repo 的服务和临时排查脚本。必要的隔离测试仅按文首例外使用独立测试资源，结束后清理。
 
 postgres / redis / RustFS / Kafka 都发布了宿主端口，init 挑选时会避开本机已占用的口。以
 `compose.env` 末尾的 `POSTGRES_PORT` / `REDIS_PORT` / `MINIO_PORT` / `MINIO_CONSOLE_PORT` /
@@ -674,7 +681,7 @@ Kafka 数据也随升级保留。`KAFKA_CLUSTER_ID` 与 `kafka-data` 绑定，�
 只有用户明确要求清空门户数据时，才手动运行 `"$S" dc run --rm portal-api bun run db:seed:onebox`，
 随后重跑 `register-app`、重载 Caddy；这会重建身份 UUID，关联 App 数据可能失去原租户/用户关联，浏览器也需要重新登录。
 
-`down -v` 是主动删除当前 compose 命名卷的操作，pg、RustFS、Kafka、apps、caddy 数据会丢失。
+`down -v` 是主动删除当前 compose 命名卷的操作，pg、RustFS、Kafka、apps、caddy 数据会丢失。以下要求适用于共享一盒；隔离测试专属卷按文首清理规则处理。
 只有用户明确同意丢弃这些数据才按上表重置；有需保留的数据则先备份并明确恢复方式。退役 MinIO 卷和 `backup/` 不在新 compose 删除范围内，
 保留供核对，不因升级自动删除。命名卷属主故障按 [排查表 §7](references/troubleshooting.md#7-命名卷属主不对eacces-一族)
 处理，升级本身不要求清空所有数据。
