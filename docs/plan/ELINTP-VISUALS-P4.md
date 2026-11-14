@@ -218,7 +218,7 @@ REVIEW @progress_consistency:
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-14 14:27 +0800 | chart 图型与两种柱状图打通：基线十一类逐一相同，V-1 三份交付 complete，V-4 全绿；guide 场景词按 @implementation_route 修订 | [M1 记录](ELINTP-VISUALS-P4.records/M1.md) | 待提交 |
+| M1 | 已完成 | 2026-11-14 14:27 +0800 | chart 图型与两种柱状图打通：基线十一类逐一相同，V-1 三份交付 complete，V-4 全绿；guide 场景词按 @implementation_route 修订 | [M1 记录](ELINTP-VISUALS-P4.records/M1.md) | 1d9e3f57 |
 
 ## 0. 需求、范围与决策
 
