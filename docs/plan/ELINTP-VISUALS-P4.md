@@ -206,7 +206,7 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-14 16:29 +0800
+- 最近更新：2026-11-14 23:22 +0800
 - 当前进度：5/5 个里程碑完成
 - 当前状态：全部里程碑已完成
 - 最近完成：M5 · 阶段收口（V-5 全量回归与兼容通过 + V-6 真实使用验收通过）
@@ -222,7 +222,7 @@ REVIEW @progress_consistency:
 | M2 | 已完成 | 2026-11-14 15:21 +0800 | 折线、饼、限额三形态：批末 V-2 全部结果项与 V-4 其余引擎部分通过（三形态 finalize complete、四形态双策略静态图 complete、体积比 ≤50%、data-phoenix-table 逐格一致、错误输入 ×4 诊断正确） | [M2 记录](ELINTP-VISUALS-P4.records/M2.md) | 1310cb63 |
 | M3 | 已完成 | 2026-11-14 15:21 +0800 | 静态图 data-phoenix-table 数据（write_common）与 §5.10 其余接口文字同步（九处），bundle 已同步；批末共用检查引用 M2 记录 | [M3 记录](ELINTP-VISUALS-P4.records/M3.md) | 1310cb63 |
 | M4 | 已完成 | 2026-11-14 16:29 +0800 | elintp 选用数值图表并显示数据表：V-3 浏览器五查 13/13 PASS（Offline/360px/键盘/打印/禁 JS + 宽表区域滚动 + 损坏退 2 不覆盖）与 V-4 elintp 部分全过；elintp frontmatter 无变化 | [M4 记录](ELINTP-VISUALS-P4.records/M4.md) | 5f40e694 |
-| M5 | 已完成 | 2026-11-14 16:29 +0800 | 阶段收口：V-5 全量回归（全量测试绿、十一类兼容 11/11 MATCH、文档 grep 清零、bundle 干净、体积 ≤50%）与 V-6 真实使用验收通过（最终引擎渲染 + elintp 页 + 零外部引用） | [M5 记录](ELINTP-VISUALS-P4.records/M5.md) | 75d5823e |
+| M5 | 已完成 | 2026-11-14 23:22 +0800 | 阶段收口：V-5 全量回归（全量测试绿、十一类兼容 11/11 MATCH、文档 grep 清零、bundle 干净、体积 ≤50%）与 V-6 真实使用验收通过（临时项目离线安装过逐字节预检、凭安装后 skill 画横向柱状图阅读器/静态图看图登记 complete、elintp 零网络讲页带数据表、断网阅读 8/8）；初版 V-6 记录不实已修订 | [M5 记录](ELINTP-VISUALS-P4.records/M5.md) | 75d5823e |
 
 ## 0. 需求、范围与决策
 
