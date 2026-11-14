@@ -22,7 +22,7 @@ Manifest 的权威载体是一条**市场清单（marketplace listing）**。安
 | `navItems` | `{ id, label, icon, path }[]` 贡献到左侧导航 |
 | `helpEntry` | 版头帮助按钮的入口，可空字符串。`"/help"` = App 内路由（宿主置 `?r=`，自动通过档）／`"https://…"` = 外站文档（新标签 + `noopener`，治理档）。不声明就不出这枚按钮 |
 | `dashboardWidgets` | 可加到 Dashboard 的 Widget 声明（**顶层数组**；嵌套的 `dashboard.widgets` 门户从不读取、提交即拒）。契约见 [open-api-and-extensions.md §3](open-api-and-extensions.md#3-dashboard-widget应用动态) |
-| `adminPages` | 你自己的管理页，门户嵌进管理面：`platform`（控制台 › 应用市场编辑页，平台管理员身份）/ `tenant`（租户 › 应用管理 › 配置，租户管理员身份），各 `{ route, label }`。仅 `micro` + `embed` 可声明，治理档；被嵌入时 `init.adminPage` 有值、App 只渲染那一页。放什么配置见 portal-external-app skill「配置放哪一层」 |
+| `adminPages` | 两级管理入口：`platform` 为平台管理员、`tenant` 为当前租户管理员。各级可声明 `{ label, path, scopes, schema }`（micro/service），或 `{ route, label }` 嵌入页（仅 micro + embed）；均为治理档。嵌入时 `init.adminPage` 有值、App 只渲染该页。配置作用域与 GET/PUT 合同见 [配置分层](config-placement.md) |
 | `dependencies` | 依赖的其他清单（安装按拓扑序补装；卸载被依赖会拦截） |
 | `exchangeTargets` | 经令牌交换读取哪些 App（安装时自动建交换白名单 + consent 共授） |
 | `embedCsp` | 托管前端的精确来源声明；开发版本支持 connectSrc/scriptSrc/styleSrc/fontSrc/imgSrc/mediaSrc，须正式发布并启用 strict/v2 后使用，旧门户只支持 connectSrc |

@@ -58,6 +58,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       assert.equal(result.status,valid?0:1,label);
       passed++;
     }
+    const schemaConfig = {label:"设置",path:"/v1/settings",scopes:["demo.read"],schema:{type:"object",properties:{enabled:{type:"boolean",title:"启用"}}}};
     // requiredEnvNotes 与 Dashboard 组件：与门户提交面同口径（坏的在 CI 里就拦住）。
     for (const [label,extra,valid] of [
       ["env note ok", {requiredEnv:["DEMO_TITLE"],requiredEnvNotes:{DEMO_TITLE:"报表抬头"}}, true],
@@ -73,6 +74,13 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       ["admin page no zh-CN", {adminPages:{tenant:{route:"/s",label:{en:"S"}}}}, false],
       ["admin page unknown level", {adminPages:{console:{route:"/s",label:"x"}}}, false],
       ["tenant config ok", {type:"service",scopes:["demo.read"],tenantConfig:{label:"设置",path:"/v2/policy",scopes:["demo.read"],schema:{type:"object",properties:{limits:{type:"object",properties:{wait:{type:"integer",title:"等待",default:10,unit:"秒",scale:1000},mode:{type:"select",title:"模式",options:[{value:"auto",label:"自动"}]},strict:{type:"boolean",title:"严格",default:false}}}}}}}, true],
+      ["micro schema", {type:"micro",scopes:["demo.read"],tenantConfig:schemaConfig}, true],
+      ["both admin schema", {type:"service",scopes:["demo.read"],adminPages:{platform:schemaConfig,tenant:schemaConfig}}, true],
+      ["micro admin schema without embed", {type:"micro",openModes:["standalone"],scopes:["demo.read"],adminPages:{platform:schemaConfig}}, true],
+      ["schema route conflict", {scopes:["demo.read"],adminPages:{tenant:{...schemaConfig,route:"/settings"}}}, false],
+      ["schema unknown scope", {scopes:[],adminPages:{platform:schemaConfig}}, false],
+      ["service iframe rejected", {type:"service",adminPages:{tenant:{route:"/settings",label:"设置"}}}, false],
+      ["skills protocol", {type:"micro",scopes:["demo.read","demo.admin"],tenantConfig:{protocol:"skills-settings-v1",label:"设置",path:"/v1/settings",scopes:["demo.read","demo.admin"]}}, true],
       ["tenant config bad scope", {type:"service",scopes:["demo.read"],tenantConfig:{label:"设置",path:"/v2/policy",scopes:["demo.write"],schema:{type:"object",properties:{wait:{type:"integer",title:"等待"}}}}}, false],
       ["tenant config escape", {type:"service",scopes:["demo.read"],tenantConfig:{label:"设置",path:"//evil.example",scopes:["demo.read"],schema:{type:"object",properties:{wait:{type:"integer",title:"等待"}}}}}, false],
     ]) {

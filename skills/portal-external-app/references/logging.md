@@ -1,10 +1,4 @@
----
-name: portal-logging
-description: '用于将 App 日志或遥测接入 XGENT 门户「日志与监控」，或排查写入、查询异常。覆盖采集器、写入凭据与 scope、流命名、日志字段及多行合并。'
-when_to_use: "用户会说「日志进不了门户」「门户里查不到日志」「日志被拆成很多行」时。"
----
-
-# portal-logging · 把 App 的日志接进「日志与监控」
+# 把 App 的日志接进「日志与监控」
 
 一条链路四段，**两种身份**：
 
@@ -15,14 +9,14 @@ when_to_use: "用户会说「日志进不了门户」「门户里查不到日志
 
 两种身份不能互换，这是整条链路最常见的困惑来源：**采集器只能写、不能查；人只能查、不能写**。拿服务密钥去查会得到 401，那不是配置错。
 
-> **路径约定**：本 skill 里的 `apps/…` `deploy/…` `docs/…` 都在**门户仓**。在你自己的 App repo 里它们不存在——它们标注的是「门户侧的事实在哪」，不是让你去打开的文件。你需要的一切在本 skill 的 `references/` 与 `scripts/`（自包含，路径相对于本 `SKILL.md` 所在目录）。运行脚本前，在 App repo 根目录按实际加载位置设置 `SKILL_DIR="<本 SKILL.md 所在目录>"`。
+> **路径约定**：本篇链接相对当前参考文件。运行脚本前设置 `SKILL_DIR="<portal-external-app 的 SKILL.md 所在目录>"`，脚本在该根目录的 `scripts/`。门户仓内 `apps/`、`deploy/`、`docs/` 路径只标注实现位置，外部项目没有这些路径。
 
 ## 按任务读
 
 | 任务 | 读 |
 | --- | --- |
-| 配采集器（容器 stdout / 文件 tail / 应用内直打），含多行合并与级别判定 | [references/collectors.md](references/collectors.md) |
-| 端点、凭据、请求/响应形状、查询 API、错误码矩阵、计量 | [references/contract.md](references/contract.md) |
+| 配采集器（容器 stdout / 文件 tail / 应用内直打），含多行合并与级别判定 | [logging-collectors.md](logging-collectors.md) |
+| 端点、凭据、请求/响应形状、查询 API、错误码矩阵、计量 | [logging-contract.md](logging-contract.md) |
 | 只想先打通一条，验证链路是活的 | `"$SKILL_DIR/scripts/smoke-ingest.sh"`（改环境变量直接跑） |
 
 ## 0. 先判断：你要接的真的是「日志」吗
@@ -32,7 +26,7 @@ when_to_use: "用户会说「日志进不了门户」「门户里查不到日志
 - **审计**（谁在什么时候改了什么，要可追溯、不可篡改、要留存）→ 门户审计面（`audit.write`），不是日志。
 - **用量/计费**（要精确、要对账）→ 平台计量面。日志会被采样、会过期。
 - **给用户看的消息**（提醒、待办、通知）→ 门户通知域。
-- **指标与链路**（数值时间序列 / trace）→ 同一个服务的 OTLP 入口，形状与日志不同，见 contract.md。
+- **指标与链路**（数值时间序列 / trace）→ 同一个服务的 OTLP 入口，形状与日志不同，见 logging-contract.md。
 
 判据：这条记录**丢了会不会有人要赔钱或说不清责任**。会 → 不是日志。
 
@@ -69,7 +63,7 @@ Content-Type: application/json
 
 **成功判据要看两层**：HTTP 200 **且** 响应体 `code:200` 且 `status[]` 里 `failed:0`。只看 HTTP 状态码会把「收下了但没落库」当成功——这正是「写入一直 200、界面永远查不到」的来源。
 
-⚠️ **采集器代发（形态 A/B）时你根本看不到这个响应**：采集器只在自己的日志里留一行 `HTTP status=200`，`failed>0` 那种「收下了没落库」它不会告诉你，401/403 也只是按重试上限丢掉——**采集器不报错 ≠ 接通了**。所以这两种形态的验收落在 §8 冒烟那一条 curl（那里你拿得到响应体）加上界面真的搜到；排障时再临时打开采集器的响应打印（见 collectors.md）。
+⚠️ **采集器代发（形态 A/B）时你根本看不到这个响应**：采集器只在自己的日志里留一行 `HTTP status=200`，`failed>0` 那种「收下了没落库」它不会告诉你，401/403 也只是按重试上限丢掉——**采集器不报错 ≠ 接通了**。所以这两种形态的验收落在 §8 冒烟那一条 curl（那里你拿得到响应体）加上界面真的搜到；排障时再临时打开采集器的响应打印（见 logging-collectors.md）。
 
 **流名**：你写 `<stream>`，实际落在 `app_<你的 appKey>_<stream>`——前缀由令牌里的 `azp` 决定，你写不进别人的命名空间，也**别在 `<stream>` 里再重复一遍自己的 key**（会得到 `app_foo_foo_console`）。一个 App 按用途分流即可：`console`（进程标准输出）、`access`、`job`。
 
@@ -85,7 +79,7 @@ Content-Type: application/json
 
 **时间**：落库的时间轴是**到达时间**，日志自带的时间只是一个普通字段。要让时间轴等于事件时间，就在记录里带上 `_timestamp`（微秒 epoch），并**先用一条冒烟记录验证**这个版本认不认——别假设。
 
-**级别**：如果你的日志是文本行、由采集器搬运，采集器只能靠 `stderr` 和关键词猜，而 `console.warn` 一类在多数运行时也走 stderr ⇒ 例行 warn 会整批被判成 error。解法是**产生方把级别写进正文**（例如正文尾部的 JSON 里 `"lvl":"error"`），采集器优先取它。判定次序与可直接抄的实现见 collectors.md。
+**级别**：如果你的日志是文本行、由采集器搬运，采集器只能靠 `stderr` 和关键词猜，而 `console.warn` 一类在多数运行时也走 stderr ⇒ 例行 warn 会整批被判成 error。解法是**产生方把级别写进正文**（例如正文尾部的 JSON 里 `"lvl":"error"`），采集器优先取它。判定次序与可直接抄的实现见 logging-collectors.md。
 
 **永远不要写进日志**：令牌 / 密钥 / 密码、完整 query string（授权码与令牌常在里面）、用户个人信息与租户业务正文、大 blob。排障要的是**能定位的 ID**，不是内容本身——日志会被转发、留存、被平台管理员看到。
 
@@ -101,7 +95,7 @@ Content-Type: application/json
 
 ⚠️ 多行合并按 tag/流分缓冲。**多个日志源共用一个 tag 时，A 源的栈会把 B 源随后那行吸进同一条记录**——每个源（每个文件 / 每个容器 × stdout|stderr）一个 tag。
 
-配置照抄 [references/collectors.md](references/collectors.md)。
+配置照抄 [logging-collectors.md](logging-collectors.md)。
 
 ## 6. 查
 
@@ -119,7 +113,7 @@ Content-Type: application/json
 | 查询报 `stream not found` | 这个流一条都没写进去过 | 回到上一行 |
 | 查询 401、但写入 200 | 拿服务密钥查 | 换用户身份 |
 | 只看到零星几条 | 时间范围太窄；或你的进程本来就几乎不打日志 | 先确认源头有没有行 |
-| 一次报错被拆成几十条 | 采集器没配多行合并 | collectors.md |
+| 一次报错被拆成几十条 | 采集器没配多行合并 | logging-collectors.md |
 | 一条记录里混了两个进程的行 | 多个源共用一个 tag | 每源一个 tag |
 | 界面里只有别的 App 的流 | 你的令牌 `azp` 不是你以为的那个 | 自省一下令牌 |
 

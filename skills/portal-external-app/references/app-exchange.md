@@ -1,10 +1,4 @@
----
-name: portal-app-exchange
-description: '用于 XGENT 门户跨 App 调用、OAuth Token Exchange 布线与排错。处理 exchangeTargets、交换白名单、consent、scope 交集和授权失败。'
-when_to_use: "用户会说「A 调 B 拿不到 token」「交换被拒绝」「scope 对不上」时。"
----
-
-# portal-app-exchange · 跨应用调用（令牌交换）布线与排错
+# 跨应用调用（令牌交换）布线与排错
 
 App A 代表用户调 App B = 拿一个 `aud=B` 的 TDT，走 OAuth Token Exchange，**严格不可提权**。
 本文可直接在 App 自己的仓库使用；声明写入 `app.manifest.json`，平台授权由管理员处理。`/apps/<key>/` 是线上 URL 路径。
@@ -88,14 +82,14 @@ POST {PORTAL}/oauth/token
 
 ## 与服务态直调的边界
 
-`client_credentials`（服务账号签服务态 TDT，无用户上下文）不走本链路——那是"服务调服务"的姿势，consent / 白名单 / 交集都不适用，靠服务账号的 scope 与租户策略收口。判别：请求是否代表**某个用户**？是 → 令牌交换；否 → 服务态直调（见 portal-external-app skill 的服务账号契约）。
+`client_credentials`（服务账号签服务态 TDT，无用户上下文）不走本链路——那是"服务调服务"的姿势，consent / 白名单 / 交集都不适用，靠服务账号的 scope 与租户策略收口。判别：请求是否代表**某个用户**？是 → 令牌交换；否 → 服务态直调（见 [服务令牌](service-tokens.md)）。
 
 **写入时这条判别的实用形式是「这份数据归谁」**（两种姿态在目标 App 里落进不同的容器、有不同的可见性，选错了功能会当场消失）：
 
 | 归属 | 姿态 | 后果 |
 | --- | --- | --- |
 | **归用户**：用户主动存的、他在目标 App 里看得见删得掉、算他的配额 | 令牌交换（用户态） | 落用户自己的容器；令牌带 `azp=A`，目标侧照样有来源归因 |
-| **归 App**：系统产物、用户删不得、随 A 的生命周期消失 | 服务账号（服务态） | 落 A 的应用级容器，默认只有租户管理员可见；Files 可带 `onBehalfOf` 署名，让作者只读可见（见 portal-external-app 的代成员保存） |
+| **归 App**：系统产物、用户删不得、随 A 的生命周期消失 | 服务账号（服务态） | 落 A 的应用级容器，默认只有租户管理员可见；Files 可带 `onBehalfOf` 署名，让作者只读可见（见 [代成员保存](files-member-docs.md)） |
 
 典型误判：把「用户点一下另存到我的空间」做成服务态——写进去的是 A 的应用容器，用户在目标 App 里根本看不见自己刚存的东西，功能等于没有。
 

@@ -30,7 +30,7 @@ else
   OK=$(printf '%s' "$RESP" | jget '["ok"]')
   if [ "$OK" != "True" ]; then
     echo "✗ 换令牌失败：$(printf '%s' "$RESP" | jget '["error"]["code"]')"
-    echo "  APP_NOT_INSTALLED ⇒ 你的 App 没装在这个租户（设计如此）。其余见 references/contract.md §6。"
+    echo "  APP_NOT_INSTALLED ⇒ 你的 App 没装在这个租户（设计如此）。其余见 references/logging-contract.md §6。"
     exit 1
   fi
   SCOPE=$(printf '%s' "$RESP" | jget '["data"]["scope"]')
@@ -53,7 +53,7 @@ CODE=$(printf '%s' "$BODY" | jget '["code"]')
 FAILED=$(printf '%s' "$BODY" | jget '["status"][0]["failed"]')
 
 if [ "$W" != "200" ]; then
-  echo "✗ HTTP $W —— 401=凭证无效/已撤销；403=身份类型不对或 scope 不含 ingest。见 contract.md §6"
+  echo "✗ HTTP $W —— 401=凭证无效/已撤销；403=身份类型不对或 scope 不含 ingest。见 references/logging-contract.md §6"
   echo "  $BODY"; exit 1
 fi
 if [ "$CODE" != "200" ] || [ "${FAILED:-1}" != "0" ]; then

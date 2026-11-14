@@ -8,10 +8,8 @@
 
 | 任务 | Skill |
 | --- | --- |
-| 外部后端接入、manifest、鉴权、服务路由与健康契约 | [portal-external-app](../../portal-external-app/SKILL.md) |
-| iframe 前端、SDK 握手、导航、主题与路由 | [portal-micro-app](../../portal-micro-app/SKILL.md) |
+| App 前后端开发、manifest、鉴权、配置分层、跨 App 交换与日志 | [portal-external-app](../../portal-external-app/SKILL.md) |
 | 共享 onebox 初始化、注册、启动、体检与排错 | [portal-dev-setup](../../portal-dev-setup/SKILL.md) |
-| 跨 App 调用、Token Exchange、consent 与 scope | [portal-app-exchange](../../portal-app-exchange/SKILL.md) |
 | 前端产物、后端镜像引用、清单提案与发布确认 | [xgent-app-release](../../xgent-app-release/SKILL.md) |
 | App 镜像构建、私有 Harbor 推送与 CI | [xgent-image-push](../../xgent-image-push/SKILL.md) |
 

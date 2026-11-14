@@ -1,6 +1,6 @@
 # 采集器：三种形态 + 可直接抄的配置
 
-三种形态写入面完全一样（[contract.md](contract.md)），差别只在「从哪儿把行读出来」。下面的 fluent-bit 配置在真镜像上跑通过，**照抄再改路径/环境变量**比自己重写省一整天——尤其是多行合并那一段，它有两个静默坑。
+三种形态写入面完全一样（[logging-contract.md](logging-contract.md)），差别只在「从哪儿把行读出来」。下面的 fluent-bit 配置在真镜像上跑通过，**照抄再改路径/环境变量**比自己重写省一整天——尤其是多行合并那一段，它有两个静默坑。
 
 - [A 容器 stdout → 日志驱动 → 采集器](#a-容器-stdout)
 - [B 采集器 tail 日志文件](#b-文件-tail)
@@ -186,7 +186,7 @@ async function flush() {
   if (!BUF.length) return;
   const batch = BUF.splice(0, BUF.length);      // 先摘出来：flush 期间新来的行不阻塞
   try {
-    const token = await serviceToken();         // 缓存到 expires_in - 10s，见 contract.md §2
+    const token = await serviceToken();         // 缓存到 expires_in - 10s，见 logging-contract.md §2
     const r = await fetch(`${PORTAL_BASE_URL}/svc/observability/v1/ingest/console`, {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
