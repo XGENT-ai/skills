@@ -125,6 +125,9 @@ fn document(kind: DiagramType) -> Value {
         DiagramType::Statechart => {
             json!({"model":{"variables":[{"id":"done","values":[false,true]}],"init":{"done":false},"actions":[{"id":"finish","set":{"done":true}}]}})
         }
+        DiagramType::Chart => {
+            json!({"form":"bar","rows":[{"id":"a","label":"A","values":[1]},{"id":"b","label":"B","values":[2]}]})
+        }
     };
     let mut document = json!({"schema_version":1,"diagram_type":kind.as_str(),"meta":{"title":"Evidence","output":"evidence.html"}});
     if kind == DiagramType::Workflow {
@@ -194,10 +197,11 @@ fn rejects(document: &Value, code: &str, path: &str) -> Value {
 fn every_type_binds_its_primary_elements_to_lines_of_the_pinned_commit() {
     let (temp, revision) = repository("https://github.com/example/repo.git");
     let root = temp.join("repo");
-    // A statechart derives its states, so it has no elements to cite.
+    // A statechart derives its states, so it has no elements to cite;
+    // a numeric chart takes its evidence stance in meta, not element sources.
     for kind in DiagramType::ALL
         .into_iter()
-        .filter(|kind| *kind != DiagramType::Statechart)
+        .filter(|kind| !matches!(kind, DiagramType::Statechart | DiagramType::Chart))
     {
         let source = json!([{"path":"src/lib.rs","line":1,"end_line":2,"label":"entry"}]);
         let mut document = cited(kind, &revision, source.clone());

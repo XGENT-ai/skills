@@ -16,7 +16,10 @@ pub(super) const RENDERER: TypeRenderer = TypeRenderer {
 const TONES: [&str; 5] = ["frontend", "backend", "database", "cloud", "messagebus"];
 
 fn root_attributes(scene: &CompiledDiagram) -> String {
-    let DiagramFacts::Chart { form, orientation, .. } = &scene.facts else {
+    let DiagramFacts::Chart {
+        form, orientation, ..
+    } = &scene.facts
+    else {
         return String::new();
     };
     let mut attributes = format!(
@@ -117,7 +120,9 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
     }
     // Series polylines read before the rows so points sit on top.
     for line in of_kind(scene, "chart-series") {
-        let points = line.authored.facts["points"].as_array().map_or(&[][..], Vec::as_slice);
+        let points = line.authored.facts["points"]
+            .as_array()
+            .map_or(&[][..], Vec::as_slice);
         if points.len() < 2 {
             continue;
         }
@@ -134,11 +139,16 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
                 write!(d, " L {x} {y}").unwrap();
             }
         }
-        write!(out, "<path d=\"{d}\" class=\"t-{tone} ch-line\" data-chart-series=\"{}\"/>",
-            line.authored.facts["series"].as_u64().unwrap_or_default()).unwrap();
+        write!(
+            out,
+            "<path d=\"{d}\" class=\"t-{tone} ch-line\" data-chart-series=\"{}\"/>",
+            line.authored.facts["series"].as_u64().unwrap_or_default()
+        )
+        .unwrap();
     }
     for (order, node) in scene.nodes.iter().enumerate() {
-        if let Some(row) = of_kind(scene, "chart-row").find(|row| row.authored.id == node.authored.id)
+        if let Some(row) =
+            of_kind(scene, "chart-row").find(|row| row.authored.id == node.authored.id)
         {
             write_row(&locale, order, node, row, out);
         }
@@ -172,13 +182,27 @@ fn write_row(locale: &Locale, order: usize, node: &Node, row: &Container, out: &
             .iter()
             .map(|value| js_to_string(value.as_f64().unwrap_or_default()))
             .collect();
-        write!(out, " data-chart-values=\"{}\"", escape_text(&joined.join(","))).unwrap();
+        write!(
+            out,
+            " data-chart-values=\"{}\"",
+            escape_text(&joined.join(","))
+        )
+        .unwrap();
     } else if facts["limit"].as_f64().is_some() {
         // limits rows carry value/limit/over for the Reader and the checks.
-        write!(out, " data-chart-value=\"{}\" data-chart-limit=\"{}\" data-chart-over=\"{}\"",
-            escape_text(&facts["value"].as_f64().map(js_to_string).unwrap_or_default()),
+        write!(
+            out,
+            " data-chart-value=\"{}\" data-chart-limit=\"{}\" data-chart-over=\"{}\"",
+            escape_text(
+                &facts["value"]
+                    .as_f64()
+                    .map(js_to_string)
+                    .unwrap_or_default()
+            ),
             escape_text(&js_to_string(facts["limit"].as_f64().unwrap_or_default())),
-            facts["over"] == true).unwrap();
+            facts["over"] == true
+        )
+        .unwrap();
     }
     write!(
         out,
@@ -198,7 +222,7 @@ fn write_row(locale: &Locale, order: usize, node: &Node, row: &Container, out: &
                 number(mark["cx"].as_f64().unwrap_or_default()), number(mark["cy"].as_f64().unwrap_or_default()),
                 mark["series"].as_u64().unwrap_or_default()).unwrap(),
             "slice" => write!(out, "<path d=\"{}\" class=\"c-{mark_tone} ch-slice{dim_class}\" fill-rule=\"evenodd\" data-chart-sweep=\"{}\"/>",
-                escape_text(&mark["path"].as_str().unwrap_or_default()),
+                escape_text(mark["path"].as_str().unwrap_or_default()),
                 js_to_string(mark["sweep"].as_f64().unwrap_or_default())).unwrap(),
             "track" => write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"ch-track\"/>",
                 number(mark["x"].as_f64().unwrap_or_default()), number(mark["y"].as_f64().unwrap_or_default()),
@@ -241,8 +265,16 @@ fn write_row(locale: &Locale, order: usize, node: &Node, row: &Container, out: &
         if form_name == "limits" && !note.is_empty() {
             ordinal -= 1;
         }
-        let class = if form_name == "pie" && ordinal == 1 { "t-muted" } else { "t-primary" };
-        let weight = if form_name == "limits" && ordinal == 1 { 750 } else { 600 };
+        let class = if form_name == "pie" && ordinal == 1 {
+            "t-muted"
+        } else {
+            "t-primary"
+        };
+        let weight = if form_name == "limits" && ordinal == 1 {
+            750
+        } else {
+            600
+        };
         write!(out, "<text data-chart-value-label=\"{}\" x=\"{}\" y=\"{}\" class=\"{class} ch-num{}\" font-size=\"{}\" font-weight=\"{weight}\" text-anchor=\"{}\">{}</text>",
             ordinal, number(text.position.x), number(text.position.y), dim_class,
             number(text.font_size), escape_text(&text.anchor), escape_text(&text.content)).unwrap();
@@ -262,9 +294,15 @@ fn legend_glyph(_scene: &CompiledDiagram, legend: &Card, baseline: f64, out: &mu
     }
     if kind == "limits-limit" {
         // The limit reads as a vertical stroke over the track.
-        write!(out, "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" class=\"ch-limit\" stroke-width=\"2\"/>",
-            number(legend.bounds.x + 7.0), number(baseline - 12.0),
-            number(legend.bounds.x + 7.0), number(baseline + 2.0)).unwrap();
+        write!(
+            out,
+            "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" class=\"ch-limit\" stroke-width=\"2\"/>",
+            number(legend.bounds.x + 7.0),
+            number(baseline - 12.0),
+            number(legend.bounds.x + 7.0),
+            number(baseline + 2.0)
+        )
+        .unwrap();
         return;
     }
     if kind == "limits-current" || kind == "limits-over" {

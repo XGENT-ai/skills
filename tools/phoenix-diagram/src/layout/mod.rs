@@ -1,7 +1,7 @@
 pub mod architecture;
+pub mod chart;
 pub mod class;
 pub mod dataflow;
-pub mod chart;
 pub mod erd;
 pub mod lifecycle;
 pub(crate) mod router;

@@ -92,11 +92,7 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
                 .map(|(k, value)| {
                     let text = js_to_string(value.as_f64().unwrap_or_default());
                     if series.len() >= 2 {
-                        format!(
-                            "{} {}",
-                            series[k]["key"].as_str().unwrap_or_default(),
-                            text
-                        )
+                        format!("{} {}", series[k]["key"].as_str().unwrap_or_default(), text)
                     } else {
                         text
                     }
@@ -131,12 +127,7 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
             .map(|value| js_to_string(value.as_f64().unwrap_or_default()))
             .collect::<Vec<_>>()
             .join(",");
-        if group
-            .value()
-            .attr("data-chart-values")
-            .unwrap_or_default()
-            != expected_attr
-        {
+        if group.value().attr("data-chart-values").unwrap_or_default() != expected_attr {
             findings.push(finding(
                 "artifact/semantic-relation",
                 &path,
@@ -271,13 +262,10 @@ fn bar_scale(svg: ElementRef<'_>, facts: &Value, findings: &mut Vec<ContentFindi
         {
             let v = value.as_f64().unwrap_or_default();
             let path = format!("/metadata/facts/rows/{index}/values/{k}");
-            let mark = group
-                .children()
-                .filter_map(ElementRef::wrap)
-                .find(|child| {
-                    child.value().name() == "rect"
-                        && child.value().attr("data-chart-series") == Some(k.to_string().as_str())
-                });
+            let mark = group.children().filter_map(ElementRef::wrap).find(|child| {
+                child.value().name() == "rect"
+                    && child.value().attr("data-chart-series") == Some(k.to_string().as_str())
+            });
             if v == 0.0 {
                 if mark.is_some() {
                     findings.push(finding(
@@ -304,10 +292,7 @@ fn bar_scale(svg: ElementRef<'_>, facts: &Value, findings: &mut Vec<ContentFindi
                     number(mark, "height", f64::NAN),
                 )
             } else {
-                (
-                    number(mark, "x", f64::NAN),
-                    number(mark, "width", f64::NAN),
-                )
+                (number(mark, "x", f64::NAN), number(mark, "width", f64::NAN))
             };
             let outer = zero + v * scale;
             let (near, far) = match (vertical, v > 0.0) {
@@ -383,14 +368,10 @@ fn line_scale(svg: ElementRef<'_>, facts: &Value, findings: &mut Vec<ContentFind
         {
             let v = value.as_f64().unwrap_or_default();
             let path = format!("/metadata/facts/rows/{index}/values/{k}");
-            let Some(point) = group
-                .children()
-                .filter_map(ElementRef::wrap)
-                .find(|child| {
-                    child.value().name() == "circle"
-                        && child.value().attr("data-chart-series") == Some(k.to_string().as_str())
-                })
-            else {
+            let Some(point) = group.children().filter_map(ElementRef::wrap).find(|child| {
+                child.value().name() == "circle"
+                    && child.value().attr("data-chart-series") == Some(k.to_string().as_str())
+            }) else {
                 findings.push(finding(
                     "artifact/semantic-relation",
                     &path,
@@ -606,7 +587,10 @@ pub(super) fn table(document: &scraper::Html, metadata: &Value) -> Vec<ContentFi
         ));
         return findings;
     }
-    let headers: Vec<String> = details[0].select(&selector("thead th")).map(text_of).collect();
+    let headers: Vec<String> = details[0]
+        .select(&selector("thead th"))
+        .map(text_of)
+        .collect();
     let expected: Vec<String> = spec["columns"]
         .as_array()
         .map_or(&[][..], Vec::as_slice)

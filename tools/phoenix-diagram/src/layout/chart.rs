@@ -196,8 +196,20 @@ fn sector_path(cx: f64, cy: f64, r_out: f64, r_in: f64, a0: f64, a1: f64) -> Str
     let large = if a1 - a0 > std::f64::consts::PI { 1 } else { 0 };
     format!(
         "M {} {} A {} {} 0 {} 1 {} {} L {} {} A {} {} 0 {} 0 {} {} Z",
-        number(x0), number(y0), number(r_out), number(r_out), large, number(x1), number(y1),
-        number(x2), number(y2), number(r_in), number(r_in), large, number(x3), number(y3)
+        number(x0),
+        number(y0),
+        number(r_out),
+        number(r_out),
+        large,
+        number(x1),
+        number(y1),
+        number(x2),
+        number(y2),
+        number(r_in),
+        number(r_in),
+        large,
+        number(x3),
+        number(y3)
     )
 }
 
@@ -270,8 +282,7 @@ pub fn compile(
             js_to_string(value)
         }
     };
-    let value_text_w =
-        |k: usize, v: f64| text_units(&number_text(k, v)) * VALUE_FONT * ADVANCE;
+    let value_text_w = |k: usize, v: f64| text_units(&number_text(k, v)) * VALUE_FONT * ADVANCE;
     let sublabel_of = |row: &RowInput<'_>| -> String {
         let parts: Vec<String> = (0..n)
             .map(|k| {
@@ -327,8 +338,7 @@ pub fn compile(
         let label_y = plot_bottom + LABEL_BASE_GAP;
         content_bottom = label_y + 4.0;
         width = plot_right + MARGIN;
-        let y_at =
-            |v: f64| js_round((plot_bottom - (v - lo) / (hi - lo) * PLOT_H) * 100.0) / 100.0;
+        let y_at = |v: f64| js_round((plot_bottom - (v - lo) / (hi - lo) * PLOT_H) * 100.0) / 100.0;
         containers.push(container(
             authored(
                 "axis",
@@ -460,7 +470,7 @@ pub fn compile(
             }
             let mut marks = Vec::new();
             let mut annots = Vec::new();
-            for k in 0..n {
+            for (k, placed_y) in placed.iter().enumerate().take(n) {
                 let v = row.values[k].as_f64().unwrap_or_default();
                 marks.push(json!({
                     "kind": "point",
@@ -473,7 +483,7 @@ pub fn compile(
                     format!("/rows/{}/values/{}", row.index, k),
                     &number_text(k, v),
                     center,
-                    placed[k],
+                    *placed_y,
                     VALUE_FONT,
                     "middle",
                 ));
@@ -600,7 +610,9 @@ pub fn compile(
         let band_h = 18.0;
         let caption_y = ring_cy + ring_r_out + 24.0;
         content_bottom = caption_y.max(list_top + rows.len() as f64 * pitch) + 4.0;
-        width = (list_x + list_w + MARGIN).ceil().max(ring_cx + ring_r_out + MARGIN);
+        width = (list_x + list_w + MARGIN)
+            .ceil()
+            .max(ring_cx + ring_r_out + MARGIN);
         let mut angle = -std::f64::consts::FRAC_PI_2;
         for row in &rows {
             let v = row.values[0].as_f64().unwrap_or_default();
@@ -756,7 +768,11 @@ pub fn compile(
         let mut text_room = 0.0f64;
         for row in &rows {
             let limit = row.limit.unwrap_or_default();
-            let row_unit = if row.row_unit.is_empty() { unit } else { row.row_unit };
+            let row_unit = if row.row_unit.is_empty() {
+                unit
+            } else {
+                row.row_unit
+            };
             let main = if let Some(v) = row.value {
                 format!(
                     "{}{}",
@@ -776,10 +792,8 @@ pub fn compile(
             let mut w = text_units(&main) * VALUE_FONT * ADVANCE;
             if row.value.is_some_and(|v| v > limit) {
                 w += 10.0
-                    + text_units(&format!(
-                        "\u{b7} {}",
-                        locale.text("chart.limit.over", &[])
-                    )) * VALUE_FONT
+                    + text_units(&format!("\u{b7} {}", locale.text("chart.limit.over", &[])))
+                        * VALUE_FONT
                         * ADVANCE;
             }
             text_room = text_room.max(w);
@@ -791,12 +805,15 @@ pub fn compile(
             let limit = row.limit.unwrap_or_default();
             let over = row.value.is_some_and(|v| v > limit);
             any_over = any_over || over;
-            let row_unit = if row.row_unit.is_empty() { unit } else { row.row_unit };
+            let row_unit = if row.row_unit.is_empty() {
+                unit
+            } else {
+                row.row_unit
+            };
             let full = row.value.unwrap_or(limit).max(limit) * 1.25;
             let fill_tone = if over { "security" } else { tone_of(0) };
-            let fill_len = js_round(
-                (row.value.unwrap_or(limit) / full * track_w).max(1.0) * 100.0,
-            ) / 100.0;
+            let fill_len =
+                js_round((row.value.unwrap_or(limit) / full * track_w).max(1.0) * 100.0) / 100.0;
             let marks = vec![
                 json!({
                     "kind": "track",
@@ -967,8 +984,7 @@ pub fn compile(
         let label_y = plot_bottom + LABEL_BASE_GAP;
         content_bottom = label_y + 4.0;
         width = plot_right + MARGIN;
-        let y_at =
-            |v: f64| js_round((plot_bottom - (v - lo) / (hi - lo) * PLOT_H) * 100.0) / 100.0;
+        let y_at = |v: f64| js_round((plot_bottom - (v - lo) / (hi - lo) * PLOT_H) * 100.0) / 100.0;
         let zero_y = y_at(0.0);
         // The value axis is the vertical spine left of the plot.
         containers.push(container(
@@ -1158,13 +1174,11 @@ pub fn compile(
         let rows_top = header_top + 26.0;
         let axis_x0 = MARGIN + label_w + 12.0 + neg_room;
         let axis_x1 = axis_x0 + HORIZONTAL_AXIS_W;
-        let x_at = |v: f64| {
-            js_round((axis_x0 + (v - lo) / (hi - lo) * HORIZONTAL_AXIS_W) * 100.0) / 100.0
-        };
+        let x_at =
+            |v: f64| js_round((axis_x0 + (v - lo) / (hi - lo) * HORIZONTAL_AXIS_W) * 100.0) / 100.0;
         let zero_x = x_at(0.0);
         width = axis_x1 + pos_room + MARGIN;
-        content_bottom =
-            rows_top + rows.len() as f64 * (row_h + ROW_BAND_GAP) - ROW_BAND_GAP + 4.0;
+        content_bottom = rows_top + rows.len() as f64 * (row_h + ROW_BAND_GAP) - ROW_BAND_GAP + 4.0;
         // The value axis is the horizontal spine above the rows.
         containers.push(container(
             authored(
@@ -1403,7 +1417,11 @@ pub fn compile(
     let extra = (wrapped.len().saturating_sub(1)) as f64 * 22.0;
     let height = (content_bottom
         + MARGIN
-        + if entries.is_empty() { 0.0 } else { 34.0 + extra })
+        + if entries.is_empty() {
+            0.0
+        } else {
+            34.0 + extra
+        })
     .ceil();
     let mut legends = Vec::new();
     if !entries.is_empty() {
@@ -1509,7 +1527,11 @@ pub fn compile(
         let mut table_rows = Vec::new();
         for row in &rows {
             let limit = row.limit.unwrap_or_default();
-            let row_unit = if row.row_unit.is_empty() { unit } else { row.row_unit };
+            let row_unit = if row.row_unit.is_empty() {
+                unit
+            } else {
+                row.row_unit
+            };
             let status = if row.value.is_none() {
                 "\u{2014}".to_owned()
             } else if row.value.is_some_and(|v| v > limit) {
@@ -1519,7 +1541,10 @@ pub fn compile(
             };
             let mut cells = vec![
                 json!(row.label),
-                json!(row.value.map(js_to_string).unwrap_or_else(|| "\u{2014}".into())),
+                json!(row
+                    .value
+                    .map(js_to_string)
+                    .unwrap_or_else(|| "\u{2014}".into())),
                 json!(js_to_string(limit)),
                 json!(row_unit),
                 json!(status),
@@ -1552,7 +1577,10 @@ pub fn compile(
         for row in &rows {
             let mut cells = vec![json!(row.label)];
             for k in 0..n {
-                cells.push(json!(number_text(k, row.values[k].as_f64().unwrap_or_default())));
+                cells.push(json!(number_text(
+                    k,
+                    row.values[k].as_f64().unwrap_or_default()
+                )));
             }
             table_rows.push(Value::from(cells));
         }

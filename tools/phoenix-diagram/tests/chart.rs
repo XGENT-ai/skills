@@ -34,8 +34,7 @@ fn compile(document: Value) -> phoenix_diagram::scene::CompiledDiagram {
         &options,
     )
     .unwrap_or_else(|errors| panic!("parse failed: {errors:?}"));
-    layout::compile(&input, &options)
-        .unwrap_or_else(|errors| panic!("layout failed: {errors:?}"))
+    layout::compile(&input, &options).unwrap_or_else(|errors| panic!("layout failed: {errors:?}"))
 }
 
 fn html(scene: &phoenix_diagram::scene::CompiledDiagram) -> String {
@@ -147,8 +146,7 @@ fn form_field_pairings_and_series_count_point_at_the_offending_field() {
         "/series",
     );
     assert_code_path(
-        bar(json!([{"id":"a","label":"A","values":[-1]}]))
-        .tap_form_pie(),
+        bar(json!([{"id":"a","label":"A","values":[-1]}])).tap_form_pie(),
         "chart/pie-value",
         "/rows/0/values/0",
     );
@@ -179,7 +177,10 @@ fn bar_axis_covers_zero_and_bars_follow_the_sign() {
     ])));
     let document = Html::parse_document(&html(&scene));
     let svg = document.select(&select("svg")).next().unwrap();
-    let zero_tick = svg.select(&select("line[data-chart-tick='0']")).next().unwrap();
+    let zero_tick = svg
+        .select(&select("line[data-chart-tick='0']"))
+        .next()
+        .unwrap();
     let zero_y = number(&zero_tick, "y1");
     for group in svg.select(&select("g[data-node-id]")) {
         let bar = group
@@ -195,21 +196,25 @@ fn bar_axis_covers_zero_and_bars_follow_the_sign() {
     ])));
     let document = Html::parse_document(&html(&scene));
     let svg = document.select(&select("svg")).next().unwrap();
-    let zero_tick = svg.select(&select("line[data-chart-tick='0']")).next().unwrap();
+    let zero_tick = svg
+        .select(&select("line[data-chart-tick='0']"))
+        .next()
+        .unwrap();
     let zero_y = number(&zero_tick, "y1");
-    let bars: Vec<_> = svg
-        .select(&select("rect[data-chart-series='0']"))
-        .collect();
+    let bars: Vec<_> = svg.select(&select("rect[data-chart-series='0']")).collect();
     assert_eq!(bars.len(), 2);
-    let positive = bars.iter().find(|bar| number(*bar, "y") < zero_y).unwrap();
-    let negative = bars.iter().find(|bar| number(*bar, "y") >= zero_y).unwrap();
+    let positive = bars.iter().find(|bar| number(bar, "y") < zero_y).unwrap();
+    let negative = bars.iter().find(|bar| number(bar, "y") >= zero_y).unwrap();
     assert!((number(positive, "y") + number(positive, "height") - zero_y).abs() < 0.06);
     assert!((number(negative, "y") - zero_y).abs() < 0.06);
     // All zero: axis becomes [0, 1] and no bar is drawn.
     let scene = compile(bar(json!([{"id":"a","label":"A","values":[0]}])));
     let document = Html::parse_document(&html(&scene));
     let svg = document.select(&select("svg")).next().unwrap();
-    assert!(svg.select(&select("rect[data-chart-series]")).next().is_none());
+    assert!(svg
+        .select(&select("rect[data-chart-series]"))
+        .next()
+        .is_none());
     let ticks: Vec<String> = svg
         .select(&select("line[data-chart-tick]"))
         .map(|tick| tick.value().attr("data-chart-tick").unwrap().to_owned())
@@ -227,9 +232,13 @@ fn values_are_written_exactly_as_authored() {
         {"id":"e","label":"E","values":[-3]},
     ])));
     let document = Html::parse_document(&html(&scene));
-    for (id, expected) in
-        [("a", "12"), ("b", "4.5"), ("c", "0.1"), ("d", "1234567"), ("e", "-3")]
-    {
+    for (id, expected) in [
+        ("a", "12"),
+        ("b", "4.5"),
+        ("c", "0.1"),
+        ("d", "1234567"),
+        ("e", "-3"),
+    ] {
         let group = document
             .select(&select(&format!("g[data-node-id='{id}']")))
             .next()
@@ -240,7 +249,10 @@ fn values_are_written_exactly_as_authored() {
             .unwrap();
         assert_eq!(text_of(label), expected, "row {id}");
     }
-    let group = document.select(&select("g[data-node-id='d']")).next().unwrap();
+    let group = document
+        .select(&select("g[data-node-id='d']"))
+        .next()
+        .unwrap();
     assert_eq!(group.value().attr("data-chart-values"), Some("1234567"));
 }
 
@@ -271,7 +283,12 @@ fn equal_values_of_two_series_keep_separate_annotations() {
     assert!((first - second).abs() >= 20.0, "{first} vs {second}");
     // Each annotation carries its series key.
     assert_eq!(
-        text_of(document.select(&select("text[data-chart-value-label='0']")).next().unwrap()),
+        text_of(
+            document
+                .select(&select("text[data-chart-value-label='0']"))
+                .next()
+                .unwrap()
+        ),
         "A 7"
     );
 }
@@ -291,7 +308,12 @@ fn the_27th_series_key_is_aa() {
     }));
     let document = Html::parse_document(&html(&scene));
     assert_eq!(
-        text_of(document.select(&select("text[data-chart-value-label='26']")).next().unwrap()),
+        text_of(
+            document
+                .select(&select("text[data-chart-value-label='26']"))
+                .next()
+                .unwrap()
+        ),
         "AA 27"
     );
 }
@@ -301,11 +323,7 @@ fn the_minimal_example_passes_the_artifact_check() {
     let raw = include_str!("../../../skills/phoenix-diagram/examples/minimal.chart.json");
     let scene = compile(serde_json::from_str(raw).unwrap());
     let result = check::check_html(html(&scene).as_bytes(), scene.quality);
-    assert!(
-        result.diagnostics.is_empty(),
-        "{:?}",
-        result.diagnostics
-    );
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
 }
 
 #[test]
@@ -320,11 +338,7 @@ fn sourced_evidence_draws_no_badge_and_still_passes_the_artifact_check() {
         .next()
         .is_none());
     let result = check::check_html(html(&scene).as_bytes(), scene.quality);
-    assert!(
-        result.diagnostics.is_empty(),
-        "{:?}",
-        result.diagnostics
-    );
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
 }
 
 #[test]
@@ -341,13 +355,22 @@ fn line_axis_follows_data_and_points_stay_on_scale() {
     let document = Html::parse_document(&html(&scene));
     let svg = document.select(&select("svg")).next().unwrap();
     // The axis follows the data: all-positive rows need no zero tick.
-    assert!(svg.select(&select("line[data-chart-tick='0']")).next().is_none());
+    assert!(svg
+        .select(&select("line[data-chart-tick='0']"))
+        .next()
+        .is_none());
     let ticks: Vec<(f64, f64)> = svg
         .select(&select("line[data-chart-tick]"))
-        .map(|tick| (
-            tick.value().attr("data-chart-tick").unwrap().parse().unwrap(),
-            tick.value().attr("y1").unwrap().parse().unwrap(),
-        ))
+        .map(|tick| {
+            (
+                tick.value()
+                    .attr("data-chart-tick")
+                    .unwrap()
+                    .parse()
+                    .unwrap(),
+                tick.value().attr("y1").unwrap().parse().unwrap(),
+            )
+        })
         .collect();
     let (v0, y0) = ticks[0];
     let (v1, y1) = ticks[1];
@@ -428,11 +451,9 @@ fn line_label_room_is_reported_for_a_row_that_cannot_fit() {
     .unwrap();
     let errors = layout::compile(&input, &options).unwrap_err();
     assert!(
-        errors
-            .iter()
-            .any(|error| error.code == "chart/label-room"
-                && error.subject.path == "/rows/0"
-                && error.stage == "layout"),
+        errors.iter().any(|error| error.code == "chart/label-room"
+            && error.subject.path == "/rows/0"
+            && error.stage == "layout"),
         "{errors:?}"
     );
 }
@@ -529,7 +550,10 @@ fn limits_fill_ratio_limit_line_and_over_mark() {
     }));
     let document = Html::parse_document(&html(&scene));
     // Within limit: fill ratio 13/25, limit line at 20/25 of the track.
-    let ok = document.select(&select("g[data-node-id='ok']")).next().unwrap();
+    let ok = document
+        .select(&select("g[data-node-id='ok']"))
+        .next()
+        .unwrap();
     let track = ok.select(&select("rect.ch-track")).next().unwrap();
     let track_w: f64 = track.value().attr("width").unwrap().parse().unwrap();
     let track_x: f64 = track.value().attr("x").unwrap().parse().unwrap();
@@ -557,7 +581,10 @@ fn limits_fill_ratio_limit_line_and_over_mark() {
         .select(&select("text"))
         .all(|text| !text.text().collect::<String>().contains("Over limit")));
     // Over limit: security fill and the over note, exactly once.
-    let over = document.select(&select("g[data-node-id='over']")).next().unwrap();
+    let over = document
+        .select(&select("g[data-node-id='over']"))
+        .next()
+        .unwrap();
     assert!(over
         .select(&select("rect.ch-fill"))
         .next()
@@ -571,7 +598,10 @@ fn limits_fill_ratio_limit_line_and_over_mark() {
         .select(&select("text"))
         .any(|text| text.text().collect::<String>().contains("Over limit")));
     // Limit-only row fills to the limit with an empty value attribute.
-    let only = document.select(&select("g[data-node-id='only']")).next().unwrap();
+    let only = document
+        .select(&select("g[data-node-id='only']"))
+        .next()
+        .unwrap();
     assert_eq!(only.value().attr("data-chart-value"), Some(""));
     let only_fill_w: f64 = only
         .select(&select("rect.ch-fill"))
