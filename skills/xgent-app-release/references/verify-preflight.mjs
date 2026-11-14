@@ -13,6 +13,8 @@ export const cases = [
   ["websocket connect", {connectSrc:["wss://events.example.com"]}, true],
   ["local schemes connect", {connectSrc:["blob:","data:"]}, true],
   ["local scheme with payload", {connectSrc:["data:,x"]}, false],
+  ["https scheme connect", {connectSrc:[" https: ","https:"]}, true],
+  ...["http:","HTTPS:","https:;","https:\n","wss:"].map((value,i)=>[`invalid connect scheme ${i}`,{connectSrc:[value]},false]),
   ["alias", {platformSources:{scriptSrc:["jsCdn"],styleSrc:["jsCdn"],fontSrc:["jsCdn"],connectSrc:["jsCdn"]}}, true],
   ["origin normalization", {imgSrc:[" https://EXAMPLE.com:443/ ","https://example.com"]}, true],
   ["empty arrays", {scriptSrc:[],platformSources:{scriptSrc:[]}}, true],
@@ -22,7 +24,7 @@ export const cases = [
   ["wrong collection", {scriptSrc:"https://example.com"}, false],
   ["wrong source", {scriptSrc:[null]}, false],
   ...["https://*.example.com","https://example.com/script.js","https://example.com?x=1","https://example.com#x",
-    "https://user:private@localhost","unsafe-inline","'unsafe-eval'","data:","blob:","http://example.com",
+    "https://user:private@localhost","unsafe-inline","'unsafe-eval'","data:","blob:","https:","http://example.com",
     "http://localhost:8080","wss://example.com","https:example.com","https://example.com\n","https://example.com;"].map((value,i)=>[`invalid origin ${i}`,{scriptSrc:[value]},false]),
 ];
 
@@ -106,6 +108,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       rmSync(blob);
     }
     assert.deepEqual(normalizeEmbedCsp(cases.find(c=>c[0]==="origin normalization")[1]),{imgSrc:["https://example.com"]});passed++;
+    assert.deepEqual(normalizeEmbedCsp(cases.find(c=>c[0]==="https scheme connect")[1]),{connectSrc:["https:"]});passed++;
     assert.throws(()=>normalizeEmbedCsp(Object.defineProperty({},"scriptSrc",{get(){throw new Error("must-not-run");}})),/accessors/);passed++;
     console.log(`exported preflight: ${passed}/0`);
   } finally { rmSync(root,{recursive:true,force:true}); }

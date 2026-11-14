@@ -14,7 +14,7 @@ export const EMBED_CSP_PLATFORM_FIELDS = Object.freeze([
   "connectSrc"
 ]);
 const unsafe = /[\s\u0000-\u001f\u007f-\u009f\\'"`{};*]/u;
-const CONNECT_SCHEME_SOURCES = ["blob:", "data:"];
+const CONNECT_SCHEME_SOURCES = ["blob:", "data:", "https:"];
 function fail(field, reason) {
   throw new Error(`${field}: ${reason}`);
 }
