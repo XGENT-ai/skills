@@ -218,8 +218,8 @@ REVIEW @progress_consistency:
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-14 14:27 +0800 | chart 图型与两种柱状图打通：基线十一类逐一相同，V-1 三份交付 complete，V-4 全绿；guide 场景词按 @implementation_route 修订 | [M1 记录](ELINTP-VISUALS-P4.records/M1.md) | 1d9e3f57；修复 3f38d053 |
-| M2 | 已完成 | 2026-11-14 15:21 +0800 | 折线、饼、限额三形态：批末 V-2 全部结果项与 V-4 其余引擎部分通过（三形态 finalize complete、四形态双策略静态图 complete、体积比 ≤50%、data-phoenix-table 逐格一致、错误输入 ×4 诊断正确） | [M2 记录](ELINTP-VISUALS-P4.records/M2.md) | 1310cb63；修复 3f38d053 |
+| M1 | 已完成 | 2026-11-14 14:27 +0800 | chart 图型与两种柱状图打通：基线十一类逐一相同，V-1 三份交付 complete，V-4 全绿；guide 场景词按 @implementation_route 修订 | [M1 记录](ELINTP-VISUALS-P4.records/M1.md) | 1d9e3f57；修复 3f38d053；修复 5eaf6b11 |
+| M2 | 已完成 | 2026-11-14 15:21 +0800 | 折线、饼、限额三形态：批末 V-2 全部结果项与 V-4 其余引擎部分通过（三形态 finalize complete、四形态双策略静态图 complete、体积比 ≤50%、data-phoenix-table 逐格一致、错误输入 ×4 诊断正确） | [M2 记录](ELINTP-VISUALS-P4.records/M2.md) | 1310cb63；修复 3f38d053；修复 5eaf6b11 |
 | M3 | 已完成 | 2026-11-14 15:21 +0800 | 静态图 data-phoenix-table 数据（write_common）与 §5.10 其余接口文字同步（九处），bundle 已同步；批末共用检查引用 M2 记录 | [M3 记录](ELINTP-VISUALS-P4.records/M3.md) | 1310cb63 |
 | M4 | 已完成 | 2026-11-14 16:29 +0800 | elintp 选用数值图表并显示数据表：V-3 浏览器五查 13/13 PASS（Offline/360px/键盘/打印/禁 JS + 宽表区域滚动 + 损坏退 2 不覆盖）与 V-4 elintp 部分全过；elintp frontmatter 无变化 | [M4 记录](ELINTP-VISUALS-P4.records/M4.md) | 5f40e694 |
 | M5 | 已完成 | 2026-11-15 00:11 +0800 | 阶段收口：V-5 全量回归（npm run test:diagram 全绿：fmt/clippy/evidence 测试缺口经修复提交后通过、final2 上十一类指纹与两策略静态 SHA 对基线 33/33 MATCH 且与 final1 逐字节相同、文档 grep 清零、bundle 干净、体积 ≤50%）与 V-6 真实使用验收通过（临时项目离线安装过逐字节预检、凭安装后 skill 画横向柱状图阅读器/静态图看图登记 complete、elintp 零网络讲页带数据表、断网阅读 8/8）；初版 V-6 记录不实已修订 | [M5 记录](ELINTP-VISUALS-P4.records/M5.md) | 75d5823e / cf55f536 / 14d598ba / 8f382080 |
