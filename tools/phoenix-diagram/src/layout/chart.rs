@@ -1254,8 +1254,9 @@ pub fn compile(
                     let len = (x_at(v) - zero_x).abs().max(1.0);
                     (zero_x, len, zero_x + len + 4.0, "start")
                 } else {
+                    // Anchor at zero so the 1 px minimum grows leftward, not across zero.
                     let len = (zero_x - x_at(v)).abs().max(1.0);
-                    (x_at(v), len, x_at(v) - 4.0, "end")
+                    (zero_x - len, len, zero_x - len - 4.0, "end")
                 };
                 marks.push(json!({
                     "series": k,

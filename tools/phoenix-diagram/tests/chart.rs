@@ -260,11 +260,15 @@ fn wide_and_mixed_magnitude_charts_keep_spaced_ticks_and_pass_the_artifact_check
         let result = check::check_html(html.as_bytes(), scene.quality);
         assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
     }
-    // A value far below one pixel of the axis still draws the 1 px minimum bar.
+    // A value far below one pixel of the axis still draws the 1 px minimum bar,
+    // on its own side of the zero line in every direction.
     for (small, orientation) in [
         (1.0, "vertical"),
         (0.334971, "vertical"),
+        (-0.334971, "vertical"),
         (1.0, "horizontal"),
+        (-0.334971, "horizontal"),
+        (-2.0, "horizontal"),
     ] {
         let mut document = bar(json!([
             {"id":"a","label":"Almost none","values":[small]},
@@ -280,28 +284,40 @@ fn wide_and_mixed_magnitude_charts_keep_spaced_ticks_and_pass_the_artifact_check
         );
     }
     // The minimum does not excuse a bar drawn longer than both rules allow.
-    let mut scene = compile(bar(json!([
-        {"id":"a","label":"Almost none","values":[1]},
-        {"id":"b","label":"All of it","values":[1000]},
-    ])));
-    let row = scene
-        .containers
-        .iter_mut()
-        .find(|container| container.authored.id == "a" && container.authored.kind == "chart-row")
-        .unwrap();
-    let mark = &mut row.authored.facts["marks"][0];
-    let bottom = mark["y"].as_f64().unwrap() + mark["height"].as_f64().unwrap();
-    mark["y"] = json!(bottom - 4.0);
-    mark["height"] = json!(4.0);
-    let result = check::check_html(html(&scene).as_bytes(), scene.quality);
-    assert!(
-        result
-            .diagnostics
-            .iter()
-            .any(|error| error.message.contains("shared linear scale from zero")),
-        "{:?}",
-        result.diagnostics
-    );
+    for (small, orientation) in [(1.0, "vertical"), (-1.0, "horizontal")] {
+        let mut document = bar(json!([
+            {"id":"a","label":"Almost none","values":[small]},
+            {"id":"b","label":"All of it","values":[1000]},
+        ]));
+        document["orientation"] = json!(orientation);
+        let mut scene = compile(document);
+        let row = scene
+            .containers
+            .iter_mut()
+            .find(|container| {
+                container.authored.id == "a" && container.authored.kind == "chart-row"
+            })
+            .unwrap();
+        let mark = &mut row.authored.facts["marks"][0];
+        // Keep the zero end fixed and stretch the bar to 4 px.
+        let (start, length) = if orientation == "vertical" {
+            ("y", "height")
+        } else {
+            ("x", "width")
+        };
+        let zero_end = mark[start].as_f64().unwrap() + mark[length].as_f64().unwrap();
+        mark[start] = json!(zero_end - 4.0);
+        mark[length] = json!(4.0);
+        let result = check::check_html(html(&scene).as_bytes(), scene.quality);
+        assert!(
+            result
+                .diagnostics
+                .iter()
+                .any(|error| error.message.contains("shared linear scale from zero")),
+            "{orientation}: {:?}",
+            result.diagnostics
+        );
+    }
 }
 
 #[test]

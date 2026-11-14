@@ -831,6 +831,31 @@ fn real_dom_reader_legend_and_normal_flow_notes_are_measured_without_clip_exempt
             );
         }
     }
+    // One node hides the index, so the rail controls take their own row below
+    // the notes; the Reader folds that row away and the probe must too.
+    let single = json!({"schema_version":1,"diagram_type":"chart","meta":{"title":"One row","evidence":"sourced"},"form":"bar","rows":[{"id":"a","label":"Throughput","values":[42]}]});
+    let single = parse_input(
+        &serde_json::to_vec(&single).unwrap(),
+        DiagramType::Chart,
+        &options,
+    )
+    .unwrap();
+    let single = render::render(
+        &layout::compile(&single, &options).unwrap(),
+        &EmbeddedAssets::builtin(),
+    )
+    .unwrap();
+    let receipt = inspect("single-node-notes", &single);
+    assert_eq!(
+        receipt.status,
+        BrowserStatus::Pass,
+        "{:?}",
+        receipt
+            .coverage
+            .iter()
+            .map(|coverage| (&coverage.viewport, &coverage.metrics["readerFlow"]))
+            .collect::<Vec<_>>()
+    );
     let html = String::from_utf8(baseline).unwrap();
     for (name, css, check_name, desktop_only) in [
         (

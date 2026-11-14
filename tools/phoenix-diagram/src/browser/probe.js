@@ -258,8 +258,10 @@
   // The narrow rail is display:contents and has no rectangle or mode attribute.
   // Only a measured, reachable normal-flow tail may leave the diagram's first
   // screen budget. A clipped tail must not make the page appear to fit.
+  // The rail controls belong to that tail: with the index hidden they take a
+  // row of their own below the notes, which the Reader's fold already counts.
   var rail = reader && reader.querySelector(':scope > .reader-rail');
-  var noteElements = rail ? Array.from(rail.querySelectorAll(':scope > .cards, :scope > .node-outline')).filter(function (element) {
+  var noteElements = rail ? Array.from(rail.querySelectorAll(':scope > .cards, :scope > .node-outline, :scope > .rail-controls')).filter(function (element) {
     var bounds = rect(element);
     return visible(element) && bounds && bounds.width > 0 && bounds.height > 0;
   }) : [];
@@ -268,7 +270,8 @@
     for (var ancestor = element; ancestor && ancestor !== reader; ancestor = ancestor.parentElement) {
       if (!['static', 'relative'].includes(getComputedStyle(ancestor).position)) normal = false;
     }
-    return { kind: element.classList.contains('cards') ? 'cards' : 'index', bounds: bounds, normalFlow: normal };
+    var kind = element.classList.contains('cards') ? 'cards' : element.classList.contains('rail-controls') ? 'controls' : 'index';
+    return { kind: kind, bounds: bounds, normalFlow: normal };
   });
   var notesBelowFold = Boolean(diagramRect && notes.length && notes.every(function (note) { return note.normalFlow && note.bounds.top >= diagramRect.bottom - 1; }));
   var flowFailures = svgRect && diagramRect ? overflowClips(svg, svgRect, { x: false, y: true }) : [{ reason: 'missing-diagram-bounds' }];
