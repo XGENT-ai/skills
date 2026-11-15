@@ -117,3 +117,7 @@
 - 153d7ac1-816e-4088-8ae9-41a14d2517d2 — [PHOENIX-UI-EVIDENCE-CRAFT-P1-gaps 实施（M1）](153d7ac1-816e-4088-8ae9-41a14d2517d2.md)
 - ddfc2db0-1081-4c9e-8cee-8aecf3179c7e — [Phoenix UI 中文排版检测与口径 P2 实施](ddfc2db0-1081-4c9e-8cee-8aecf3179c7e.md)
 - 3fafbda8-0f05-482b-8320-18ca474ee753 · [Phoenix UI 素材与交付图片 P3 实施](3fafbda8-0f05-482b-8320-18ca474ee753.md)
+
+- bbcd9727-a2bc-4555-9677-2305fbdbfb20 · [多期 PRD 过渡目标与后续目标衔接](bbcd9727-a2bc-4555-9677-2305fbdbfb20.md)
+
+- e5a0979b-bfcf-40e6-a519-82ddd0d3da34 · [ELINTP P3 gaps UI 打磨](e5a0979b-bfcf-40e6-a519-82ddd0d3da34.md)
