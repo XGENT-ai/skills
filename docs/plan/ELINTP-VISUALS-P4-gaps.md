@@ -218,7 +218,7 @@ REVIEW @progress_consistency:
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
-| M1 | 已完成 | 2026-11-15 13:05 CST | 四处 chart 修正落地，V-1/V-2 通过 | [M1 记录](ELINTP-VISUALS-P4-gaps.records/M1.md) | 待提交 |
+| M1 | 已完成 | 2026-11-15 13:05 CST | 四处 chart 修正落地，V-1/V-2 通过 | [M1 记录](ELINTP-VISUALS-P4-gaps.records/M1.md) | `75f3c597` |
 
 ## 0. 需求、范围与决策
 
