@@ -162,28 +162,35 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
             json!({"evidence": facts["evidence"]}),
         ));
     }
-    // Series legend entries pair every series with its key.
+    // Series legend entries pair every series with its key, and the colour
+    // block itself carries that key rather than the authored id.
     if series.len() >= 2 {
         for entry in series {
             let id = entry["id"].as_str().unwrap_or_default();
+            let key = entry["key"].as_str().unwrap_or_default();
             let expected = format!(
                 "{} \u{b7} {}",
-                entry["key"].as_str().unwrap_or_default(),
+                key,
                 entry["name"].as_str().unwrap_or_default()
             );
-            let found = svg
+            let legend = svg
                 .select(&selector("g[data-graph-role='legend']"))
-                .any(|legend| {
+                .find(|legend| {
                     legend.value().attr("data-legend-semantic-kind")
                         == Some(format!("series:{id}").as_str())
-                        && text_of(legend).contains(&visible_text(&expected))
                 });
-            if !found {
+            let glyph_key = legend
+                .and_then(|legend| legend.select(&selector("text")).next())
+                .is_some_and(|text| text_of(text) == visible_text(key));
+            let found = legend.is_some_and(|legend| {
+                text_of(legend).contains(&visible_text(&expected))
+            });
+            if !found || !glyph_key {
                 findings.push(finding(
                     "artifact/semantic-text",
                     "/metadata/facts/series",
-                    "A series legend entry is missing or changed",
-                    json!({"id": id, "expected": expected}),
+                    "A series legend entry is missing, changed or shows the series id",
+                    json!({"id": id, "expected": expected, "key": key}),
                 ));
             }
         }
@@ -534,26 +541,42 @@ fn limits_checks(svg: ElementRef<'_>, metadata: &Value, findings: &mut Vec<Conte
         }
         let track = group.select(&selector("rect.ch-track")).next();
         let fill = group.select(&selector("rect.ch-fill")).next();
+        let span = group.select(&selector("rect.ch-span")).next();
         let line = group.select(&selector("line.ch-limit")).next();
-        let (Some(track), Some(fill), Some(line)) = (track, fill, line) else {
+        let (Some(track), Some(line)) = (track, line) else {
             findings.push(finding(
                 "artifact/semantic-relation",
                 &path,
-                "A limits row is missing its track, fill or limit line",
+                "A limits row is missing its track or limit line",
                 json!({"id": id}),
             ));
             continue;
         };
+        // A current value fills the track; a limit-only row shows an outlined
+        // span instead, so the two cases never read as the same mark.
+        let bar = match (value, fill, span) {
+            (Some(_), Some(fill), None) => fill,
+            (None, None, Some(span)) => span,
+            (value, fill, span) => {
+                findings.push(finding(
+                    "artifact/semantic-relation",
+                    &path,
+                    "A limits row needs a fill for its current value or a span for a limit alone",
+                    json!({"id": id, "value": value, "fill": fill.is_some(), "span": span.is_some()}),
+                ));
+                continue;
+            }
+        };
         let full = value.unwrap_or(limit).max(limit) * 1.25;
         let expected_ratio = value.unwrap_or(limit) / full;
         let track_width = number(track, "width", f64::NAN);
-        let fill_width = number(fill, "width", f64::NAN);
-        let actual_ratio = fill_width / track_width;
+        let bar_width = number(bar, "width", f64::NAN);
+        let actual_ratio = bar_width / track_width;
         if !actual_ratio.is_finite() || (actual_ratio - expected_ratio).abs() > 0.01 {
             findings.push(finding(
                 "artifact/semantic-relation",
                 &path,
-                "A limits fill is not proportional to its track scale",
+                "A limits bar is not proportional to its track scale",
                 json!({"expected": expected_ratio, "actual": actual_ratio}),
             ));
         }
@@ -579,6 +602,21 @@ fn limits_checks(svg: ElementRef<'_>, metadata: &Value, findings: &mut Vec<Conte
                 json!({"over": over_expected}),
             ));
         }
+    }
+    // The limit-only entry explains the outlined span exactly when one exists.
+    let any_limit_only = rows.iter().any(|row| row["value"].is_null());
+    let legend = svg
+        .select(&selector("g[data-graph-role='legend']"))
+        .any(|legend| {
+            legend.value().attr("data-legend-semantic-kind") == Some("limits-limit-only")
+        });
+    if legend != any_limit_only {
+        findings.push(finding(
+            "artifact/semantic-relation",
+            "/metadata/facts/rows",
+            "The limit-only legend entry must appear exactly when a row has only a limit",
+            json!({"expected": any_limit_only}),
+        ));
     }
 }
 

@@ -49,13 +49,14 @@ fn defs(_scene: &CompiledDiagram) -> String {
         "svg[data-chart-ui] .ch-slice { stroke: var(--bg); stroke-width: 1.5; }",
         "svg[data-chart-ui] .ch-track { fill: var(--lane-fill); stroke: var(--lane-stroke); stroke-width: 1; }",
         "svg[data-chart-ui] .ch-fill { stroke: none; fill-opacity: .9; }",
+        "svg[data-chart-ui] .ch-span { fill: none; stroke: var(--text-dim); stroke-width: 1.5; stroke-dasharray: 4 3; }",
         "svg[data-chart-ui] .ch-limit { stroke: var(--text-dim); stroke-width: 1.5; }",
         "svg[data-chart-ui] .ch-num { font-variant-numeric: tabular-nums; }",
         "svg[data-chart-ui] .ch-dim { opacity: .45; }",
         // Thin bars stay crisp: the classic preset's card shadow blurs their edges.
         "svg[data-chart-ui] [data-node-id] > rect { filter: none !important; }",
     ));
-    for tone in TONES {
+    for tone in TONES.into_iter().chain(["security", "external"]) {
         write!(
             style,
             "svg[data-chart-ui] .ch-bar.c-{tone} {{ fill: var(--{tone}-stroke); }}\
@@ -230,6 +231,9 @@ fn write_row(locale: &Locale, order: usize, node: &Node, row: &Container, out: &
             "fill" => write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"c-{mark_tone} ch-fill{dim_class}\"/>",
                 number(mark["x"].as_f64().unwrap_or_default()), number(mark["y"].as_f64().unwrap_or_default()),
                 number(mark["width"].as_f64().unwrap_or_default()), number(mark["height"].as_f64().unwrap_or_default())).unwrap(),
+            "span" => write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"ch-span{dim_class}\"/>",
+                number(mark["x"].as_f64().unwrap_or_default()), number(mark["y"].as_f64().unwrap_or_default()),
+                number(mark["width"].as_f64().unwrap_or_default()), number(mark["height"].as_f64().unwrap_or_default())).unwrap(),
             "limit-line" => write!(out, "<line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" class=\"ch-limit{dim_class}\" stroke-width=\"1.5\"/>",
                 number(mark["x"].as_f64().unwrap_or_default()), number(mark["y1"].as_f64().unwrap_or_default()),
                 number(mark["x"].as_f64().unwrap_or_default()), number(mark["y2"].as_f64().unwrap_or_default())).unwrap(),
@@ -285,11 +289,18 @@ fn write_row(locale: &Locale, order: usize, node: &Node, row: &Container, out: &
 fn legend_glyph(_scene: &CompiledDiagram, legend: &Card, baseline: f64, out: &mut String) {
     let facts = &legend.authored.facts;
     let kind = legend.authored.kind.as_str();
-    if let Some(key) = kind.strip_prefix("series:") {
-        // A series entry pairs its colour block with the key letter.
+    if let Some(_series) = kind.strip_prefix("series:") {
+        // A series entry pairs its colour block with the series key, never the
+        // authored id, so long ids cannot spill out of the block.
         write!(out, "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"c-{} ch-bar\" stroke-width=\"1.2\"/><text x=\"{}\" y=\"{}\" class=\"t-primary\" font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\">{}</text>",
             number(legend.bounds.x), number(baseline - 10.0), facts["tone"].as_str().unwrap_or("external"),
-            number(legend.bounds.x + 7.0), number(baseline - 1.5), escape_text(key)).unwrap();
+            number(legend.bounds.x + 7.0), number(baseline - 1.5), escape_text(facts["key"].as_str().unwrap_or_default())).unwrap();
+        return;
+    }
+    if kind == "limits-limit-only" {
+        // Limit-only rows read as an outlined span, matching the row mark.
+        write!(out, "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"ch-span\"/>",
+            number(legend.bounds.x), number(baseline - 10.0)).unwrap();
         return;
     }
     if kind == "limits-limit" {

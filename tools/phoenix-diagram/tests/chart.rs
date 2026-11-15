@@ -3,6 +3,7 @@ use phoenix_diagram::{
     input::{parse_input, CompileOptions, DiagramType},
     layout,
     render::{render, EmbeddedAssets},
+    scene::DiagramFacts,
 };
 use scraper::{ElementRef, Html, Selector};
 use serde_json::{json, Value};
@@ -389,6 +390,65 @@ fn equal_values_of_two_series_keep_separate_annotations() {
         ),
         "A 7"
     );
+    // The colour block shows the key, never the authored id.
+    let legend = document
+        .select(&select("g[data-legend-semantic-kind='series:x']"))
+        .next()
+        .unwrap();
+    assert_eq!(text_of(legend.select(&select("text")).next().unwrap()), "A");
+    // A block that fell back to the id is rejected by the artifact check.
+    let page = html(&scene).replacen(
+        "font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\">A</text>",
+        "font-size=\"9\" font-weight=\"700\" text-anchor=\"middle\">x</text>",
+        1,
+    );
+    let result = check::check_html(page.as_bytes(), scene.quality);
+    assert!(
+        result
+            .diagnostics
+            .iter()
+            .any(|error| error.code == "artifact/semantic-text"),
+        "{:?}",
+        result.diagnostics
+    );
+}
+
+#[test]
+fn data_table_cells_stay_numeric_with_units_in_headers() {
+    let scene = compile(json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title":"T","evidence":"sourced","locale":"en","unit":"ms"},
+        "form": "bar",
+        "series": [{"id":"before","name":"Before"},{"id":"after","name":"After"}],
+        "rows": [{"id":"a","label":"A","values":[4200,2600]}],
+    }));
+    let DiagramFacts::Chart { table, .. } = &scene.facts else {
+        panic!("chart facts")
+    };
+    assert_eq!(table["columns"], json!(["Item", "Before (ms)", "After (ms)"]));
+    assert_eq!(table["rows"], json!([["A", "4200", "2600"]]));
+    let document = Html::parse_document(&html(&scene));
+    let cells: Vec<String> = document
+        .select(&select("details.chart-data tbody td"))
+        .map(text_of)
+        .collect();
+    assert_eq!(cells, ["4200", "2600"]);
+
+    let zh = compile(json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title":"T","evidence":"sourced","locale":"zh-CN","unit":"ms"},
+        "form": "line",
+        "series": [{"id":"p50","name":"p50"},{"id":"p95","name":"p95"}],
+        "rows": [
+            {"id":"a","label":"低","values":[0.1,1234567]},
+            {"id":"b","label":"高","values":[12,34]},
+        ],
+    }));
+    let DiagramFacts::Chart { table, .. } = &zh.facts else {
+        panic!("chart facts")
+    };
+    assert_eq!(table["columns"], json!(["项目", "p50（ms）", "p95（ms）"]));
+    assert_eq!(table["rows"][0], json!(["低", "0.1", "1234567"]));
 }
 
 #[test]
@@ -605,6 +665,20 @@ fn pie_sectors_and_list_match_facts() {
             None => assert!(sector.is_none(), "{id} must not draw a sector"),
         }
     }
+    // The table writes bare numbers; the share column names its percent unit.
+    let DiagramFacts::Chart { table, .. } = &scene.facts else {
+        panic!("chart facts")
+    };
+    assert_eq!(table["columns"], json!(["Item", "Value", "Share (%)"]));
+    assert_eq!(
+        table["rows"],
+        json!([
+            ["A", "2", "50"],
+            ["B", "1", "25"],
+            ["C", "1", "25"],
+            ["Zero", "0", "0"],
+        ])
+    );
 }
 
 #[test]
@@ -632,6 +706,12 @@ fn pie_percent_unit_omits_share() {
         ),
         "45%"
     );
+    // Percent data keeps one numeric column; the unit lives in its header.
+    let DiagramFacts::Chart { table, .. } = &scene.facts else {
+        panic!("chart facts")
+    };
+    assert_eq!(table["columns"], json!(["Item", "Value (%)"]));
+    assert_eq!(table["rows"], json!([["A", "45"], ["B", "55"]]));
 }
 
 #[test]
@@ -695,14 +775,15 @@ fn limits_fill_ratio_limit_line_and_over_mark() {
     assert!(over
         .select(&select("text"))
         .any(|text| text.text().collect::<String>().contains("Over limit")));
-    // Limit-only row fills to the limit with an empty value attribute.
+    // Limit-only row shows an outlined span to the limit, never a filled bar.
     let only = document
         .select(&select("g[data-node-id='only']"))
         .next()
         .unwrap();
     assert_eq!(only.value().attr("data-chart-value"), Some(""));
-    let only_fill_w: f64 = only
-        .select(&select("rect.ch-fill"))
+    assert!(only.select(&select("rect.ch-fill")).next().is_none());
+    let only_span_w: f64 = only
+        .select(&select("rect.ch-span"))
         .next()
         .unwrap()
         .value()
@@ -719,7 +800,34 @@ fn limits_fill_ratio_limit_line_and_over_mark() {
         .unwrap()
         .parse()
         .unwrap();
-    assert!((only_fill_w / only_track_w - 0.8).abs() < 0.01);
+    assert!((only_span_w / only_track_w - 0.8).abs() < 0.01);
+    // The legend explains the outlined span exactly when one exists.
+    assert!(document
+        .select(&select("g[data-legend-semantic-kind='limits-limit-only']"))
+        .next()
+        .is_some());
+    // A span that turned into a filled bar is rejected by the artifact check.
+    let page = html(&scene).replace("class=\"ch-span\"", "class=\"c-frontend ch-fill\"");
+    let result = check::check_html(page.as_bytes(), scene.quality);
+    assert!(
+        result
+            .diagnostics
+            .iter()
+            .any(|error| error.code == "artifact/semantic-relation"),
+        "{:?}",
+        result.diagnostics
+    );
+    // Without a limit-only row the entry is absent.
+    let valued = compile(json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title":"T","evidence":"sourced","unit":"req/s"},
+        "form": "limits",
+        "rows": [
+            {"id":"ok","label":"OK","value":13,"limit":20},
+            {"id":"over","label":"Over","value":25,"limit":20},
+        ],
+    }));
+    assert!(!html(&valued).contains("data-legend-semantic-kind=\"limits-limit-only\""));
 }
 
 #[test]

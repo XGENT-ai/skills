@@ -308,6 +308,7 @@ pub fn compile(
     let mut nodes = Vec::new();
     let mut rows_facts: Vec<Value> = Vec::new();
     let mut any_over = false;
+    let mut any_limit_only = false;
     let width;
     let content_bottom;
 
@@ -810,6 +811,7 @@ pub fn compile(
             let limit = row.limit.unwrap_or_default();
             let over = row.value.is_some_and(|v| v > limit);
             any_over = any_over || over;
+            any_limit_only = any_limit_only || row.value.is_none();
             let row_unit = if row.row_unit.is_empty() {
                 unit
             } else {
@@ -819,6 +821,26 @@ pub fn compile(
             let fill_tone = if over { "security" } else { tone_of(0) };
             let fill_len =
                 js_round((row.value.unwrap_or(limit) / full * track_w).max(1.0) * 100.0) / 100.0;
+            // A row without a current value still shows its limit, but as an
+            // outlined span so it never reads as a filled current value.
+            let bar_mark = if row.value.is_some() {
+                json!({
+                    "kind": "fill",
+                    "tone": fill_tone,
+                    "x": track_x,
+                    "y": band_y + 8.0,
+                    "width": fill_len,
+                    "height": 18.0,
+                })
+            } else {
+                json!({
+                    "kind": "span",
+                    "x": track_x,
+                    "y": band_y + 8.0,
+                    "width": fill_len,
+                    "height": 18.0,
+                })
+            };
             let marks = vec![
                 json!({
                     "kind": "track",
@@ -828,14 +850,7 @@ pub fn compile(
                     "width": track_w,
                     "height": 18.0,
                 }),
-                json!({
-                    "kind": "fill",
-                    "tone": fill_tone,
-                    "x": track_x,
-                    "y": band_y + 8.0,
-                    "width": fill_len,
-                    "height": 18.0,
-                }),
+                bar_mark,
                 json!({
                     "kind": "limit-line",
                     "tone": fill_tone,
@@ -1381,6 +1396,15 @@ pub fn compile(
             tone: "external",
             width: 0.0,
         });
+        if any_limit_only {
+            entries.push(LegendEntry {
+                kind: "limits-limit-only".into(),
+                key: String::new(),
+                label: locale.text("legend.chart.limitOnly", &[]),
+                tone: "external",
+                width: 0.0,
+            });
+        }
         if any_over {
             entries.push(LegendEntry {
                 kind: "limits-over".into(),
@@ -1489,7 +1513,15 @@ pub fn compile(
         }
     }
 
-    // The table carries every value once, written the way the figure writes it.
+    // The table carries every value once as a bare number; the unit lives in
+    // the column header, so copied cells stay numeric.
+    let unit_column = |name: &str| -> String {
+        if unit.is_empty() {
+            name.to_owned()
+        } else {
+            locale.text("chart.table.withUnit", &[("name", name), ("unit", unit)])
+        }
+    };
     let table = if form == "pie" {
         let total: f64 = rows
             .iter()
@@ -1497,22 +1529,21 @@ pub fn compile(
             .sum();
         let mut columns = vec![
             json!(locale.text("chart.table.item", &[])),
-            json!(locale.text("chart.table.value", &[])),
+            json!(unit_column(&locale.text("chart.table.value", &[]))),
         ];
         if unit != "%" {
-            columns.push(json!(locale.text("chart.table.share", &[])));
+            columns.push(json!(locale.text(
+                "chart.table.withUnit",
+                &[("name", &locale.text("chart.table.share", &[])), ("unit", "%")],
+            )));
         }
         let mut table_rows = Vec::new();
         for row in &rows {
             let v = row.values[0].as_f64().unwrap_or_default();
-            let mut cells = vec![
-                json!(row.label),
-                json!(format!("{}{}", js_to_string(v), suffix)),
-            ];
+            let mut cells = vec![json!(row.label), json!(js_to_string(v))];
             if unit != "%" {
-                cells.push(json!(format!(
-                    "{}%",
-                    js_to_string(js_round(v / total * 100.0 * 10.0) / 10.0)
+                cells.push(json!(js_to_string(
+                    js_round(v / total * 100.0 * 10.0) / 10.0
                 )));
             }
             table_rows.push(Value::from(cells));
@@ -1564,27 +1595,17 @@ pub fn compile(
     } else {
         let mut columns = vec![json!(locale.text("chart.table.item", &[]))];
         if series.is_empty() {
-            let name = locale.text("chart.table.value", &[]);
-            columns.push(json!(if unit.is_empty() {
-                name
-            } else {
-                format!("{name}\u{ff08}{unit}\u{ff09}")
-            }));
+            columns.push(json!(unit_column(&locale.text("chart.table.value", &[]))));
         } else {
             for (_, name, _) in &series {
-                columns.push(json!(if unit.is_empty() {
-                    (*name).to_owned()
-                } else {
-                    format!("{name}\u{ff08}{unit}\u{ff09}")
-                }));
+                columns.push(json!(unit_column(name)));
             }
         }
         let mut table_rows = Vec::new();
         for row in &rows {
             let mut cells = vec![json!(row.label)];
             for k in 0..n {
-                cells.push(json!(number_text(
-                    k,
+                cells.push(json!(js_to_string(
                     row.values[k].as_f64().unwrap_or_default()
                 )));
             }
