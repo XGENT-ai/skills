@@ -249,10 +249,20 @@ fn parse(args: &[String]) -> Result<Option<Options>, String> {
 
 /// Runs an explicitly requested media command.
 pub fn run(args: &[String], io: &mut Io) -> i32 {
-    run_with(args, io, &sources::Endpoints::default())
+    run_with(
+        args,
+        io,
+        &sources::Endpoints::default(),
+        impeccable_context::http::agent_builder(),
+    )
 }
 
-fn run_with(args: &[String], io: &mut Io, endpoints: &sources::Endpoints) -> i32 {
+fn run_with(
+    args: &[String],
+    io: &mut Io,
+    endpoints: &sources::Endpoints,
+    builder: ureq::AgentBuilder,
+) -> i32 {
     let options = match parse(args) {
         Ok(Some(options)) => options,
         Ok(None) => {
@@ -264,7 +274,7 @@ fn run_with(args: &[String], io: &mut Io, endpoints: &sources::Endpoints) -> i32
             return 1;
         }
     };
-    match execute(&options, io, endpoints) {
+    match execute(&options, io, endpoints, builder) {
         Ok((result, code)) => {
             if options.json {
                 io.out(&format!("{result}\n"));
@@ -289,6 +299,7 @@ fn execute(
     options: &Options,
     io: &Io,
     endpoints: &sources::Endpoints,
+    builder: ureq::AgentBuilder,
 ) -> Result<(Value, i32), String> {
     let area = if options.command == "audit" {
         index::resolve_readonly(&io.cwd, &options.dir)?
@@ -306,7 +317,7 @@ fn execute(
         result["findings"] = json!(findings);
         return Ok((result, code));
     }
-    let agent = impeccable_context::http::agent_builder()
+    let agent = builder
         .user_agent(&format!(
             "phoenix-ui-media/{} (+https://github.com/XGENT-ai/skills)",
             env!("CARGO_PKG_VERSION")
@@ -592,6 +603,8 @@ mod tests {
                 &args.iter().map(|s| s.to_string()).collect::<Vec<_>>(),
                 &mut io,
                 endpoints,
+                // A direct agent: a proxy inherited from the shell would answer for the dead source.
+                ureq::AgentBuilder::new(),
             );
             let out: Value = serde_json::from_slice(&captured.stdout.borrow()).unwrap();
             (code, out)
@@ -620,6 +633,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             &mut io,
             &endpoints,
+            ureq::AgentBuilder::new(),
         );
         assert_eq!(code, 2);
         let output = captured.stdout.borrow();
