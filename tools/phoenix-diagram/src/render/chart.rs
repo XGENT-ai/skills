@@ -48,9 +48,11 @@ fn defs(_scene: &CompiledDiagram) -> String {
         "svg[data-chart-ui] .ch-line { fill: none; stroke-width: 2; stroke-linejoin: round; }",
         "svg[data-chart-ui] .ch-slice { stroke: var(--bg); stroke-width: 1.5; }",
         "svg[data-chart-ui] .ch-track { fill: var(--lane-fill); stroke: var(--lane-stroke); stroke-width: 1; }",
+        "svg[data-chart-ui] .ch-fill { stroke: none; fill-opacity: .9; }",
         // Dark themes' reds are lighter than their cyans, so an over-limit fill only
-        // outweighs a normal one when the normal fill is quieter.
-        "svg[data-chart-ui] .ch-fill { stroke: none; fill-opacity: .55; }",
+        // outweighs a normal one when the normal fill is quieter. Pie list swatches
+        // share `.ch-fill` and must keep their sector's colour.
+        "svg[data-chart-ui] .ch-fill.ch-limit-fill { fill-opacity: .55; }",
         "svg[data-chart-ui] .ch-fill.c-security { fill-opacity: .9; }",
         "svg[data-chart-ui] .ch-span { fill: none; stroke: var(--text-dim); stroke-width: 1.5; stroke-dasharray: 4 3; }",
         "svg[data-chart-ui] .ch-limit { stroke: var(--text-dim); stroke-width: 1.5; }",
@@ -219,6 +221,12 @@ fn write_row(locale: &Locale, order: usize, node: &Node, row: &Container, out: &
         number(b.x), number(b.y), number(b.width), number(b.height),
         if order % 2 == 1 { " ch-band-alt" } else { "" }).unwrap();
     let dim_class = if dim { " ch-dim" } else { "" };
+    let form_name = facts["form"].as_str().unwrap_or("bar");
+    let fill_class = if form_name == "limits" {
+        " ch-limit-fill"
+    } else {
+        ""
+    };
     for mark in facts["marks"].as_array().map_or(&[][..], Vec::as_slice) {
         let mark_tone = mark["tone"].as_str().unwrap_or(tone);
         match mark["kind"].as_str().unwrap_or("bar") {
@@ -231,7 +239,7 @@ fn write_row(locale: &Locale, order: usize, node: &Node, row: &Container, out: &
             "track" => write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"ch-track\"/>",
                 number(mark["x"].as_f64().unwrap_or_default()), number(mark["y"].as_f64().unwrap_or_default()),
                 number(mark["width"].as_f64().unwrap_or_default()), number(mark["height"].as_f64().unwrap_or_default())).unwrap(),
-            "fill" => write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"c-{mark_tone} ch-fill{dim_class}\"/>",
+            "fill" => write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"c-{mark_tone} ch-fill{fill_class}{dim_class}\"/>",
                 number(mark["x"].as_f64().unwrap_or_default()), number(mark["y"].as_f64().unwrap_or_default()),
                 number(mark["width"].as_f64().unwrap_or_default()), number(mark["height"].as_f64().unwrap_or_default())).unwrap(),
             "span" => write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"ch-span{dim_class}\"/>",
@@ -247,7 +255,6 @@ fn write_row(locale: &Locale, order: usize, node: &Node, row: &Container, out: &
         }
     }
     let note = facts["note"].as_str().unwrap_or_default();
-    let form_name = facts["form"].as_str().unwrap_or("bar");
     for (index, text) in node.text.iter().enumerate() {
         if index == 0 {
             write!(out, "<text data-node-label=\"\" x=\"{}\" y=\"{}\" class=\"t-primary\" font-size=\"{}\" font-weight=\"{}\" text-anchor=\"{}\">{}</text>",
@@ -325,7 +332,7 @@ fn legend_glyph(_scene: &CompiledDiagram, legend: &Card, baseline: f64, out: &mu
         return;
     }
     if kind == "limits-current" || kind == "limits-over" {
-        write!(out, "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"c-{} ch-fill\" stroke-width=\"1.2\"/>",
+        write!(out, "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"c-{} ch-fill ch-limit-fill\" stroke-width=\"1.2\"/>",
             number(legend.bounds.x), number(baseline - 10.0), facts["tone"].as_str().unwrap_or("external")).unwrap();
     }
 }

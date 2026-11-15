@@ -300,7 +300,7 @@ PRD 需求沿用工作号与 AC ID，差异沿用报告的 G-ID 与 D-ID，原�
 | elintp → 静态 SVG `data-phoenix-table` | 已核实足够 | `columns` 为非空字符串数组、每行等长字符串数组（`skills/elintp/scripts/draft.mjs` `parseTable`） | 零改动；单元格仍是字符串 | 不变 |
 | 静态样式转换 | 已核实足够 | `supported_declaration` 含 `fill`、`stroke`、`stroke-width`、`stroke-dasharray` | 新规则遵守 C-2 | 违规时 `static` 报 `static/style`，修规则 |
 
-没有新的命令、参数、诊断码、回执字段或静态数据属性；新增目录键 `chart.table.withUnit`、`legend.chart.limitOnly`，新增图形类 `ch-span`。
+没有新的命令、参数、诊断码、回执字段或静态数据属性；新增目录键 `chart.table.withUnit`、`legend.chart.limitOnly`，新增图形类 `ch-span`、`ch-limit-fill`。
 
 ## 5. 核心机制（引擎）
 
@@ -311,7 +311,7 @@ PRD 需求沿用工作号与 AC ID，差异沿用报告的 G-ID 与 D-ID，原�
 
 ### 5.2 强调色槽规则（G-02）
 
-`render/chart.rs` 生成色槽规则的循环（L58）改为遍历 `TONES` 加 `security`、`external`；生成的五类规则（`.ch-bar`、`.ch-point`、`.ch-line`、`.ch-slice`、`.ch-fill`）与既有色槽相同。`TONES` 本身（系列与饼图循环色）不变。效果：超限填充与「超限」图例色块用 `var(--security-stroke)`，饼图收尾扇区与其列表色块用 `var(--external-stroke)`。限额图：`.ch-fill` 改为 `fill-opacity: .55`，另加 `.ch-fill.c-security { fill-opacity: .9; }`；「当前值」「超限」图例色块改用 `ch-fill` 类，与行填充同样式。
+`render/chart.rs` 生成色槽规则的循环（L58）改为遍历 `TONES` 加 `security`、`external`；生成的五类规则（`.ch-bar`、`.ch-point`、`.ch-line`、`.ch-slice`、`.ch-fill`）与既有色槽相同。`TONES` 本身（系列与饼图循环色）不变。效果：超限填充与「超限」图例色块用 `var(--security-stroke)`，饼图收尾扇区与其列表色块用 `var(--external-stroke)`。限额图：行填充与「当前值」「超限」图例色块都用 `ch-fill ch-limit-fill` 类，规则 `.ch-fill.ch-limit-fill { fill-opacity: .55; }`，另加 `.ch-fill.c-security { fill-opacity: .9; }` 让超限保持醒目；`.ch-fill` 本身保持 `.9`，饼图列表色块不带 `ch-limit-fill`，与扇区同色。
 
 ### 5.3 数据表单元格（D-01）
 
