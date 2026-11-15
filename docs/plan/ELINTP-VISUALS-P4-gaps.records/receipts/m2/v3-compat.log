@@ -1,0 +1,13 @@
+architecture MATCH MATCH MATCH    auto pass/pass svg 136652/46532 html 977201 ratio 14.0%/4.8%
+chart        (expected change)    auto pass/pass svg 135233/45113 html 978867 ratio 13.8%/4.6%
+class        MATCH MATCH MATCH    auto pass/pass svg 139301/49149 html 986350 ratio 14.1%/5.0%
+dataflow     MATCH MATCH MATCH    auto pass/pass svg 128204/38082 html 972562 ratio 13.2%/3.9%
+erd          MATCH MATCH MATCH    auto pass/pass svg 145514/55360 html 993958 ratio 14.6%/5.6%
+lifecycle    MATCH MATCH MATCH    auto pass/pass svg 128464/38344 html 972936 ratio 13.2%/3.9%
+sequence     MATCH MATCH MATCH    auto pass/pass svg 128775/38649 html 973255 ratio 13.2%/4.0%
+statechart   MATCH MATCH MATCH    auto pass/pass svg 134287/44159 html 980839 ratio 13.7%/4.5%
+timeline     MATCH MATCH MATCH    auto pass/pass svg 137475/47353 html 981949 ratio 14.0%/4.8%
+tree         MATCH MATCH MATCH    auto pass/pass svg 132925/42799 html 983072 ratio 13.5%/4.4%
+waterfall    MATCH MATCH MATCH    auto pass/pass svg 138663/48539 html 983274 ratio 14.1%/4.9%
+workflow     MATCH MATCH MATCH    auto pass/pass svg 136280/46160 html 976637 ratio 14.0%/4.7%
+baseline compare 33/33

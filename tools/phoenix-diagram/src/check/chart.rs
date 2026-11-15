@@ -182,9 +182,8 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
             let glyph_key = legend
                 .and_then(|legend| legend.select(&selector("text")).next())
                 .is_some_and(|text| text_of(text) == visible_text(key));
-            let found = legend.is_some_and(|legend| {
-                text_of(legend).contains(&visible_text(&expected))
-            });
+            let found =
+                legend.is_some_and(|legend| text_of(legend).contains(&visible_text(&expected)));
             if !found || !glyph_key {
                 findings.push(finding(
                     "artifact/semantic-text",

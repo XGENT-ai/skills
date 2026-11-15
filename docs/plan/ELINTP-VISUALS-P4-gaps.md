@@ -206,19 +206,20 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-15 13:05 CST
-- 当前进度：1/2 个里程碑完成
-- 当前状态：进行中
-- 最近完成：M1 · 图例键、强调色槽、纯数字数据表、仅上限样式
-- 下一步：M2 · 按 §9 跑 V-3/V-4 并收口阶段
+- 最近更新：2026-11-15 18:55 CST
+- 当前进度：2/2 个里程碑完成
+- 当前状态：已完成
+- 最近完成：M2 · 阶段收口
+- 下一步：无
 - 当前阻塞：无
-- 代码基线：`b4c7b568`
+- 代码基线：`4667b732`
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-11-15 13:05 CST | 四处 chart 修正落地，V-1/V-2 通过 | [M1 记录](ELINTP-VISUALS-P4-gaps.records/M1.md) | `75f3c597` |
+| M2 | 已完成 | 2026-11-15 18:55 CST | V-3 十一类 33/33 一致；V-4 离线安装后的真实使用中发现并修复 note 行越界、暗色超限不醒目和图例大小写；按行缩放经用户确认延期 | [M2 记录](ELINTP-VISUALS-P4-gaps.records/M2.md) | 待提交 |
 
 ## 0. 需求、范围与决策
 
@@ -249,7 +250,7 @@ PRD 需求沿用工作号与 AC ID，差异沿用报告的 G-ID 与 D-ID，原�
 | --- | --- | --- | --- | --- |
 | D1 | 列头括号随语言的实现 | 新目录键 `chart.table.withUnit`，占位符 `{name}`、`{unit}`；zh-CN、zh-TW 写 `{name}（{unit}）`，en、es、ko 写 `{name} ({unit})` | 代码不按语言分支；装配 `--check` 保证五份占位符一致 | D-01；C-1 |
 | D2 | 仅上限行的样式 | 新图形类 `ch-span`：无填充、`var(--text-dim)` 描边 1.5、`stroke-dasharray: 4 3`，长度到上限；图例符号为同样式的 14×10 框 | 与当前值的实心填充一眼可分，亮暗都用既有主题变量；声明全在静态支持清单内 | D-02；C-2 |
-| D3 | 强调色槽的样式来源 | 把 `security`、`external` 加进 `render/chart.rs` 生成色槽规则的循环；系列循环色 `TONES` 不变 | 只补规则，不改哪一行用哪个色槽 | G-02 |
+| D3 | 强调色槽的样式来源 | 把 `security`、`external` 加进 `render/chart.rs` 生成色槽规则的循环；系列循环色 `TONES` 不变；限额图未超限填充与「当前值」图例色块 `fill-opacity: .55`，超限保持 `.9` | 只补规则，不改哪一行用哪个色槽；暗色主题的红都比同主题青色浅，只补规则时暗色超限反而更暗（V-4 实测亮度 0.28 对 0.43），故弱化未超限填充 | G-02；用户 2026-11-15 选定弱化方案 |
 | D4 | 版本号 | 保持 `0.2.0`，phoenix-diagram skill 文件与 bundle 不变 | 本计划只改引擎；静态数据格式（字符串单元格）不变 | 原计划 D13 |
 
 ### 0.4 职责与事实所有权
@@ -268,6 +269,7 @@ PRD 需求沿用工作号与 AC ID，差异沿用报告的 G-ID 与 D-ID，原�
 - **其他差异报告结论**：G-03（静态图数据表由宿主显示）、G-04（D14 判定口径）保留现状，无动作。
 - **新形态、字段、图例交互或数据表复制按钮**——PRD 未要求。
 - **发布、CHANGELOG**——发布流程处理。
+- **限额图按行缩放**——每行满长取 max(值, 上限) × 1.25，是原 P4 的设计；V-4 中作者因超限行等长判视觉审核失败。用户 2026-11-15 确认延期、另立跟进，见 [M2 记录 · 延期项](ELINTP-VISUALS-P4-gaps.records/M2.md#延期项用户-2026-11-15-确认)。
 
 ## 1. 当前事实与改动面
 
@@ -309,7 +311,7 @@ PRD 需求沿用工作号与 AC ID，差异沿用报告的 G-ID 与 D-ID，原�
 
 ### 5.2 强调色槽规则（G-02）
 
-`render/chart.rs` 生成色槽规则的循环（L58）改为遍历 `TONES` 加 `security`、`external`；生成的五类规则（`.ch-bar`、`.ch-point`、`.ch-line`、`.ch-slice`、`.ch-fill`）与既有色槽相同。`TONES` 本身（系列与饼图循环色）不变。效果：超限填充与「超限」图例色块用 `var(--security-stroke)`，饼图收尾扇区与其列表色块用 `var(--external-stroke)`。
+`render/chart.rs` 生成色槽规则的循环（L58）改为遍历 `TONES` 加 `security`、`external`；生成的五类规则（`.ch-bar`、`.ch-point`、`.ch-line`、`.ch-slice`、`.ch-fill`）与既有色槽相同。`TONES` 本身（系列与饼图循环色）不变。效果：超限填充与「超限」图例色块用 `var(--security-stroke)`，饼图收尾扇区与其列表色块用 `var(--external-stroke)`。限额图：`.ch-fill` 改为 `fill-opacity: .55`，另加 `.ch-fill.c-security { fill-opacity: .9; }`；「当前值」「超限」图例色块改用 `ch-fill` 类，与行填充同样式。
 
 ### 5.3 数据表单元格（D-01）
 
@@ -325,7 +327,8 @@ PRD 需求沿用工作号与 AC ID，差异沿用报告的 G-ID 与 D-ID，原�
 
 ### 5.4 仅上限的限额行（D-02）
 
-- 布局：没有 `value` 的行，第二个 mark 改为 `{"kind": "span", "x", "y", "width", "height"}`，宽度仍按「上限 ÷ 满长」计算（与现有填充长度相同），不带色槽；有 `value` 的行保持 `kind: "fill"`。任一行没有 `value` 时，图例在「上限」之后加条目 `kind: "limits-limit-only"`，文字 `legend.chart.limitOnly`（zh-CN「仅上限」、zh-TW「僅上限」、en「Limit only」、es「Solo límite」、ko「한도만」）。
+- 布局：没有 `value` 的行，第二个 mark 改为 `{"kind": "span", "x", "y", "width", "height"}`，宽度仍按「上限 ÷ 满长」计算（与现有填充长度相同），不带色槽；有 `value` 的行保持 `kind: "fill"`。任一行没有 `value` 时，图例在「上限」之后加条目 `kind: "limits-limit-only"`，文字 `legend.chart.limitOnly`（zh-CN「仅上限」、zh-TW「僅上限」、en「limit only」、es「solo límite」、ko「한도만」；与同组图例的小写一致）。
+- 带 `note` 的限额行：标签基线 `band_y + 14`、备注基线 `band_y + 27`（原为 12/26，阅读器放大后标签上沿越出行带 1.3px，`browser/text-containment` 失败且无可用修复；V-4 发现，原 P4 引擎同样复现）。
 - 渲染：`render/chart.rs` mark 分支加 `"span"` → `<rect … class="ch-span{dim_class}"/>`；`defs` 加规则 `svg[data-chart-ui] .ch-span { fill: none; stroke: var(--text-dim); stroke-width: 1.5; stroke-dasharray: 4 3; }`；`legend_glyph` 对 `limits-limit-only` 画同类 14×10 的 `rect.ch-span`。右侧文字（`chart.limit.only`）与行属性（`data-chart-value` 缺省、`data-chart-limit`）不变。
 - 检查：`check/chart.rs` 限额检查取「`rect.ch-fill` 或 `rect.ch-span`」计算长度比；另要求没有当前值的行恰有 `rect.ch-span` 且没有 `rect.ch-fill`，有当前值的行反之；「仅上限」图例条目当且仅当存在这类行时出现。失败码沿用 `artifact/semantic-relation`，路径 `/metadata/facts/rows/<i>`。
 

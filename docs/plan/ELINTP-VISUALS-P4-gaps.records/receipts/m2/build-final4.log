@@ -1,0 +1,20 @@
+   Compiling phoenix-diagram v0.2.0 (/Users/rockie/Documents/gh-xgent/skills/tools/phoenix-diagram)
+    Finished `release` profile [optimized] target(s) in 1m 27s
+mbx[cache]: 0 hits, 2 misses, 1 incremental, 1 bypassed; 0 B downloaded, 0 B uploaded, 2.8 KiB stored locally
+mbx[savings]: 673456 compilations dispensed from stock. inventory immaculate.
+{
+  "status": "development-built",
+  "target": "darwin-arm64",
+  "directory": "/Users/rockie/Documents/gh-xgent/skills/local/phoenix-diagram/elintp-p4-gaps-final4",
+  "sourceState": "dirty",
+  "sourceInputSha256": "94edeb0cf5384456abf5a39a6752e32f08059eb770538d41b4fa54f3c2607704",
+  "binarySha256": "ac391286ffa23e4453792667dce9f8ff6d4846278c49edbf5cc79b5cd16923c9",
+  "bundleSha256": "4b4fcac18e16485ca151f8308aa4e886e0dc1a7c6511fb6df1a1f68e7615e60d",
+  "licenseSha256": "7d290e47e77f78e0fe73d878e22ea179c021d66ff47b8e9b47e7cbc1495c8f60",
+  "fullRuntimeTests": "not-run-by-build-script",
+  "synced": {
+    "directory": "dist/phoenix-diagram",
+    "files": 196,
+    "engine": "skills/phoenix-diagram/ENGINE.json"
+  }
+}

@@ -1,0 +1,7 @@
+PASS offline reload makes no http(s) requests — []
+PASS page has no iframes
+PASS page has one data table per figure (2) — found 2
+PASS theme control toggles light/dark — "" -> "dark"
+FAIL table 1 expands and a copied row pastes as label + plain numbers — head=["Item","Current value","Limit","Unit","Status","Note"] paste="rust-port\t577\t250\tchars\tOver limit\t"
+PASS table 2 expands and a copied row pastes as label + plain numbers — head=["Item","b4c7b568 (files)","HEAD 4667b732 (files)"] paste="phoenix-ui\t135\t135"
+V4-READER-HAS-FAILURES

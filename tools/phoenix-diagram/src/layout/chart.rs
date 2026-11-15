@@ -881,7 +881,8 @@ pub fn compile(
                 format!("/rows/{}/label", row.index),
                 row.label,
                 MARGIN,
-                band_y + if with_note { 12.0 } else { 20.0 },
+                // With a note the label sits high, but its ascent must stay inside the band.
+                band_y + if with_note { 14.0 } else { 20.0 },
                 LABEL_FONT,
                 "start",
             )];
@@ -890,7 +891,7 @@ pub fn compile(
                     format!("/rows/{}/note", row.index),
                     row.note,
                     MARGIN,
-                    band_y + 26.0,
+                    band_y + 27.0,
                     TICK_FONT,
                     "start",
                 ));
@@ -1534,7 +1535,10 @@ pub fn compile(
         if unit != "%" {
             columns.push(json!(locale.text(
                 "chart.table.withUnit",
-                &[("name", &locale.text("chart.table.share", &[])), ("unit", "%")],
+                &[
+                    ("name", &locale.text("chart.table.share", &[])),
+                    ("unit", "%")
+                ],
             )));
         }
         let mut table_rows = Vec::new();

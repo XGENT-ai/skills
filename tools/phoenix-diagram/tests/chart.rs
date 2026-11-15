@@ -425,7 +425,10 @@ fn data_table_cells_stay_numeric_with_units_in_headers() {
     let DiagramFacts::Chart { table, .. } = &scene.facts else {
         panic!("chart facts")
     };
-    assert_eq!(table["columns"], json!(["Item", "Before (ms)", "After (ms)"]));
+    assert_eq!(
+        table["columns"],
+        json!(["Item", "Before (ms)", "After (ms)"])
+    );
     assert_eq!(table["rows"], json!([["A", "4200", "2600"]]));
     let document = Html::parse_document(&html(&scene));
     let cells: Vec<String> = document

@@ -48,7 +48,10 @@ fn defs(_scene: &CompiledDiagram) -> String {
         "svg[data-chart-ui] .ch-line { fill: none; stroke-width: 2; stroke-linejoin: round; }",
         "svg[data-chart-ui] .ch-slice { stroke: var(--bg); stroke-width: 1.5; }",
         "svg[data-chart-ui] .ch-track { fill: var(--lane-fill); stroke: var(--lane-stroke); stroke-width: 1; }",
-        "svg[data-chart-ui] .ch-fill { stroke: none; fill-opacity: .9; }",
+        // Dark themes' reds are lighter than their cyans, so an over-limit fill only
+        // outweighs a normal one when the normal fill is quieter.
+        "svg[data-chart-ui] .ch-fill { stroke: none; fill-opacity: .55; }",
+        "svg[data-chart-ui] .ch-fill.c-security { fill-opacity: .9; }",
         "svg[data-chart-ui] .ch-span { fill: none; stroke: var(--text-dim); stroke-width: 1.5; stroke-dasharray: 4 3; }",
         "svg[data-chart-ui] .ch-limit { stroke: var(--text-dim); stroke-width: 1.5; }",
         "svg[data-chart-ui] .ch-num { font-variant-numeric: tabular-nums; }",
@@ -299,8 +302,13 @@ fn legend_glyph(_scene: &CompiledDiagram, legend: &Card, baseline: f64, out: &mu
     }
     if kind == "limits-limit-only" {
         // Limit-only rows read as an outlined span, matching the row mark.
-        write!(out, "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"ch-span\"/>",
-            number(legend.bounds.x), number(baseline - 10.0)).unwrap();
+        write!(
+            out,
+            "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"ch-span\"/>",
+            number(legend.bounds.x),
+            number(baseline - 10.0)
+        )
+        .unwrap();
         return;
     }
     if kind == "limits-limit" {
@@ -317,7 +325,7 @@ fn legend_glyph(_scene: &CompiledDiagram, legend: &Card, baseline: f64, out: &mu
         return;
     }
     if kind == "limits-current" || kind == "limits-over" {
-        write!(out, "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"c-{} ch-bar\" stroke-width=\"1.2\"/>",
+        write!(out, "<rect x=\"{}\" y=\"{}\" width=\"14\" height=\"10\" rx=\"2.5\" class=\"c-{} ch-fill\" stroke-width=\"1.2\"/>",
             number(legend.bounds.x), number(baseline - 10.0), facts["tone"].as_str().unwrap_or("external")).unwrap();
     }
 }

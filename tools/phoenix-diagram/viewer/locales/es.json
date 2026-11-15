@@ -494,7 +494,7 @@
   "chart.table.withUnit": "{name} ({unit})",
   "legend.chart.current": "valor actual",
   "legend.chart.limit": "límite",
-  "legend.chart.limitOnly": "Solo límite",
+  "legend.chart.limitOnly": "solo límite",
   "legend.chart.over": "fuera de límite",
   "waterfall.evidence.measured": "Tiempos medidos",
   "waterfall.evidence.illustrative": "Tiempos ilustrativos",

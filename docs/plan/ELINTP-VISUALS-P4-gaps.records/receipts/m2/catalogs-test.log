@@ -1,0 +1,17 @@
+✔ the five catalogs share one key set and one placeholder set per key (3.563125ms)
+✔ the template embeds exactly the normalized catalog (0.923708ms)
+✔ share-card badges and the editorial plate carry the Phoenix Diagram identity in every language (0.1815ms)
+✔ the added timeline and source-evidence keys resolve in every language at runtime (90.994833ms)
+✔ meta.locale selects a bundled catalog case-insensitively and sets html lang (65.886667ms)
+✔ workflow backend defaults describe processing without inventing an agent (126.878375ms)
+✔ unsupported or absent locales fall back to English (79.220917ms)
+✔ valid meta.translations override the bundled catalog; invalid entries are ignored (34.201792ms)
+✔ route and reach share cards draw the Phoenix Diagram badge in each language (96.48025ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 546.181667

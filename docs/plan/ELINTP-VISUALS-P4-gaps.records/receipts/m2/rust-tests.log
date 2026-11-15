@@ -1,0 +1,56 @@
+   Compiling phoenix-diagram v0.2.0 (/Users/rockie/Documents/gh-xgent/skills/tools/phoenix-diagram)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.79s
+     Running tests/browser_contract.rs (tools/phoenix-diagram/target/debug/deps/browser_contract-71105014cebacb31)
+
+running 17 tests
+test real_dom_css_hiding_a_node_path_or_required_label_is_rejected ... ignored, real Chrome and native Reader acceptance run only at the core stage
+test real_dom_reader_legend_and_normal_flow_notes_are_measured_without_clip_exemptions ... ignored, real Chrome and native Reader acceptance run only at the core stage
+test deadlines_are_bounded_and_do_not_disable_the_sandbox ... ok
+test an_explicit_missing_browser_is_a_configuration_failure ... ok
+test measurement_without_an_out_dir_does_not_create_evidence ... ok
+test full_page_script_restore_error_retains_the_capture_error ... ok
+test full_page_capture_error_still_restores_scripts ... ok
+test full_page_restored_layout_error_cannot_publish_a_passed_capture ... ok
+test full_page_script_restore_error_cannot_publish_a_passed_capture ... ok
+test full_page_protection_leaves_short_viewport_captures_unchanged ... ok
+test a_failed_capture_can_be_retried_in_an_independent_new_directory ... ok
+test full_page_capture_preserves_the_stable_reader_and_restores_script_execution ... ok
+test protocol_fixture_records_all_scopes_and_writes_four_long_captures ... ok
+test protocol_failure_and_timeout_are_failed_and_release_owned_resources ... ok
+test remote_requests_fail_the_offline_check ... ok
+test startup_timeout_stops_only_the_owned_child_and_profile ... ok
+test screenshot_directories_survive_discovery_launch_and_protocol_failures ... ok
+
+test result: ok. 15 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 1.54s
+
+     Running tests/check_anchors.rs (tools/phoenix-diagram/target/debug/deps/check_anchors-03a98bb76117ea9b)
+
+running 13 tests
+test automatic_routes_must_leave_the_actual_node_boundary_perpendicularly ... ok
+test actual_path_must_preserve_authored_via_points_instead_of_only_its_annotation ... ok
+test explicit_sides_are_checked_against_raw_facts_and_actual_body_sides ... ok
+test tree_links_must_leave_the_parent_body_and_enter_the_child_body ... ok
+test explicit_sides_reject_tangents_and_backwards_segments ... ok
+test named_and_via_routes_do_not_acquire_unstated_endpoint_directions ... ok
+test workflow_via_does_not_waive_a_simultaneous_consumed_channel_pin ... ok
+test public_artifact_gate_checks_endpoints_after_both_path_and_annotation_tampering ... ok
+test sequence_anchors_use_participant_offsets_and_authored_timeline_y ... ok
+test lifecycle_frame_exit_requires_real_frame_bounds_and_matching_raw_sources ... ok
+test jointly_tampered_d_and_route_declarations_cannot_float_from_known_nodes ... ok
+test lifecycle_frames_shared_buses_and_distinct_signatures_keep_source_semantics ... ok
+test actual_renderer_endpoints_accept_every_diagram_type ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+
+     Running tests/i18n.rs (tools/phoenix-diagram/target/debug/deps/i18n-0d468770d5522d0a)
+
+running 4 tests
+test placeholders_are_filled_and_unknown_names_stay_literal ... ok
+test usable_overrides_win_and_mismatched_or_unregistered_overrides_are_ignored ... ok
+test bundled_tags_match_case_insensitively_and_unsupported_tags_fall_back_to_english ... ok
+test five_catalogs_share_keys_placeholders_and_phoenix_identity ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+mbx[cache]: 0 hits, 0 misses, 3 not looked up, 3 incremental; 0 B downloaded, 0 B uploaded, 0 B stored locally
+mbx[savings]: 7.5 TiB logical of target/ was waiting for checkouts that are never coming back. it has stopped waiting.

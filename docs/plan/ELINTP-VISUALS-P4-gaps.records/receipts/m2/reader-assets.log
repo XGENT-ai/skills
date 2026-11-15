@@ -1,0 +1,16 @@
+✔ reader is a complete offline Phoenix artifact with exactly eight native slots (6.269833ms)
+✔ assembly is deterministic, checks without writes, and rejects stale output (59.381958ms)
+✔ assembly rejects missing, duplicate, unknown and wrongly nested fragments before writing (47.903709ms)
+✔ classic script order and private canonical/recorder cleanup survive assembly (3.789584ms)
+✔ embedded font bytes, full OFL and source MIT notices survive assembly and SVG export assets (2.069291ms)
+✔ motion reads only Phoenix storage and first readers remain Still until Live is stored (1.305ms)
+✔ native metadata locale adaptation keeps author strings in safe text and attribute sinks (5.07775ms)
+✔ template and native renderer read one normalized five-language catalog (27.72375ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 189.944833
