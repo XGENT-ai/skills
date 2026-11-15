@@ -1,0 +1,23 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running tests/chart.rs (tools/phoenix-diagram/target/debug/deps/chart-691427d1fee0a4da)
+
+running 16 tests
+test form_field_pairings_and_series_count_point_at_the_offending_field ... ok
+test line_label_room_is_reported_for_a_row_that_cannot_fit ... ok
+test pie_percent_unit_omits_share ... ok
+test line_annotations_stack_with_minimum_spacing ... ok
+test pie_sectors_and_list_match_facts ... ok
+test values_are_written_exactly_as_authored ... ok
+test line_axis_follows_data_and_points_stay_on_scale ... ok
+test data_table_cells_stay_numeric_with_units_in_headers ... ok
+test the_minimal_example_passes_the_artifact_check ... ok
+test sourced_evidence_draws_no_badge_and_still_passes_the_artifact_check ... ok
+test equal_values_of_two_series_keep_separate_annotations ... ok
+test the_27th_series_key_is_aa ... ok
+test bar_axis_covers_zero_and_bars_follow_the_sign ... ok
+test limits_fill_ratio_limit_line_and_over_mark ... ok
+test three_forms_pass_the_artifact_check ... ok
+test wide_and_mixed_magnitude_charts_keep_spaced_ticks_and_pass_the_artifact_check ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
