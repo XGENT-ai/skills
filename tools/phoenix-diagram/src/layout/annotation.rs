@@ -401,6 +401,10 @@ pub fn compile(
                 "end": span.end,
                 "issue": span.issue,
             }));
+            // The metadata graph lists one entry per node and the Reader keys
+            // focus, search and detail by `id`; every other type authors it.
+            let mut facts = raw.as_object().cloned().unwrap_or_default();
+            facts.insert("id".to_owned(), Value::String(node_id.clone()));
             nodes.push(Node {
                 brand: None,
                 authored: Authored {
@@ -411,7 +415,7 @@ pub fn compile(
                     } else {
                         "annotation-note".into()
                     },
-                    facts: raw.clone(),
+                    facts: Value::Object(facts),
                     geometry_provenance: vec!["authored-span".into()],
                 },
                 bounds: Rect {

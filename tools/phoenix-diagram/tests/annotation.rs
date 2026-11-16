@@ -360,6 +360,28 @@ fn artifact_checking_catches_drawn_text_that_drifts_from_the_facts() {
 }
 
 #[test]
+fn metadata_graph_carries_one_id_per_card_in_drawing_order() {
+    let scene = compile(example());
+    let page = Html::parse_document(&html(&scene));
+    let metadata: Value = serde_json::from_str(
+        &page
+            .select(&select("script#phoenix-diagram-metadata"))
+            .next()
+            .unwrap()
+            .text()
+            .collect::<String>(),
+    )
+    .unwrap();
+    let ids: Vec<&str> = metadata["graph"]["nodes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|node| node["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(ids, ["headline-1", "headline-0", "headline-2", "closing-0"]);
+}
+
+#[test]
 fn a_wide_title_moves_the_aside_onto_its_own_line() {
     let aside = "marketing owns this line";
     let short = compile(json!({
