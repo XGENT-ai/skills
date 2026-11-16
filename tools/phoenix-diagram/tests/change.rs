@@ -388,6 +388,81 @@ fn tree_reparent_appends_a_before_connection_and_counts_both_views() {
 }
 
 #[test]
+fn a_sibling_reparent_routes_one_elbow_instead_of_running_to_the_canvas_edge() {
+    let project = Project::new();
+    let value = json!({
+        "schema_version": 1,
+        "diagram_type": "tree",
+        "meta": {"title": "Sibling move", "output": "tree.html"},
+        "nodes": [
+            {"id": "r", "label": "Root"},
+            {"id": "p1", "parent": "r", "label": "Old parent"},
+            {"id": "p2", "parent": "r", "label": "New parent"},
+            {"id": "g", "parent": "p2", "parent_before": "p1", "label": "Moved leaf"}
+        ]
+    });
+    let candidate = project.write("tree.json", &value);
+    let output = run(&[
+        flag("validate"),
+        flag("tree"),
+        candidate.as_os_str(),
+        flag("--layout-json"),
+        flag("--json"),
+    ]);
+    assert_eq!(output.status.code(), Some(0), "{:?}", parsed(&output));
+    let scene = parsed(&output);
+    let width = scene["layout"]["viewBox"]["width"].as_f64().unwrap();
+    let relation = scene["layout"]["relations"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|relation| relation["authored"]["kind"] == "tree-edge-before")
+        .unwrap();
+    let points = relation["points"].as_array().unwrap();
+    // start, one gap corner above the old parent, one above the child, entry.
+    assert_eq!(points.len(), 4, "{points:?}");
+    for point in points {
+        let x = point["x"].as_f64().unwrap();
+        assert!((0.0..=width).contains(&x), "x {x} outside 0..={width}");
+    }
+    let html = std::env::temp_dir().join(format!("tree-{}.html", std::process::id()));
+    let output = run(&[
+        flag("deliver"),
+        flag("tree"),
+        candidate.as_os_str(),
+        html.as_os_str(),
+        flag("--json"),
+    ]);
+    assert_eq!(output.status.code(), Some(0), "{:?}", parsed(&output));
+}
+
+#[test]
+fn static_figures_keep_the_changes_view_without_before_or_after_text() {
+    let project = Project::new();
+    let candidate = project.write("candidate.json", &marked_workflow());
+    let svg =
+        std::env::temp_dir().join(format!("phoenix-change-static-{}.svg", std::process::id()));
+    let output = run(&[
+        flag("static"),
+        flag("workflow"),
+        candidate.as_os_str(),
+        svg.as_os_str(),
+        flag("--json"),
+    ]);
+    assert_eq!(output.status.code(), Some(0), "{:?}", parsed(&output));
+    let text = fs::read_to_string(&svg).unwrap();
+    assert!(
+        !text.contains("data-change-when=\"before\""),
+        "before view name"
+    );
+    assert!(
+        !text.contains("data-change-when=\"after\""),
+        "after view name"
+    );
+    assert!(text.contains("data-change-mark"));
+}
+
+#[test]
 fn erd_entity_marks_reach_every_field_row_and_the_artifact() {
     let project = Project::new();
     let value = json!({

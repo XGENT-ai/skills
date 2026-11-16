@@ -918,7 +918,22 @@ pub fn compile(
         } else {
             solved.view_box[1] + CHANNEL_INSET
         };
-        if authored_view_box.is_none() {
+        // A move between sibling positions leaves the same gap above the old
+        // and new parent rows. Such an edge is one elbow; sending it to the
+        // outside channel would run to the canvas edge and back on the same
+        // line. Only a move across generations needs the channel, and only it
+        // widens the canvas.
+        let gaps = |old: &Measured, child: &Measured| {
+            (
+                solved.band_start[old.depth + 1] - settings.depth_gap() / 2.0 - 6.0,
+                solved.band_start[child.depth] - settings.depth_gap() / 2.0 - 6.0,
+            )
+        };
+        let detour = reparents.iter().any(|(old_index, child_index)| {
+            let (old_gap, child_gap) = gaps(&solved.nodes[*old_index], &solved.nodes[*child_index]);
+            (old_gap - child_gap).abs() >= 0.5
+        });
+        if detour && authored_view_box.is_none() {
             if down {
                 solved.view_box[0] += CHANNEL_INSET * 2.0;
             } else {
@@ -933,15 +948,31 @@ pub fn compile(
             } else {
                 point(child.x, child.y + child.height * 0.75)
             };
-            let old_gap = solved.band_start[old.depth + 1] - settings.depth_gap() / 2.0 - 6.0;
-            let child_gap = solved.band_start[child.depth] - settings.depth_gap() / 2.0 - 6.0;
+            let (old_gap, child_gap) = gaps(old, child);
+            let sibling = (old_gap - child_gap).abs() < 0.5;
             let mut points = if down {
+                if sibling {
+                    vec![
+                        start,
+                        point(start.x, old_gap),
+                        point(entry.x, old_gap),
+                        entry,
+                    ]
+                } else {
+                    vec![
+                        start,
+                        point(start.x, old_gap),
+                        point(channel, old_gap),
+                        point(channel, child_gap),
+                        point(entry.x, child_gap),
+                        entry,
+                    ]
+                }
+            } else if sibling {
                 vec![
                     start,
-                    point(start.x, old_gap),
-                    point(channel, old_gap),
-                    point(channel, child_gap),
-                    point(entry.x, child_gap),
+                    point(old_gap, start.y),
+                    point(old_gap, entry.y),
                     entry,
                 ]
             } else {

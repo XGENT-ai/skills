@@ -145,6 +145,12 @@ fn emit_rules(
                 let mut light = Vec::new();
                 let mut dark = Vec::new();
                 for selector in split_top_level(selectors, ',')? {
+                    // The figure drops the before/after band groups, so their
+                    // view-switching rules would only keep the view names in
+                    // the file; the figure is always the changes view.
+                    if kind == SourceKind::Figure && selector.contains("data-change-when") {
+                        continue;
+                    }
                     if let Some(scoped) = scope_selector(selector.trim(), kind)? {
                         match scoped.1 {
                             Theme::Base => base.push(scoped.0),
