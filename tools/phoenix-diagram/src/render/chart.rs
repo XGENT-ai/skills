@@ -72,6 +72,13 @@ fn defs(_scene: &CompiledDiagram) -> String {
         )
         .unwrap();
     }
+    // The pie's closing sector owns the chart accent slot: a green that stays
+    // apart from the series green, so a sixth row never falls back to the
+    // neutral `external` tone the rest of the figures use for outer systems.
+    style.push_str(concat!(
+        "svg[data-chart-ui] .ch-slice.c-accent { fill: var(--accent-stroke); }",
+        "svg[data-chart-ui] .ch-fill.c-accent { fill: var(--accent-stroke); }",
+    ));
     style.push_str("</style>");
     style
 }

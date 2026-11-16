@@ -435,41 +435,45 @@ pub fn compile(
             let band_w = slot_w - 10.0;
             let band_y = plot_top - LINE_ANNOT_ROOM;
             let band_h = content_bottom - band_y;
-            // Annotations sit 8 above their point; collisions resolve downward
-            // with a 13 px minimum and the stack shifts up when it would run
-            // past the band bottom.
-            let mut placed = vec![0.0f64; n];
+            // Annotations sit 8 above their point. Colliding labels stack away
+            // from the axis — upward while the band has the room, otherwise
+            // below their point — so no label covers a marker or the axis.
+            let point_y = |index: usize| y_at(row.values[index].as_f64().unwrap_or_default());
+            let desired: Vec<f64> = (0..n).map(|index| point_y(index) - 8.0).collect();
             let mut order: Vec<usize> = (0..n).collect();
-            order.sort_by(|&a, &b| {
-                let ya = y_at(row.values[a].as_f64().unwrap_or_default()) - 8.0;
-                let yb = y_at(row.values[b].as_f64().unwrap_or_default()) - 8.0;
-                ya.total_cmp(&yb)
-            });
-            let mut stack = f64::NEG_INFINITY;
-            for &i in &order {
-                let desired = y_at(row.values[i].as_f64().unwrap_or_default()) - 8.0;
-                let p = desired.max(stack + 13.0);
-                placed[i] = p;
-                stack = p;
+            order.sort_by(|&a, &b| point_y(a).total_cmp(&point_y(b)));
+            let (band_top, axis_top) = (band_y + 9.0, plot_bottom - 2.0);
+            let mut placed = vec![0.0f64; n];
+            let mut ceiling = f64::INFINITY;
+            for &index in order.iter().rev() {
+                placed[index] = desired[index].min(ceiling - 13.0);
+                ceiling = placed[index];
             }
-            let bottom_limit = plot_bottom + 14.0;
-            let last = order[n - 1];
-            if placed[last] > bottom_limit {
-                let shift = placed[last] - bottom_limit;
-                for value in placed.iter_mut() {
-                    *value -= shift;
+            if placed[order[0]] < band_top {
+                // No headroom above the stack: tuck the colliding labels under
+                // their points instead — 13.5 is the marker radius, a 2 px gap
+                // and the text height — still clear of the axis line.
+                let mut floor = f64::NEG_INFINITY;
+                for (rank, &index) in order.iter().enumerate() {
+                    let above = desired[index];
+                    placed[index] = if rank == 0 || above >= floor + 13.0 {
+                        above
+                    } else {
+                        (point_y(index) + 13.5).max(floor + 13.0)
+                    };
+                    floor = placed[index];
                 }
-            }
-            if placed[order[0]] < band_y + 9.0 {
-                let mut diagnostic = Diagnostic::error(
-                    Some("chart"),
-                    "chart/label-room",
-                    &format!("/rows/{}", row.index),
-                    "This row's value annotations do not fit its band",
-                );
-                diagnostic.stage = "layout".into();
-                diagnostic.supported_fixes = vec!["减少系列，或拆成多张图".into()];
-                return Err(vec![diagnostic]);
+                if placed[order[n - 1]] > axis_top {
+                    let mut diagnostic = Diagnostic::error(
+                        Some("chart"),
+                        "chart/label-room",
+                        &format!("/rows/{}", row.index),
+                        "This row's value annotations do not fit its band",
+                    );
+                    diagnostic.stage = "layout".into();
+                    diagnostic.supported_fixes = vec!["减少系列，或拆成多张图".into()];
+                    return Err(vec![diagnostic]);
+                }
             }
             let mut marks = Vec::new();
             let mut annots = Vec::new();
@@ -558,11 +562,21 @@ pub fn compile(
             .iter()
             .map(|row| row.values[0].as_f64().unwrap_or_default())
             .sum();
+        let closing_row = rows.len() > 1 && rows.len() % 5 == 1;
         let row_tone = |index: usize| -> &'static str {
-            if rows.len() > 1 && rows.len() % 5 == 1 && index == rows.len() - 1 {
+            if closing_row && index == rows.len() - 1 {
                 "external"
             } else {
                 TONES[index % TONES.len()]
+            }
+        };
+        // The closing row paints in the chart accent slot while keeping the
+        // neutral kind: the Reader's index and lens still read it as derived.
+        let mark_tone = |index: usize| -> &'static str {
+            if closing_row && index == rows.len() - 1 {
+                "accent"
+            } else {
+                row_tone(index)
             }
         };
         let value_pie_text = |v: f64| format!("{}{}", js_to_string(v), suffix);
@@ -624,6 +638,7 @@ pub fn compile(
             let v = row.values[0].as_f64().unwrap_or_default();
             let band_y = list_top + row.index as f64 * pitch;
             let tone = row_tone(row.index);
+            let fill_tone = mark_tone(row.index);
             let mut marks = Vec::new();
             if v > 0.0 {
                 let sweep = v / total * 360.0;
@@ -637,14 +652,14 @@ pub fn compile(
                 };
                 marks.push(json!({
                     "kind": "slice",
-                    "tone": tone,
+                    "tone": fill_tone,
                     "path": path,
                     "sweep": js_round(sweep * 100.0) / 100.0,
                 }));
             }
             marks.push(json!({
                 "kind": "fill",
-                "tone": tone,
+                "tone": fill_tone,
                 "x": swatch_x,
                 "y": band_y + 4.0,
                 "width": 14.0,

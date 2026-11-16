@@ -590,6 +590,56 @@ fn line_annotations_stack_with_minimum_spacing() {
 }
 
 #[test]
+fn line_annotations_stay_above_the_axis_and_their_markers() {
+    // A row whose values sit on the axis used to stack its labels downward,
+    // across the axis line and the point markers.
+    let scene = compile(json!({
+        "schema_version": 1, "diagram_type": "chart",
+        "meta": {"title":"T","evidence":"sourced"},
+        "form": "line",
+        "series": [{"id":"x","name":"X"},{"id":"y","name":"Y"}],
+        "rows": [
+            {"id":"low","label":"Low","values":[0.1, 0.3]},
+            {"id":"high","label":"High","values":[1234567, 2345678]},
+        ],
+    }));
+    let document = Html::parse_document(&html(&scene));
+    let axis_bottom = document
+        .select(&select("line[data-chart-tick]"))
+        .map(|tick| number(&tick, "y1"))
+        .fold(f64::NEG_INFINITY, f64::max);
+    let group = document
+        .select(&select("g[data-node-id='low']"))
+        .next()
+        .unwrap();
+    let mut baselines = Vec::new();
+    for series in 0..2 {
+        let annotation = group
+            .select(&select(&format!("text[data-chart-value-label='{series}']")))
+            .next()
+            .unwrap();
+        let baseline = number(&annotation, "y");
+        let marker = group
+            .select(&select(&format!("circle[data-chart-series='{series}']")))
+            .next()
+            .unwrap();
+        assert!(
+            baseline <= number(&marker, "cy") - 8.0 + 0.01,
+            "series {series} label {baseline} covers its marker"
+        );
+        assert!(
+            baseline <= axis_bottom - 2.0,
+            "series {series} label {baseline} crosses the axis at {axis_bottom}"
+        );
+        baselines.push(baseline);
+    }
+    assert!(
+        (baselines[0] - baselines[1]).abs() >= 13.0 - 0.01,
+        "{baselines:?}"
+    );
+}
+
+#[test]
 fn line_label_room_is_reported_for_a_row_that_cannot_fit() {
     let series: Vec<Value> = (0..27)
         .map(|index| json!({"id": format!("s{index}"), "name": format!("S{index}")}))
@@ -617,6 +667,41 @@ fn line_label_room_is_reported_for_a_row_that_cannot_fit() {
             && error.stage == "layout"),
         "{errors:?}"
     );
+}
+
+#[test]
+fn pie_closing_sector_paints_in_the_accent_slot() {
+    // Six rows cannot repeat the first series colour; the closing sector takes
+    // the chart accent slot while keeping the derived neutral kind.
+    let pie = |labels: &[&str]| {
+        let rows: Vec<Value> = labels
+            .iter()
+            .enumerate()
+            .map(|(index, label)| json!({"id": format!("r{index}"), "label": label, "values": [10 - index]}))
+            .collect();
+        html(&compile(json!({
+            "schema_version": 1, "diagram_type": "chart",
+            "meta": {"title":"T","evidence":"sourced"},
+            "form": "pie",
+            "rows": rows,
+        })))
+    };
+    let document = Html::parse_document(&pie(&["A", "B", "C", "D", "E", "F"]));
+    let group = document
+        .select(&select("g[data-node-id='r5']"))
+        .next()
+        .unwrap();
+    assert_eq!(group.value().attr("data-node-kind"), Some("external"));
+    for mark in ["path.ch-slice", "rect.ch-fill"] {
+        let element = group.select(&select(mark)).next().unwrap();
+        assert!(
+            element.value().classes().any(|class| class == "c-accent"),
+            "{mark} must paint in the accent slot"
+        );
+    }
+    // Five rows keep the five series tones and never reach the accent slot.
+    let five = Html::parse_document(&pie(&["A", "B", "C", "D", "E"]));
+    assert!(five.select(&select("[class*='c-accent']")).next().is_none());
 }
 
 #[test]
