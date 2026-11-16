@@ -206,19 +206,21 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-17 · M1 已验收；M2 已提交待批末检查；M3 未实施，用户指示暂停，新对话续做
-- 当前进度：1/5 个里程碑完成（M2/M3 实施中，批末 V-2、V-3、V-5 未跑，两任务均未记完成）
-- 当前状态：暂停于 M2–M3 批内——M2 已实现并提交 `55135ea3`（lifecycle/tree/erd 变更标记、换父连线、干线/合流点视图、静态图收口、tests/change.rs 9/9、cli 11/11、check_anchors 13/13，tree/erd/lifecycle 未标记产物与基线逐字节相同）；M3 仅落盘 `skills/phoenix-diagram/schemas/annotation.schema.json` 与 `examples/minimal.annotation.json`（未提交），引擎登记、layout/render/check、五语言文案、tests 与 skill 文字均未动工，实施规格见 §5.6–§5.10（照 chart 提交 `1d9e3f57` 逐项登记）
+- 最近更新：2026-11-17 · M3 已提交待批末检查；M2 待批末检查；两任务均未记完成
+- 当前进度：1/5 个里程碑完成（M2/M3 实施完成，批末 V-2、V-3、V-5 未跑）
+- 当前状态：M2 已提交 `55135ea3`；M3 已提交 `9217a694`——`annotation` 已登记为第十三类型，语义定位与重叠校验、layout/render/check 三文件、五语言文案、`white-space` 静态支持、`tests/annotation.rs` 13/13、`references/annotation.md`、SKILL.md 图型表/创作路径/描述、装配与 `--sync-bundle`（45 文件）均已完成；顺带修复 M2 遗留的 `changes` 字段缺失、两处 clippy、一处测试断言写法与 rustfmt 重排，见 [M3](ELINTP-VISUALS-P5.records/M3.md)
 - 最近完成：M1 · 变更标记在 workflow 打通（已验收，记录 [M1](ELINTP-VISUALS-P5.records/M1.md)）
-- 下一步：M3 · annotation 逐词标注图型（先完成 §5.6–§5.10 全部落点并提交；随后批末开发构建换新目录后缀，连续跑 V-2、V-3、V-5，写批末里程碑记录，回填 M2/M3 两行并分别提交完成）；本地辅助物在 `local/phoenix-diagram/`（基线 `elintp-p5-base`、开发引擎 `elintp-p5`、V-1 产物与交互驱动脚本，均不入库）
+- 下一步：M2–M3 批末——开发构建换新输出目录后缀，连续跑 V-2、V-3、V-5（含 1440×900 亮暗看图与 review-record、两张静态图、窄屏与打印），写批末里程碑记录，回填 M2/M3 两行并分别提交；本地辅助物在 `local/phoenix-diagram/`（均不入库）
 - 当前阻塞：无
-- 代码基线：`84f91b5e`（批内实现提交：`b7fab31a` M1、`55135ea3` M2）
+- 代码基线：`84f91b5e`（批内实现提交：`b7fab31a` M1、`55135ea3` M2、`9217a694` M3）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-11-17 | 十二类基线与指纹已记录；变更标记在 workflow 全链路打通，阅读器三视图切换/导出/打印/探索回退与错误输入诊断均通过 | [M1 记录](ELINTP-VISUALS-P5.records/M1.md) | `b7fab31a` |
+| M2 | 进行中 | 2026-11-17 | lifecycle、tree、erd 的变更标记与批内测试已交付；批末 V-2、V-3、V-5 未跑 | [M2–M3 批末记录](ELINTP-VISUALS-P5.records/M2M3.md) | `55135ea3` |
+| M3 | 进行中 | 2026-11-17 | annotation 图型、定位与重叠校验、布局/渲染/检查、五语言与静态支持已交付；批末 V-2、V-3、V-5 未跑 | [M3 记录](ELINTP-VISUALS-P5.records/M3.md) | `9217a694` |
 
 ## 0. 需求、范围与决策
 
