@@ -223,6 +223,9 @@
                   "type": "string",
                   "minLength": 3,
                   "pattern": "^[^.]+\\.[^.]+$"
+                },
+                "change": {
+                  "$ref": "common.schema.json#/$defs/elementChange"
                 }
               },
               "if": {
@@ -257,6 +260,9 @@
           },
           "sources": {
             "$ref": "common.schema.json#/$defs/sourceReferences"
+          },
+          "change": {
+            "$ref": "common.schema.json#/$defs/elementChange"
           }
         }
       }
@@ -344,6 +350,9 @@
           },
           "width": {
             "$ref": "common.schema.json#/$defs/relationshipWidth"
+          },
+          "change": {
+            "$ref": "common.schema.json#/$defs/relationChange"
           }
         },
         "allOf": [

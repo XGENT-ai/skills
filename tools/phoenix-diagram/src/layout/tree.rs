@@ -280,7 +280,13 @@ fn structure(nodes: &[Value], down: bool) -> (usize, Vec<Measured>, Vec<Vec<Grou
             }
         };
         for &child in &measured[index].children {
-            if measured[child].children.is_empty() {
+            // A reparented node and the node it moved away from never join a
+            // stacked list: their extra connections enter from the front face.
+            let reparent_related = nodes[child].get("parent_before").is_some()
+                || nodes
+                    .iter()
+                    .any(|node| node["parent_before"].as_str() == nodes[child]["id"].as_str());
+            if measured[child].children.is_empty() && !reparent_related {
                 run.push(child);
             } else {
                 flush(&mut run, &mut owned);
@@ -856,7 +862,7 @@ pub fn compile(
         .enumerate()
         .map(|(index, node)| scene_node(&nodes[index], index, node))
         .collect();
-    let relations = solved
+    let mut relations: Vec<Relation> = solved
         .nodes
         .iter()
         .enumerate()
@@ -890,6 +896,92 @@ pub fn compile(
             })
         })
         .collect();
+    // Reparent connections: one polyline per parent_before, routed from the
+    // old parent's exit through both generation gaps and a channel outside
+    // the old canvas into the child's front face at three quarters. The
+    // canvas only widens when a reparent exists, and gap horizontals run 6
+    // off the ordinary edges' horizontals.
+    let reparents: Vec<(usize, usize)> = nodes
+        .iter()
+        .enumerate()
+        .filter_map(|(index, node)| {
+            let old = node["parent_before"].as_str()?;
+            let old_index = solved.nodes.iter().position(|n| n.id == old)?;
+            Some((old_index, index))
+        })
+        .collect();
+    if !reparents.is_empty() {
+        const CHANNEL_INSET: f64 = 16.0;
+        let down = settings.down;
+        let channel = if down {
+            solved.view_box[0] + CHANNEL_INSET
+        } else {
+            solved.view_box[1] + CHANNEL_INSET
+        };
+        if authored_view_box.is_none() {
+            if down {
+                solved.view_box[0] += CHANNEL_INSET * 2.0;
+            } else {
+                solved.view_box[1] += CHANNEL_INSET * 2.0;
+            }
+        }
+        for (old_index, child_index) in reparents {
+            let (old, child) = (&solved.nodes[old_index], &solved.nodes[child_index]);
+            let start = edge_start(old.rect(), old.toggle_at, down);
+            let entry = if down {
+                point(child.x + child.width * 0.75, child.y)
+            } else {
+                point(child.x, child.y + child.height * 0.75)
+            };
+            let old_gap = solved.band_start[old.depth + 1] - settings.depth_gap() / 2.0 - 6.0;
+            let child_gap = solved.band_start[child.depth] - settings.depth_gap() / 2.0 - 6.0;
+            let mut points = if down {
+                vec![
+                    start,
+                    point(start.x, old_gap),
+                    point(channel, old_gap),
+                    point(channel, child_gap),
+                    point(entry.x, child_gap),
+                    entry,
+                ]
+            } else {
+                vec![
+                    start,
+                    point(old_gap, start.y),
+                    point(old_gap, channel),
+                    point(child_gap, channel),
+                    point(child_gap, entry.y),
+                    entry,
+                ]
+            };
+            points.dedup();
+            relations.push(Relation {
+                authored: Authored {
+                    id: format!("{}-before", child.id),
+                    source_path: format!("/nodes/{child_index}/parent_before"),
+                    kind: "tree-edge-before".into(),
+                    facts: json!({"from":old.id,"to":child.id}),
+                    geometry_provenance: vec!["tree-elbow".into()],
+                },
+                crossover_halo: false,
+                independent_ports: false,
+                junction: None,
+                label_owner: None,
+                from: old.id.clone(),
+                to: child.id.clone(),
+                variant: "default".into(),
+                label: String::new(),
+                note: None,
+                note_bounds: None,
+                note_backdrop: None,
+                points,
+                label_plate: None,
+                text: vec![],
+                marker_start: None,
+                marker_end: None,
+            });
+        }
+    }
     let descendants = |index: usize| {
         let (mut count, mut pending) = (0, solved.nodes[index].children.clone());
         while let Some(child) = pending.pop() {

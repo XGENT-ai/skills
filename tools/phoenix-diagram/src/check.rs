@@ -1134,11 +1134,39 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         })
         .collect();
     let workflow_v2 = svg.value().attr("data-layout-contract") == Some("readable-v2");
+    // Reparent connections cross sibling links by design (they detour through
+    // the outside channel); the kind-specific checks cover their geometry.
+    let before_pairs: std::collections::HashSet<(String, String)> = metadata
+        .as_ref()
+        .and_then(|metadata| metadata.pointer("/facts/nodes"))
+        .and_then(Value::as_array)
+        .map(|nodes| {
+            nodes
+                .iter()
+                .filter_map(|node| {
+                    Some((
+                        node["parent_before"].as_str()?.to_owned(),
+                        node["id"].as_str()?.to_owned(),
+                    ))
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let crossing_routes: Vec<_> = actual_routes
+        .iter()
+        .filter(|route| {
+            !before_pairs.contains(&(
+                route.relation["from"].as_str().unwrap_or_default().to_owned(),
+                route.relation["to"].as_str().unwrap_or_default().to_owned(),
+            ))
+        })
+        .cloned()
+        .collect();
     let shared_crossings = |left: &Value, right: &Value| {
         workflow_v2 || (left["independentPorts"] == true && right["independentPorts"] == true)
     };
     let all_crossings = geometry_checks::collect_proper_crossings(
-        &actual_routes,
+        &crossing_routes,
         &geometry_checks::CrossingOptions {
             merge_forward_collinear_waypoints: workflow_v2,
             include_shared_endpoints: Some(&shared_crossings),
@@ -1149,7 +1177,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         left["verifiedHalo"] == true && right["verifiedHalo"] == true
     };
     let crossings = geometry_checks::collect_proper_crossings(
-        &actual_routes,
+        &crossing_routes,
         &geometry_checks::CrossingOptions {
             merge_forward_collinear_waypoints: workflow_v2,
             include_shared_endpoints: Some(&shared_crossings),

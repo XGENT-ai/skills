@@ -5,7 +5,7 @@
 use super::escape_text;
 use crate::geometry::format_number as number;
 use crate::i18n;
-use crate::scene::{ChangeCounts, CompiledDiagram, Node};
+use crate::scene::{ChangeCounts, CompiledDiagram, Node, Point};
 use std::fmt::Write;
 
 pub(super) fn root_attributes(scene: &CompiledDiagram) -> String {
@@ -40,6 +40,47 @@ pub(super) fn relation_attribute(scene: &CompiledDiagram, index: usize) -> Strin
         .unwrap_or_default()
 }
 
+/// `data-change-hidden-in` for an erd trunk container.
+pub(super) fn trunk_attribute(scene: &CompiledDiagram, trunk_id: &str) -> String {
+    scene
+        .changes
+        .as_ref()
+        .and_then(|changes| changes.trunks.get(trunk_id))
+        .map(|view| format!(" data-change-hidden-in=\"{view}\""))
+        .unwrap_or_default()
+}
+
+/// `data-change` for an erd field row from its effective mark.
+pub(super) fn field_attribute(scene: &CompiledDiagram, source_path: &str) -> String {
+    scene
+        .changes
+        .as_ref()
+        .and_then(|changes| changes.fields.get(source_path))
+        .map(|mark| attribute(mark))
+        .unwrap_or_default()
+}
+
+/// A bare field-row mark symbol (no disc): the row tint carries the color.
+pub(super) fn field_mark(scene: &CompiledDiagram, mark: &str, cx: f64, cy: f64) -> String {
+    let label = i18n::resolve(&scene.meta).text(&format!("change.mark.{mark}"), &[]);
+    let symbol = match mark {
+        "added" => format!("M {} 0 H {} M 0 {} V {}", -3.0, 3.0, -3.0, 3.0),
+        "removed" => "M -3 0 H 3".to_owned(),
+        _ => "M -3 0 C -1 -1.95, 1 1.95, 3 0".to_owned(),
+    };
+    let mut out = String::new();
+    write!(
+        out,
+        "<g data-change-mark=\"{mark}\" role=\"img\" aria-label=\"{}\" transform=\"translate({} {})\"><path d=\"{symbol}\"/><title>{}</title></g>",
+        escape_text(&label),
+        number(cx),
+        number(cy),
+        escape_text(&label)
+    )
+    .unwrap();
+    out
+}
+
 pub(super) fn defs(scene: &CompiledDiagram) -> String {
     if scene.changes.is_none() {
         return String::new();
@@ -57,6 +98,9 @@ svg[data-change-ui] [data-change-mark="removed"] circle { fill: var(--security-s
 svg[data-change-ui] [data-change-mark="changed"] circle { fill: var(--cloud-stroke); stroke: none; }
 svg[data-change-ui] [data-change-mark] path { fill: none; stroke: var(--mask); stroke-width: 2px; stroke-linecap: round; }
 svg[data-change-ui] [data-change-band] text { fill: var(--text); }
+svg[data-change-ui] .er-change-row-added { fill: var(--backend-stroke); fill-opacity: 0.14; }
+svg[data-change-ui] .er-change-row-removed { fill: var(--security-stroke); fill-opacity: 0.14; }
+svg[data-change-ui] .er-change-row-changed { fill: var(--cloud-stroke); fill-opacity: 0.14; }
 svg[data-change-ui][data-change-view="changes"] g[data-node-id][data-change="added"] > rect[data-graph-role="node-body"] { stroke: var(--backend-stroke); stroke-width: 2.5px; }
 svg[data-change-ui][data-change-view="changes"] g[data-node-id][data-change="changed"] > rect[data-graph-role="node-body"] { stroke: var(--cloud-stroke); stroke-width: 2.5px; stroke-dasharray: 2px 3px; }
 svg[data-change-ui][data-change-view="changes"] g[data-node-id][data-change="removed"] > rect[data-graph-role="node-body"] { stroke: var(--security-stroke); stroke-width: 2.5px; stroke-dasharray: 6px 4px; }
@@ -105,6 +149,34 @@ pub(super) fn edge_marks(scene: &CompiledDiagram) -> String {
     };
     let mut out = String::new();
     if scene.diagram_type == crate::input::DiagramType::Tree {
+        // Only the reparented node's two connections carry badges — the
+        // child-following links share the child node's own badge. Both sit
+        // beside the last route segment's midpoint, where the two links are
+        // distinguishable.
+        let reparented: std::collections::BTreeSet<&str> = scene
+            .relations
+            .iter()
+            .filter(|relation| relation.authored.kind == "tree-edge-before")
+            .map(|relation| relation.to.as_str())
+            .collect();
+        for (index, relation) in scene.relations.iter().enumerate() {
+            let carries_badge = relation.authored.kind == "tree-edge-before"
+                || (relation.authored.kind == "tree-edge"
+                    && reparented.contains(relation.to.as_str()));
+            if !carries_badge {
+                continue;
+            }
+            let Some(mark) = changes.relations.get(index).and_then(Option::as_deref) else {
+                continue;
+            };
+            if relation.points.len() < 2 {
+                continue;
+            }
+            let end = relation.points[relation.points.len() - 1];
+            let start = relation.points[relation.points.len() - 2];
+            let mid = Point { x: (start.x + end.x) / 2.0, y: (start.y + end.y) / 2.0 };
+            out.push_str(&badge(scene, mark, mid.x + 9.0, mid.y - 7.0, 6.0, 3.0));
+        }
         return out;
     }
     for (index, relation) in scene.relations.iter().enumerate() {

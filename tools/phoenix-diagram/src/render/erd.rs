@@ -1,5 +1,5 @@
 // Entity-relationship SVG body, derived from Archify render-erd.mjs markup (MIT).
-use super::{escape_text, sigil_shape, TypeRenderer};
+use super::{changes, escape_text, sigil_shape, TypeRenderer};
 use crate::geometry::format_number as number;
 use crate::i18n::Locale;
 use crate::layout::erd::trunks;
@@ -320,15 +320,16 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
         let Some(rule) = trunk.rule else {
             continue;
         };
-        write!(out, "<path data-er-trunk=\"\" data-composition-points=\"{}\" d=\"{}\" class=\"{}\" stroke-width=\"1.5\"/>",
+        let hidden = changes::trunk_attribute(scene, &trunk.authored.id);
+        write!(out, "<path data-er-trunk=\"\"{hidden} data-composition-points=\"{}\" d=\"{}\" class=\"{}\" stroke-width=\"1.5\"/>",
             points_value(&rule), crate::geometry::polyline_path(&rule),
             variant_class(trunk.authored.facts["variant"].as_str().unwrap_or("default"))).unwrap();
     }
     for (index, relation) in scene.relations.iter().enumerate() {
         let facts = &relation.authored.facts;
         let width = facts["width"].as_f64().unwrap_or(1.5);
-        write!(out, "<path {} data-er-ends=\"{}\" data-graph-role=\"edge\" data-composition-points=\"{}\" d=\"{}\" class=\"{}\" data-animate=\"edge\" style=\"--step:{}\" stroke-width=\"{}\" marker-start=\"url(#{})\" marker-end=\"url(#{})\"/>",
-            edge_attributes(relation, index), ends(facts), points_value(&relation.points), relation_path(relation),
+        write!(out, "<path {}{} data-er-ends=\"{}\" data-graph-role=\"edge\" data-composition-points=\"{}\" d=\"{}\" class=\"{}\" data-animate=\"edge\" style=\"--step:{}\" stroke-width=\"{}\" marker-start=\"url(#{})\" marker-end=\"url(#{})\"/>",
+            changes::relation_attribute(scene, index), edge_attributes(relation, index), ends(facts), points_value(&relation.points), relation_path(relation),
             variant_class(&relation.variant), index.min(12), number(width),
             marker_id(relation.marker_start, "start"), marker_id(relation.marker_end, "end")).unwrap();
     }
@@ -368,7 +369,8 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
                 .detail_rows
                 .first()
                 .map_or(30.0, |row| row.bounds.y - b.y);
-        write!(out, "<g {} class=\"er-hue-{}\">{}<rect {} rx=\"8\" class=\"c-mask\"/><rect data-graph-role=\"node-body\" {} rx=\"8\" class=\"c-database er-table\" data-animate=\"node\" style=\"--step:{}\" stroke-width=\"1.2\"/>",
+        write!(out, "<g {}{} class=\"er-hue-{}\">{}<rect {} rx=\"8\" class=\"c-mask\"/><rect data-graph-role=\"node-body\" {} rx=\"8\" class=\"c-database er-table\" data-animate=\"node\" style=\"--step:{}\" stroke-width=\"1.2\"/>",
+            changes::node_attribute(scene, node),
             node_attributes(&locale, &node.authored.id, &node.label, &node.authored.source_path,
                 &[("kind", Some("database")), ("sublabel", sublabel), ("tag", tag), ("context", Some(&context))],
                 &[sublabel, Some(&context)]),
@@ -394,11 +396,28 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
             number(b.x), number(header), number(b.x + b.width), number(header)).unwrap();
         for (index, row) in node.detail_rows.iter().enumerate() {
             let top = row.bounds.y;
-            write!(out, "<g data-detail=\"context\" data-er-row=\"{index}\" data-source-path=\"{}\"><line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" class=\"c-grid er-row-rule\" stroke-width=\"0.5\"/>",
+            let row_change = changes::field_attribute(scene, &row.source_path);
+            write!(out, "<g data-detail=\"context\" data-er-row=\"{index}\"{row_change} data-source-path=\"{}\"><line x1=\"{}\" y1=\"{}\" x2=\"{}\" y2=\"{}\" class=\"c-grid er-row-rule\" stroke-width=\"0.5\"/>",
                 escape_text(&row.source_path), number(b.x), number(top), number(b.x + b.width), number(top)).unwrap();
             if index % 2 == 1 {
                 write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"4\" class=\"er-zebra\"/>",
                     number(b.x + 4.0), number(top + 1.0), number(b.width - 8.0), number(row.bounds.height - 2.0)).unwrap();
+            }
+            if let Some(mark) = scene
+                .changes
+                .as_ref()
+                .and_then(|c| c.fields.get(row.source_path.as_str()))
+            {
+                // The row-wide tint plus the mark symbol sit left of the key
+                // badge, inside the row's existing padding.
+                write!(out, "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" rx=\"4\" class=\"er-change-row er-change-row-{mark}\"/>",
+                    number(b.x + 4.0), number(top + 1.0), number(b.width - 8.0), number(row.bounds.height - 2.0)).unwrap();
+                out.push_str(&changes::field_mark(
+                    scene,
+                    mark,
+                    b.x + 5.0,
+                    top + row.bounds.height / 2.0,
+                ));
             }
             let primary = row
                 .text
@@ -445,6 +464,7 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
             }
             out.push_str("</g>");
         }
+        out.push_str(&changes::node_mark(scene, node));
         out.push_str("</g>");
     }
     for (index, relation) in scene.relations.iter().enumerate() {

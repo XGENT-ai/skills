@@ -8,7 +8,7 @@ use crate::diagnostic::{Diagnostic, Diagnostics};
 use crate::i18n;
 use crate::input::{DiagramInput, DiagramType};
 use crate::layout::tree::wrap_text;
-use crate::scene::{ChangeBand, ChangeCounts, ChangeFacts, CompiledDiagram, Point, Rect, Text};
+use crate::scene::{ChangeBand, ChangeCounts, ChangeFacts, CompiledDiagram, DiagramFacts, Point, Rect, Text};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -464,6 +464,8 @@ pub(crate) fn attach(diagram: &mut CompiledDiagram, input: &DiagramInput) -> Res
                 .cloned(),
         );
     }
+    let trunks = trunk_views(diagram, &resolved);
+    let junctions = junction_views(diagram, &relations);
     let band = build_band(diagram, &resolved);
     diagram.view_box.height += band.bounds.height;
     diagram.changes = Some(ChangeFacts {
@@ -471,11 +473,78 @@ pub(crate) fn attach(diagram: &mut CompiledDiagram, input: &DiagramInput) -> Res
         nodes: resolved.nodes,
         relations,
         fields: resolved.fields,
-        trunks: BTreeMap::new(),
-        junctions: Vec::new(),
+        trunks,
+        junctions,
         band,
     });
     Ok(())
+}
+
+/// An erd trunk exists only in the view where none of its member relations
+/// exist: every member added hides it in the before view, every member
+/// removed hides it in the after view. Mixed or unmarked trunks stay in both.
+fn trunk_views(diagram: &CompiledDiagram, resolved: &Resolved) -> BTreeMap<String, String> {
+    let mut trunks = BTreeMap::new();
+    for container in &diagram.containers {
+        if container.authored.kind != "erd-trunk" {
+            continue;
+        }
+        let marks: Vec<Option<&str>> = container
+            .authored
+            .geometry_provenance
+            .iter()
+            .filter_map(|path| resolved.relations.get(path.as_str()).map(|mark| Some(mark.as_str())))
+            .collect();
+        if marks.is_empty() {
+            continue;
+        }
+        if marks.iter().all(|mark| *mark == Some("added")) {
+            trunks.insert(container.authored.id.clone(), "before".to_owned());
+        } else if marks.iter().all(|mark| *mark == Some("removed")) {
+            trunks.insert(container.authored.id.clone(), "after".to_owned());
+        }
+    }
+    trunks
+}
+
+/// A lifecycle junction disappears from a view when fewer than two visible
+/// relations pass through it (within 0.5 of the polyline).
+fn junction_views(diagram: &CompiledDiagram, relations: &[Option<String>]) -> Vec<Vec<String>> {
+    let DiagramFacts::Lifecycle { presentation, .. } = &diagram.facts else {
+        return Vec::new();
+    };
+    let visible_in = |mark: Option<&str>, view: &str| match mark {
+        Some("added") => view == "after",
+        Some("removed") => view == "before",
+        _ => true,
+    };
+    presentation
+        .junctions
+        .iter()
+        .map(|junction| {
+            let mut hidden = Vec::new();
+            for view in ["before", "after"] {
+                let visible = diagram
+                    .relations
+                    .iter()
+                    .zip(relations.iter())
+                    .filter(|(relation, mark)| {
+                        visible_in(mark.as_deref(), view)
+                            && relation.points.iter().zip(relation.points.iter().skip(1)).any(
+                                |(start, end)| {
+                                    crate::geometry::point_segment_distance(*junction, *start, *end)
+                                        <= 0.5
+                                },
+                            )
+                    })
+                    .count();
+                if visible < 2 {
+                    hidden.push(view.to_owned());
+                }
+            }
+            hidden
+        })
+        .collect()
 }
 
 fn build_band(diagram: &CompiledDiagram, resolved: &Resolved) -> ChangeBand {

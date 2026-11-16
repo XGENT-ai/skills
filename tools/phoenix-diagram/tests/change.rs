@@ -301,6 +301,145 @@ fn relation_and_value_marks_outside_the_contract_are_schema_errors() {
 }
 
 #[test]
+fn tree_reparent_appends_a_before_connection_and_counts_both_views() {
+    let project = Project::new();
+    let value = json!({
+        "schema_version": 1,
+        "diagram_type": "tree",
+        "meta": {"title": "Reparent", "output": "tree.html"},
+        "nodes": [
+            {"id": "r", "label": "Root"},
+            {"id": "a", "parent": "r", "label": "Branch A"},
+            {"id": "g", "parent": "a", "label": "Leaf G", "parent_before": "r"},
+            {"id": "b", "parent": "a", "label": "Leaf B"}
+        ]
+    });
+    let candidate = project.write("tree.json", &value);
+    let output = run(&[
+        flag("validate"),
+        flag("tree"),
+        candidate.as_os_str(),
+        flag("--layout-json"),
+        flag("--json"),
+    ]);
+    assert_eq!(output.status.code(), Some(0), "{:?}", parsed(&output));
+    let scene = parsed(&output);
+    let changes = &scene["layout"]["changes"];
+    assert_eq!(changes["counts"], json!({"added": 1, "removed": 1, "changed": 0}));
+    let relations = scene["layout"]["relations"].as_array().unwrap();
+    assert!(relations.iter().any(|relation| {
+        relation["authored"]["sourcePath"].as_str() == Some("/nodes/2/parent_before")
+            && relation["authored"]["kind"] == "tree-edge-before"
+    }));
+    let before_index = relations
+        .iter()
+        .position(|relation| relation["authored"]["kind"] == "tree-edge-before")
+        .unwrap();
+    assert_eq!(changes["relations"][before_index], json!("removed"));
+}
+
+#[test]
+fn erd_entity_marks_reach_every_field_row_and_the_artifact() {
+    let project = Project::new();
+    let value = json!({
+        "schema_version": 1,
+        "diagram_type": "erd",
+        "meta": {"title": "Erd change", "output": "erd.html"},
+        "entities": [
+            {"id": "users", "label": "users", "row": 0, "col": 0, "change": "changed",
+             "attributes": [
+                {"name": "id", "type": "int", "key": "pk"},
+                {"name": "email", "type": "text"}
+             ]},
+            {"id": "orders", "label": "orders", "row": 0, "col": 3,
+             "attributes": [{"name": "id", "type": "int", "key": "pk"}]}
+        ],
+        "relationships": [
+            {"from": "users", "to": "orders", "fromCardinality": "one", "toCardinality": "many"}
+        ]
+    });
+    let candidate = project.write("erd.json", &value);
+    let output = run(&[
+        flag("validate"),
+        flag("erd"),
+        candidate.as_os_str(),
+        flag("--layout-json"),
+        flag("--json"),
+    ]);
+    assert_eq!(output.status.code(), Some(0), "{:?}", parsed(&output));
+    let scene = parsed(&output);
+    let changes = &scene["layout"]["changes"];
+    assert_eq!(changes["nodes"], json!({"users": "changed"}));
+    let fields = changes["fields"].as_object().unwrap();
+    assert_eq!(fields.len(), 2);
+    assert!(fields.values().all(|mark| mark == "changed"));
+    assert_eq!(changes["counts"]["changed"], 3);
+
+    let html = project.0.join("erd.html");
+    let output = run(&[
+        flag("deliver"),
+        flag("erd"),
+        candidate.as_os_str(),
+        html.as_os_str(),
+        flag("--json"),
+    ]);
+    assert_eq!(output.status.code(), Some(0));
+    let body = fs::read_to_string(&html).unwrap();
+    assert_eq!(body.matches("er-change-row er-change-row-changed").count(), 2);
+    let output = run(&[flag("check"), html.as_os_str(), flag("--json")]);
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(parsed(&output)["status"], "pass");
+}
+
+#[test]
+fn lifecycle_transition_marks_count_and_pass_the_artifact_check() {
+    let project = Project::new();
+    let value = json!({
+        "schema_version": 3,
+        "diagram_type": "lifecycle",
+        "meta": {"title": "Lifecycle change", "output": "life.html"},
+        "mainPath": ["open", "busy", "done"],
+        "states": [
+            {"id": "open", "type": "start", "label": "Open"},
+            {"id": "busy", "type": "active", "label": "Busy"},
+            {"id": "done", "type": "success", "label": "Done"},
+            {"id": "blocked", "type": "active", "label": "Blocked", "change": "added"}
+        ],
+        "transitions": [
+            {"from": "open", "to": "busy", "label": "start"},
+            {"from": "busy", "to": "done", "label": "finish", "change": "removed"},
+            {"from": "open", "to": "blocked", "label": "stall", "change": "added"},
+            {"from": "blocked", "to": "open", "label": "resume", "change": "added"}
+        ]
+    });
+    let candidate = project.write("life.json", &value);
+    let output = run(&[
+        flag("validate"),
+        flag("lifecycle"),
+        candidate.as_os_str(),
+        flag("--layout-json"),
+        flag("--json"),
+    ]);
+    assert_eq!(output.status.code(), Some(0), "{:?}", parsed(&output));
+    let changes = parsed(&output)["layout"]["changes"].clone();
+    assert_eq!(changes["counts"], json!({"added": 3, "removed": 1, "changed": 0}));
+    assert!(changes["junctions"].is_array());
+
+    let html = project.0.join("life.html");
+    let output = run(&[
+        flag("deliver"),
+        flag("lifecycle"),
+        candidate.as_os_str(),
+        html.as_os_str(),
+        flag("--json"),
+    ]);
+    assert_eq!(output.status.code(), Some(0));
+    let output = run(&[flag("check"), html.as_os_str(), flag("--json")]);
+    assert_eq!(output.status.code(), Some(0));
+    assert_eq!(parsed(&output)["status"], "pass");
+}
+
+#[test]
 fn band_notes_appear_only_when_a_changed_mark_exists() {
     let project = Project::new();
     let mut value = marked_workflow();

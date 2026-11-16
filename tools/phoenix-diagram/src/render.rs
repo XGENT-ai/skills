@@ -916,8 +916,14 @@ fn render_svg_layers(scene: &CompiledDiagram, layers: Option<&DeltaLayers>) -> S
     }
     write_relation_paths(scene, &mut svg, layers.map(|layers| &layers.head));
     if let DiagramFacts::Lifecycle { presentation, .. } = &scene.facts {
-        for point in &presentation.junctions {
-            write!(svg,"<circle cx=\"{}\" cy=\"{}\" r=\"2.6\" data-lifecycle-junction=\"\" style=\"fill: var(--arrow)\" aria-hidden=\"true\"/>",number(point.x),number(point.y)).unwrap();
+        for (index, point) in presentation.junctions.iter().enumerate() {
+            let hidden = scene
+                .changes
+                .as_ref()
+                .and_then(|changes| changes.junctions.get(index))
+                .map(|views| format!(" data-change-hidden-in=\"{}\"", views.join(" ")))
+                .unwrap_or_default();
+            write!(svg,"<circle cx=\"{}\" cy=\"{}\" r=\"2.6\" data-lifecycle-junction=\"\"{hidden} style=\"fill: var(--arrow)\" aria-hidden=\"true\"/>",number(point.x),number(point.y)).unwrap();
         }
     }
     if let Some(layers) = layers {

@@ -127,7 +127,18 @@
           },
           "sources": {
             "$ref": "common.schema.json#/$defs/sourceReferences"
+          },
+          "change": {
+            "$ref": "common.schema.json#/$defs/elementChange"
+          },
+          "parent_before": {
+            "$ref": "common.schema.json#/$defs/id"
           }
+        },
+        "dependentRequired": {
+          "parent_before": [
+            "parent"
+          ]
         }
       }
     },

@@ -338,7 +338,7 @@ fn interactive_selector(selector: &str) -> bool {
     if PSEUDO.iter().any(|value| selector.contains(value)) {
         return true;
     }
-    const RUNTIME: [&str; 39] = [
+    const RUNTIME: [&str; 41] = [
         "data-focus",
         "data-reach",
         "data-lens",
@@ -359,6 +359,8 @@ fn interactive_selector(selector: &str) -> bool {
         "data-tree-hidden",
         "data-tree-toggle",
         "data-tree-expand-all",
+        "data-change-view=\"before\"",
+        "data-change-view=\"after\"",
         "data-lifecycle-rail",
         ".ambient-",
         ".intent-trace-",
@@ -1561,6 +1563,14 @@ fn drop_element(name: &str, attributes: &[Attribute]) -> bool {
             )
         })
     {
+        return true;
+    }
+    // The before/after band groups never enter a static figure; it only
+    // carries the changes view.
+    if attributes.iter().any(|attribute| {
+        attribute.name == "data-change-when"
+            && matches!(attribute.value.as_str(), "before" | "after")
+    }) {
         return true;
     }
     attributes.iter().any(|attribute| {

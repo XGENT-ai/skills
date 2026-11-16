@@ -154,6 +154,9 @@
           },
           "step": {
             "type": "string"
+          },
+          "change": {
+            "$ref": "common.schema.json#/$defs/elementChange"
           }
         }
       }
@@ -185,6 +188,9 @@
           },
           "variant": {
             "$ref": "common.schema.json#/$defs/variant"
+          },
+          "change": {
+            "$ref": "common.schema.json#/$defs/relationChange"
           }
         }
       }

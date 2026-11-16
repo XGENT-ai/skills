@@ -191,14 +191,14 @@
     },
     {
       "path": "schemas/erd.schema.json",
-      "size": 9266,
-      "sha256": "79fb81efea31d7d98ac034b1a78a56c8a8a0060661a7f3fdf3e8bed1f578f89b",
+      "size": 9576,
+      "sha256": "2cd2b5d05bf0524794d1a8f1f0274d792467abcef8ab650d554252b48753e88b",
       "mode": 420
     },
     {
       "path": "schemas/lifecycle.schema.json",
-      "size": 5599,
-      "sha256": "ea23c90b390e1ca3e0aedf263ebe65f7de8bf2780f5a4c8e6bd96febecbdc634",
+      "size": 5794,
+      "sha256": "6190ca507bbf42dd948e19964ef378727be6bb72c4eb92b04f0bdfcef37d379c",
       "mode": 420
     },
     {
@@ -221,8 +221,8 @@
     },
     {
       "path": "schemas/tree.schema.json",
-      "size": 3109,
-      "sha256": "0135392aa0e305b54c840de6009c3b7d35b58fdf1e779601cb2a38ea2fbd0ec4",
+      "size": 3403,
+      "sha256": "e40877b51e2ab906b4373ad4901b9bcf913974075e1031b01bdb29f066220294",
       "mode": 420
     },
     {

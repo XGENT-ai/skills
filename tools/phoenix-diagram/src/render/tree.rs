@@ -1,4 +1,4 @@
-use super::{escape_text, TypeRenderer};
+use super::{changes, escape_text, TypeRenderer};
 use crate::geometry::{format_number as number, rounded_path};
 use crate::layout::tree::{STACKED, TOGGLE_R};
 use crate::scene::{Card, CompiledDiagram, DiagramFacts, Node, Text};
@@ -93,9 +93,13 @@ struct Hierarchy<'a> {
 
 impl<'a> Hierarchy<'a> {
     fn of(scene: &'a CompiledDiagram) -> Self {
+        // Only the current-view parent links define the hierarchy; the
+        // reparent connections (kind tree-edge-before) follow the child's
+        // ancestry without entering it.
         let parent: HashMap<&str, &str> = scene
             .relations
             .iter()
+            .filter(|relation| relation.authored.kind == "tree-edge")
             .map(|relation| (relation.to.as_str(), relation.from.as_str()))
             .collect();
         let root = match &scene.facts {
@@ -228,10 +232,11 @@ fn write_node(
     }
     write!(
         out,
-        " data-node-context=\"{}\" data-source-path=\"{}\" data-tree-depth=\"{depth}\"{} class=\"{}\"><title>{}</title>",
+        " data-node-context=\"{}\" data-source-path=\"{}\" data-tree-depth=\"{depth}\"{}{} class=\"{}\"><title>{}</title>",
         escape_text(&context),
         escape_text(&node.authored.source_path),
         tree.attributes(id),
+        changes::node_attribute(scene, node),
         tree.hue_class(id),
         escape_text(&title.join(" · "))
     )
@@ -285,6 +290,7 @@ fn write_node(
         &lines("/sublabel"),
         "data-detail=\"context\" class=\"t-muted tree-sublabel\"",
     );
+    out.push_str(&changes::node_mark(scene, node));
     out.push_str("</g>");
 }
 
@@ -301,8 +307,8 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
             .map(|point| format!("{},{}", number(point.x), number(point.y)))
             .collect::<Vec<_>>()
             .join(";");
-        write!(out, "<path data-edge-from=\"{}\" data-edge-to=\"{}\" data-edge-key=\"{index}\"{} data-graph-role=\"edge\" data-composition-points=\"{points}\" d=\"{}\" class=\"a-default tree-edge{}\" data-animate=\"edge\" style=\"--step:{}\" stroke-width=\"{}\"/>",
-            escape_text(&relation.from), escape_text(&relation.to), tree.attributes(&relation.to), rounded_path(&relation.points, 10.0),
+        write!(out, "<path data-edge-from=\"{}\" data-edge-to=\"{}\" data-edge-key=\"{index}\"{}{} data-graph-role=\"edge\" data-composition-points=\"{points}\" d=\"{}\" class=\"a-default tree-edge{}\" data-animate=\"edge\" style=\"--step:{}\" stroke-width=\"{}\"/>",
+            escape_text(&relation.from), escape_text(&relation.to), tree.attributes(&relation.to), changes::relation_attribute(scene, index), rounded_path(&relation.points, 10.0),
             if hued { format!(" tree-edge-hued {}", tree.hue_class(&relation.to)) } else { " tree-edge-trunk".into() },
             step(tree.ancestors(&relation.to).len()), if hued { "1.5" } else { "1.8" }).unwrap();
     }
@@ -331,8 +337,9 @@ fn body(scene: &CompiledDiagram, out: &mut String) {
         let expand = escape_text(&locale.text("tree.toggle.expand", &params));
         let (cx, cy) = (toggle.bounds.x + TOGGLE_R, toggle.bounds.y + TOGGLE_R);
         let arm = TOGGLE_R * 0.42;
-        write!(out, "<g data-tree-toggle=\"{}\" data-tree-count=\"{count}\"{}{} data-tree-label-collapse=\"{collapse}\" data-tree-label-expand=\"{expand}\" role=\"button\" tabindex=\"0\" aria-expanded=\"true\" aria-label=\"{collapse}\" class=\"{}\">",
+        write!(out, "<g data-tree-toggle=\"{}\" data-tree-count=\"{count}\"{}{}{} data-tree-label-collapse=\"{collapse}\" data-tree-label-expand=\"{expand}\" role=\"button\" tabindex=\"0\" aria-expanded=\"true\" aria-label=\"{collapse}\" class=\"{}\">",
             escape_text(id), tree.attributes(id),
+            scene.changes.as_ref().and_then(|c| c.nodes.get(id)).map(|mark| changes::attribute(mark)).unwrap_or_default(),
             if toggle.authored.facts["initiallyCollapsed"] == true { " data-tree-initially-collapsed=\"\"" } else { "" },
             tree.hue_class(id)).unwrap();
         write!(out, "<circle cx=\"{0}\" cy=\"{1}\" r=\"{2}\" class=\"tree-toggle-hit\"/><circle cx=\"{0}\" cy=\"{1}\" r=\"{3}\" class=\"tree-toggle-disc\" stroke-width=\"1.2\"/><path class=\"tree-toggle-glyph\" d=\"M {4} {1} H {5}\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><path class=\"tree-toggle-glyph tree-toggle-plus\" d=\"M {0} {6} V {7}\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>",
