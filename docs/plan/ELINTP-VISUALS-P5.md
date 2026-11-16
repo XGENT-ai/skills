@@ -206,13 +206,13 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-17 · M2、M3 已验收完成；M4 未开始
-- 当前进度：3/5 个里程碑完成
-- 当前状态：M2–M3 批末通过——4 类 candidate 的阅读器与两种字体静态图共 24 张 1440×900 截图逐张审核，12 份 summary 为 `deliveryStatus: complete`；三视图切换、树折叠开关、erd 干线、lifecycle 合流点 22 项交互断言全过；窄屏 360 与打印、导出通过；6 份错误输入均以约定诊断码失败且未产出 HTML；V-5 的 Rust 91 项与 Node 34 项、装配检查全过。批末修复三处：标注节点缺 `id`、同级换父连线绕行、静态图残留视图切换样式（`6330c17b`、`679e2d08`），见 [M2–M3 批末记录](ELINTP-VISUALS-P5.records/M2M3.md)
-- 最近完成：M3 · 逐词标注图型（记录 [M3](ELINTP-VISUALS-P5.records/M3.md)）
-- 下一步：M4 · 接口文字同步与 elintp 选图（§6.2 其余文字、§6.3、V-4 与 V-5 的 `skill.test.js`），完成后进入 M5 收口；本地辅助物在 `local/phoenix-diagram/`（均不入库）
+- 最近更新：2026-11-17 · M4 已验收完成；M5 未开始
+- 当前进度：4/5 个里程碑完成
+- 当前状态：M4 完成——描述改为 §6.2 的 199 字文本，五份 references、schema 清单、`docs/phoenix-diagram.md`、README、`bin/xgent-skills.js` 与 elintp「出图」同步到十三类与变更视图/逐词标注两项能力；V-4 三份材料 17 项页面检查（页内三视图、断网、360 px、打印、禁用脚本、grep）全过，V-5 的 `skill.test.js` 6 项与 elintp 21 项通过（`31bb3ff4`），见 [M4 记录](ELINTP-VISUALS-P5.records/M4.md)
+- 最近完成：M4 · 接口文字同步与 elintp 选图（记录 [M4](ELINTP-VISUALS-P5.records/M4.md)）
+- 下一步：M5 · 阶段收口与跨期终验（V-6 聚合回归与十二类字节比对、§9.2 终验证据表、V-7 从干净状态的真实使用、最终提交与 SHA 回填）；本地辅助物在 `local/phoenix-diagram/`（均不入库）
 - 当前阻塞：无
-- 代码基线：`84f91b5e`（批内实现提交：`b7fab31a` M1、`55135ea3` M2、`9217a694` M3；批末修复 `6330c17b`、`679e2d08`）
+- 代码基线：`84f91b5e`（批内实现提交：`b7fab31a` M1、`55135ea3` M2、`9217a694` M3；批末修复 `6330c17b`、`679e2d08`；M4 `31bb3ff4`）
 
 ### 完成记录
 
@@ -221,6 +221,7 @@ REVIEW @progress_consistency:
 | M1 | 已完成 | 2026-11-17 | 十二类基线与指纹已记录；变更标记在 workflow 全链路打通，阅读器三视图切换/导出/打印/探索回退与错误输入诊断均通过 | [M1 记录](ELINTP-VISUALS-P5.records/M1.md) | `b7fab31a` |
 | M2 | 已完成 | 2026-11-17 | lifecycle、tree、erd 的变更视图、静态图、三视图与错误输入均通过 V-2；批末修复同级换父连线绕行与静态图样式残留 | [M2–M3 批末记录](ELINTP-VISUALS-P5.records/M2M3.md) | `55135ea3`；修复 `6330c17b` |
 | M3 | 已完成 | 2026-11-17 | annotation 的看图、搜索与他人详情、主题/预设、导出与错误输入均通过 V-3；批末修复节点身份缺失 | [M3 记录](ELINTP-VISUALS-P5.records/M3.md) | `9217a694`；修复 `679e2d08` |
+| M4 | 已完成 | 2026-11-17 | 十三类与两项能力的接口文字同步；V-4 三份材料 17 项页面检查与 V-5 接口测试通过 | [M4 记录](ELINTP-VISUALS-P5.records/M4.md) | `31bb3ff4` |
 
 ## 0. 需求、范围与决策
 
