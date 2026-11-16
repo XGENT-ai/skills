@@ -2,7 +2,7 @@
 
 - 目标包：[ELINTP-VISUALS-P4-gaps.ui-target.md](../../ELINTP-VISUALS-P4-gaps.ui-target.md)，目标指纹 `cbb77004f7a8`（与 R1 相同，本轮未改目标包）。
 - 来源报告：[R1 UI 验收报告](../../ELINTP-VISUALS-P4-gaps.ui-review.md)（判定：需要修改；无停滞预警、无待裁定）。
-- 被测版本：基线 HEAD `8f3e66650c6ce97f673e8695f201e8e0b810b284` + 本轮工作树改动（`tools/phoenix-diagram` 差异 SHA-256 `a8335984e37676c7aaa47784db21120c019103719dbaebeb30a9af9b32ee7498`；内容与本轮 `UI修复` 提交相同）。引擎按计划 §9.1 从当前代码构建（dev 调试版 `tools/phoenix-diagram/target/debug/phoenix-diagram`，`mise exec --no-deps -- mbx build … --bin phoenix-diagram`），装配模板 `assets/template.html` 已按 `assemble-phoenix-diagram-reader.mjs` 重新生成（964902 字节）。
+- 被测版本：UI修复 `9e2fc134`（采集时工作树 dirty@8f3e6665，`tools/phoenix-diagram` 差异 SHA-256 `a8335984e37676c7aaa47784db21120c019103719dbaebeb30a9af9b32ee7498`，与该提交内容相同）。引擎按计划 §9.1 从当前代码构建（dev 调试版 `tools/phoenix-diagram/target/debug/phoenix-diagram`，`mise exec --no-deps -- mbx build … --bin phoenix-diagram`），装配模板 `assets/template.html` 已按 `assemble-phoenix-diagram-reader.mjs` 重新生成（964902 字节）。
 - 输入：沿用 R1 的四份 candidate（未复制，直接读 [r1/logs/inputs/](../r1/logs/inputs/)）：bar `08661f06…`、line `389db7d6…`、limits `f2b944bc…`、pie `cfc6302d…`。数据、语言、单位、note 行与 R1 完全一致。
 - 引擎产物：每份 candidate 跑 `finalize chart` 与 `static chart --font-policy embedded`，8/8 exit 0、`automatedStatus: pass`，summary 在 [logs/products/](logs/products/)。
 - 交互与实测：Playwright（`tools/phoenix-ui/node_modules`）驱动系统 Chrome。测量脚本 [logs/verify.cjs](logs/verify.cjs)、[logs/factcheck.cjs](logs/factcheck.cjs)、[logs/zoom.cjs](logs/zoom.cjs)，原始读数 [logs/verify.json](logs/verify.json)、[logs/factcheck.json](logs/factcheck.json)。条件同 R1：1440×900、DPR 1（对齐矩阵）或 DPR 3（放大核对）、`?theme=light|dark`、`reducedMotion: reduce`、等 `document.fonts.ready`；无账号、无业务数据写入、固定输入、无网络请求。
