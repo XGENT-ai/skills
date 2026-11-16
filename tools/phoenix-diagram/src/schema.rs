@@ -5,7 +5,7 @@ use std::sync::OnceLock;
 
 const PHOENIX_COMMON: &str =
     include_str!("../../../skills/phoenix-diagram/schemas/common.schema.json");
-const PHOENIX: [(DiagramType, &str); 12] = [
+const PHOENIX: [(DiagramType, &str); 13] = [
     (
         DiagramType::Architecture,
         include_str!("../../../skills/phoenix-diagram/schemas/architecture.schema.json"),
@@ -53,6 +53,10 @@ const PHOENIX: [(DiagramType, &str); 12] = [
     (
         DiagramType::Chart,
         include_str!("../../../skills/phoenix-diagram/schemas/chart.schema.json"),
+    ),
+    (
+        DiagramType::Annotation,
+        include_str!("../../../skills/phoenix-diagram/schemas/annotation.schema.json"),
     ),
 ];
 

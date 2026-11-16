@@ -4,7 +4,7 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::str::FromStr;
 
-mod semantics;
+pub(crate) mod semantics;
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -21,10 +21,11 @@ pub enum DiagramType {
     Waterfall,
     Statechart,
     Chart,
+    Annotation,
 }
 
 impl DiagramType {
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 13] = [
         Self::Architecture,
         Self::Workflow,
         Self::Sequence,
@@ -37,6 +38,7 @@ impl DiagramType {
         Self::Waterfall,
         Self::Statechart,
         Self::Chart,
+        Self::Annotation,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -53,6 +55,7 @@ impl DiagramType {
             Self::Waterfall => "waterfall",
             Self::Statechart => "statechart",
             Self::Chart => "chart",
+            Self::Annotation => "annotation",
         }
     }
 

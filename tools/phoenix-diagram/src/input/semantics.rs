@@ -111,6 +111,7 @@ pub(super) fn validate(document: &Value, kind: DiagramType) -> Result<(), Diagno
         DiagramType::Timeline => ("events", "relationships"),
         DiagramType::Waterfall => ("spans", "relationships"),
         DiagramType::Chart => ("rows", "relationships"),
+        DiagramType::Annotation => ("sentences", "relationships"),
         // A statechart has no authored entity collections; its model rules
         // are checked by the statechart module.
         DiagramType::Statechart => {
@@ -232,6 +233,7 @@ pub(super) fn validate(document: &Value, kind: DiagramType) -> Result<(), Diagno
         DiagramType::Timeline => timeline_checks(document, nodes, &mut checks),
         DiagramType::Waterfall => waterfall_checks(nodes, &mut checks),
         DiagramType::Chart => chart_checks(document, nodes, &mut checks),
+        DiagramType::Annotation => annotation_checks(document, &mut checks),
         _ => {}
     }
     if let Err(change_errors) = crate::changes::resolve(document, kind) {
@@ -960,5 +962,137 @@ fn chart_checks(document: &Value, rows: &[Value], checks: &mut Checks) {
                 "Every pie value is 0; a pie needs at least one non-zero sector",
             );
         }
+    }
+}
+
+/// One resolved annotation: the character range it marks in its sentence and
+/// the number it takes in the figure.
+pub(crate) struct AnnotationSpan {
+    pub sentence: usize,
+    pub index: usize,
+    pub start: usize,
+    pub end: usize,
+    pub number: usize,
+    pub issue: bool,
+}
+
+// Left-to-right, non-overlapping occurrences of `span` in `text`.
+fn occurrences(text: &[char], span: &str) -> Vec<(usize, usize)> {
+    let needle: Vec<char> = span.chars().collect();
+    let mut found = Vec::new();
+    if needle.is_empty() {
+        return found;
+    }
+    let mut index = 0;
+    while index + needle.len() <= text.len() {
+        if text[index..index + needle.len()] == needle[..] {
+            found.push((index, index + needle.len()));
+            index += needle.len();
+        } else {
+            index += 1;
+        }
+    }
+    found
+}
+
+fn span_error(code: &str, path: &str, message: String, fix: &str, evidence: Value) -> Diagnostic {
+    let mut diagnostic = Diagnostic::error(Some("annotation"), code, path, message);
+    diagnostic.supported_fixes = vec![fix.into()];
+    diagnostic.evidence = evidence;
+    diagnostic
+}
+
+/// Locates every authored span in its sentence and numbers the annotations in
+/// reading order. Both the semantic check and the layout read this, so the
+/// drawn ranges never disagree with the validated ones.
+pub(crate) fn annotation_spans(document: &Value) -> Result<Vec<AnnotationSpan>, Diagnostics> {
+    let mut spans = Vec::new();
+    let mut errors = Diagnostics::new();
+    let mut number = 0;
+    for (sentence_index, sentence) in array(document, "sentences").iter().enumerate() {
+        let text: Vec<char> = sentence["text"]
+            .as_str()
+            .unwrap_or_default()
+            .chars()
+            .collect();
+        let annotations = array(sentence, "annotations");
+        let mut located: Vec<(usize, usize, usize, bool)> = Vec::new();
+        for (index, annotation) in annotations.iter().enumerate() {
+            let span = annotation["span"].as_str().unwrap_or_default();
+            let occurrence = annotation["occurrence"].as_u64().unwrap_or(1).max(1) as usize;
+            let path = format!("/sentences/{sentence_index}/annotations/{index}");
+            let found = occurrences(&text, span);
+            if found.is_empty() {
+                errors.push(span_error(
+                    "annotation/span-missing",
+                    &format!("{path}/span"),
+                    format!("Span {span:?} does not occur in the sentence text"),
+                    "Pick a span that occurs in the sentence text",
+                    json!({"span": span}),
+                ));
+                continue;
+            }
+            if occurrence > found.len() {
+                errors.push(span_error(
+                    "annotation/span-missing",
+                    &format!("{path}/occurrence"),
+                    format!(
+                        "Occurrence {occurrence} exceeds the {} matches of span {span:?}",
+                        found.len()
+                    ),
+                    "Use an occurrence between 1 and the number of matches",
+                    json!({"occurrences": found.len(), "span": span}),
+                ));
+                continue;
+            }
+            let (start, end) = found[occurrence - 1];
+            located.push((start, end, index, annotation["issue"] == true));
+        }
+        // Two spans cannot mark the same character: report the later authored
+        // one, keeping the earlier span's range as the evidence.
+        for later in 0..located.len() {
+            let (start, end, index, _) = located[later];
+            for (other_start, other_end, other_index, _) in located[..later].iter() {
+                if start < *other_end && *other_start < end {
+                    errors.push(span_error(
+                        "annotation/span-overlap",
+                        &format!("/sentences/{sentence_index}/annotations/{index}"),
+                        format!(
+                            "Span at characters {start}..{end} overlaps annotation {other_index} at {other_start}..{other_end}"
+                        ),
+                        "Shorten one span so each character is marked once",
+                        json!({"other": other_index, "start": start, "end": end,
+                               "otherStart": other_start, "otherEnd": other_end}),
+                    ));
+                    break;
+                }
+            }
+        }
+        let mut ordered = located;
+        ordered.sort_by_key(|(start, _, index, _)| (*start, *index));
+        for (start, end, index, issue) in ordered {
+            number += 1;
+            spans.push(AnnotationSpan {
+                sentence: sentence_index,
+                index,
+                start,
+                end,
+                number,
+                issue,
+            });
+        }
+    }
+    if errors.is_empty() {
+        Ok(spans)
+    } else {
+        Err(errors)
+    }
+}
+
+fn annotation_checks(document: &Value, checks: &mut Checks) {
+    // Sentence identities use the shared unique() check; the span rules live in
+    // annotation_spans so the layout reads exactly the validated ranges.
+    if let Err(errors) = annotation_spans(document) {
+        checks.errors.extend(errors);
     }
 }

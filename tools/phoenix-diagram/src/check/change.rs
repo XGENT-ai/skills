@@ -29,9 +29,14 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
         return findings;
     };
 
-    for (id, mark) in changes["nodes"].as_object().map_or(Default::default(), |m| {
-        m.iter().map(|(k, v)| (k.clone(), v.as_str().unwrap_or_default().to_owned())).collect::<Vec<_>>()
-    }) {
+    for (id, mark) in changes["nodes"]
+        .as_object()
+        .map_or(Default::default(), |m| {
+            m.iter()
+                .map(|(k, v)| (k.clone(), v.as_str().unwrap_or_default().to_owned()))
+                .collect::<Vec<_>>()
+        })
+    {
         let path = format!("/metadata/changes/nodes/{id}");
         match svg
             .select(&selector("g[data-node-id]"))
@@ -54,7 +59,9 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
         }
     }
 
-    let relations = changes["relations"].as_array().map_or(&[][..], Vec::as_slice);
+    let relations = changes["relations"]
+        .as_array()
+        .map_or(&[][..], Vec::as_slice);
     for (index, mark) in relations.iter().enumerate() {
         let path = format!("/metadata/changes/relations/{index}");
         let expected = mark.as_str();
@@ -85,9 +92,14 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
         }
     }
 
-    for (source_path, mark) in changes["fields"].as_object().map_or(Default::default(), |m| {
-        m.iter().map(|(k, v)| (k.clone(), v.as_str().unwrap_or_default().to_owned())).collect::<Vec<_>>()
-    }) {
+    for (source_path, mark) in changes["fields"]
+        .as_object()
+        .map_or(Default::default(), |m| {
+            m.iter()
+                .map(|(k, v)| (k.clone(), v.as_str().unwrap_or_default().to_owned()))
+                .collect::<Vec<_>>()
+        })
+    {
         let path = format!("/metadata/changes/fields/{source_path}");
         match svg
             .select(&selector("g[data-er-row]"))
@@ -132,7 +144,12 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
         let counted: u64 = svg
             .select(&selector(&format!("[data-change-count=\"{mark}\"]")))
             .map(|tspan| {
-                tspan.text().collect::<String>().trim().parse::<u64>().unwrap_or(0)
+                tspan
+                    .text()
+                    .collect::<String>()
+                    .trim()
+                    .parse::<u64>()
+                    .unwrap_or(0)
             })
             .sum();
         if counted != count {
@@ -144,12 +161,14 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
         }
     }
 
-    let bands: Vec<ElementRef<'_>> =
-        svg.select(&selector("g[data-change-band]")).collect();
+    let bands: Vec<ElementRef<'_>> = svg.select(&selector("g[data-change-band]")).collect();
     if bands.len() != 1 {
         findings.push(finding(
             "/metadata/changes/band".to_owned(),
-            format!("The figure carries {} change bands instead of 1", bands.len()),
+            format!(
+                "The figure carries {} change bands instead of 1",
+                bands.len()
+            ),
             Value::Null,
         ));
         return findings;
@@ -177,7 +196,7 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
             .count();
         if (changed > 0 && notes == 0) || (changed == 0 && notes > 0) {
             findings.push(finding(
-                format!("/metadata/changes/counts/changed"),
+                "/metadata/changes/counts/changed".to_string(),
                 format!(
                     "The {when} band group {} the changed-items note while the metadata marks {} changed items",
                     if notes > 0 { "has" } else { "lacks" },

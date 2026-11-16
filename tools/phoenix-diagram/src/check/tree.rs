@@ -91,10 +91,16 @@ pub(super) fn content(svg: ElementRef<'_>, metadata: &Value) -> Vec<ContentFindi
         .map(|(child, parent)| (((*parent).to_owned(), (*child).to_owned()), 1))
         .collect();
     // Every parent_before counts as one expected and one drawn connection.
-    for node in nodes.iter().filter(|node| node.get("parent_before").is_some()) {
+    for node in nodes
+        .iter()
+        .filter(|node| node.get("parent_before").is_some())
+    {
         *links
             .entry((
-                node["parent_before"].as_str().unwrap_or_default().to_owned(),
+                node["parent_before"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_owned(),
                 node["id"].as_str().unwrap_or_default().to_owned(),
             ))
             .or_default() += 1;

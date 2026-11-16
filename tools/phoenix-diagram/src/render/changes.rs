@@ -174,7 +174,10 @@ pub(super) fn edge_marks(scene: &CompiledDiagram) -> String {
             }
             let end = relation.points[relation.points.len() - 1];
             let start = relation.points[relation.points.len() - 2];
-            let mid = Point { x: (start.x + end.x) / 2.0, y: (start.y + end.y) / 2.0 };
+            let mid = Point {
+                x: (start.x + end.x) / 2.0,
+                y: (start.y + end.y) / 2.0,
+            };
             out.push_str(&badge(scene, mark, mid.x + 9.0, mid.y - 7.0, 6.0, 3.0));
         }
         return out;
@@ -280,8 +283,7 @@ fn count_runs(out: &mut String, content: &str, counts: &ChangeCounts) {
         ("removed", counts.removed),
         ("changed", counts.changed),
     ];
-    let marks: Vec<(&str, usize)> =
-        marks.into_iter().filter(|(_, count)| *count > 0).collect();
+    let marks: Vec<(&str, usize)> = marks.into_iter().filter(|(_, count)| *count > 0).collect();
     for (index, piece) in content.split(" \u{b7} ").enumerate() {
         if index > 0 {
             out.push_str("<tspan> \u{b7} </tspan>");

@@ -70,7 +70,10 @@ fn codes(receipt: &Value) -> Vec<(String, String)> {
                 .map(|item| {
                     (
                         item["code"].as_str().unwrap_or_default().to_owned(),
-                        item["subject"]["path"].as_str().unwrap_or_default().to_owned(),
+                        item["subject"]["path"]
+                            .as_str()
+                            .unwrap_or_default()
+                            .to_owned(),
                     )
                 })
                 .collect()
@@ -123,7 +126,10 @@ fn unmarked_workflow_keeps_the_scene_free_of_change_facts() {
     ]);
     assert_eq!(output.status.code(), Some(0));
     let scene = &parsed(&output)["layout"];
-    assert!(scene.get("changes").is_none(), "unmarked scene must not carry change facts");
+    assert!(
+        scene.get("changes").is_none(),
+        "unmarked scene must not carry change facts"
+    );
     let html = project.0.join("plain.html");
     let output = run(&[
         flag("deliver"),
@@ -160,7 +166,10 @@ fn workflow_marks_produce_counts_badges_band_and_a_clean_check() {
     assert_eq!(output.status.code(), Some(0));
     let scene = parsed(&output);
     let changes = &scene["layout"]["changes"];
-    assert_eq!(changes["counts"], json!({"added": 3, "removed": 1, "changed": 1}));
+    assert_eq!(
+        changes["counts"],
+        json!({"added": 3, "removed": 1, "changed": 1})
+    );
     assert_eq!(changes["nodes"], json!({"b": "changed", "c": "added"}));
     // Aligned with scene.relations order, which is route order: the four
     // authored marks appear exactly once each.
@@ -198,21 +207,38 @@ fn workflow_marks_produce_counts_badges_band_and_a_clean_check() {
     assert!(figure.contains("data-change-band"));
     // One badge per mark: 2 added edges + 1 added node, 1 removed edge,
     // 1 changed node.
-    assert_eq!(figure.matches("<g data-change-mark=\"added\" role=\"img\"").count(), 3);
-    assert_eq!(figure.matches("<g data-change-mark=\"removed\" role=\"img\"").count(), 1);
-    assert_eq!(figure.matches("<g data-change-mark=\"changed\" role=\"img\"").count(), 1);
+    assert_eq!(
+        figure
+            .matches("<g data-change-mark=\"added\" role=\"img\"")
+            .count(),
+        3
+    );
+    assert_eq!(
+        figure
+            .matches("<g data-change-mark=\"removed\" role=\"img\"")
+            .count(),
+        1
+    );
+    assert_eq!(
+        figure
+            .matches("<g data-change-mark=\"changed\" role=\"img\"")
+            .count(),
+        1
+    );
     assert!(figure.contains("data-change-count=\"added\">3</tspan>"));
     assert!(figure.contains("data-change-count=\"removed\">1</tspan>"));
     assert!(figure.contains("data-change-count=\"changed\">1</tspan>"));
     // A changed node exists, so the before/after groups carry the note.
-    assert_eq!(figure.matches("data-change-note").count() >= 2, true);
+    assert!(figure.matches("data-change-note").count() >= 2);
 
     let output = run(&[flag("check"), html.as_os_str(), flag("--json")]);
     assert_eq!(output.status.code(), Some(0));
     let receipt = parsed(&output);
     assert_eq!(receipt["status"], "pass");
     assert!(
-        codes(&receipt).iter().all(|(code, _)| code != "artifact/change-mark"),
+        codes(&receipt)
+            .iter()
+            .all(|(code, _)| code != "artifact/change-mark"),
         "artifact check must agree with the change facts"
     );
 }
@@ -243,12 +269,17 @@ fn removed_and_added_endpoints_demand_matching_relation_marks() {
     let mut value = unmarked_workflow();
     value["nodes"][0]["change"] = json!("removed");
     let candidate = project.write("removed.json", &value);
-    let output = run(&[flag("validate"), flag("workflow"), candidate.as_os_str(), flag("--json")]);
+    let output = run(&[
+        flag("validate"),
+        flag("workflow"),
+        candidate.as_os_str(),
+        flag("--json"),
+    ]);
     assert_eq!(output.status.code(), Some(1));
     let receipt = parsed(&output);
-    assert!(codes(&receipt).iter().any(|(code, path)| {
-        code == "change/dangling-relation" && path == "/edges/0"
-    }));
+    assert!(codes(&receipt)
+        .iter()
+        .any(|(code, path)| { code == "change/dangling-relation" && path == "/edges/0" }));
     let diagnostic = receipt["diagnostics"]
         .as_array()
         .unwrap()
@@ -269,12 +300,17 @@ fn removed_and_added_endpoints_demand_matching_relation_marks() {
     let mut value = unmarked_workflow();
     value["nodes"][2]["change"] = json!("added");
     let candidate = project.write("added.json", &value);
-    let output = run(&[flag("validate"), flag("workflow"), candidate.as_os_str(), flag("--json")]);
+    let output = run(&[
+        flag("validate"),
+        flag("workflow"),
+        candidate.as_os_str(),
+        flag("--json"),
+    ]);
     assert_eq!(output.status.code(), Some(1));
     let receipt = parsed(&output);
-    assert!(codes(&receipt).iter().any(|(code, path)| {
-        code == "change/dangling-relation" && path == "/edges/2"
-    }));
+    assert!(codes(&receipt)
+        .iter()
+        .any(|(code, path)| { code == "change/dangling-relation" && path == "/edges/2" }));
 }
 
 #[test]
@@ -284,20 +320,30 @@ fn relation_and_value_marks_outside_the_contract_are_schema_errors() {
     let mut value = unmarked_workflow();
     value["edges"][0]["change"] = json!("changed");
     let candidate = project.write("relation-changed.json", &value);
-    let output = run(&[flag("validate"), flag("workflow"), candidate.as_os_str(), flag("--json")]);
+    let output = run(&[
+        flag("validate"),
+        flag("workflow"),
+        candidate.as_os_str(),
+        flag("--json"),
+    ]);
     assert_eq!(output.status.code(), Some(1));
-    assert!(codes(&parsed(&output)).iter().any(|(code, path)| {
-        code == "input/schema" && path == "/edges/0/change"
-    }));
+    assert!(codes(&parsed(&output))
+        .iter()
+        .any(|(code, path)| { code == "input/schema" && path == "/edges/0/change" }));
 
     let mut value = unmarked_workflow();
     value["nodes"][0]["change"] = json!("moved");
     let candidate = project.write("unknown-value.json", &value);
-    let output = run(&[flag("validate"), flag("workflow"), candidate.as_os_str(), flag("--json")]);
+    let output = run(&[
+        flag("validate"),
+        flag("workflow"),
+        candidate.as_os_str(),
+        flag("--json"),
+    ]);
     assert_eq!(output.status.code(), Some(1));
-    assert!(codes(&parsed(&output)).iter().any(|(code, path)| {
-        code == "input/schema" && path == "/nodes/0/change"
-    }));
+    assert!(codes(&parsed(&output))
+        .iter()
+        .any(|(code, path)| { code == "input/schema" && path == "/nodes/0/change" }));
 }
 
 #[test]
@@ -325,7 +371,10 @@ fn tree_reparent_appends_a_before_connection_and_counts_both_views() {
     assert_eq!(output.status.code(), Some(0), "{:?}", parsed(&output));
     let scene = parsed(&output);
     let changes = &scene["layout"]["changes"];
-    assert_eq!(changes["counts"], json!({"added": 1, "removed": 1, "changed": 0}));
+    assert_eq!(
+        changes["counts"],
+        json!({"added": 1, "removed": 1, "changed": 0})
+    );
     let relations = scene["layout"]["relations"].as_array().unwrap();
     assert!(relations.iter().any(|relation| {
         relation["authored"]["sourcePath"].as_str() == Some("/nodes/2/parent_before")
@@ -385,7 +434,10 @@ fn erd_entity_marks_reach_every_field_row_and_the_artifact() {
     ]);
     assert_eq!(output.status.code(), Some(0));
     let body = fs::read_to_string(&html).unwrap();
-    assert_eq!(body.matches("er-change-row er-change-row-changed").count(), 2);
+    assert_eq!(
+        body.matches("er-change-row er-change-row-changed").count(),
+        2
+    );
     let output = run(&[flag("check"), html.as_os_str(), flag("--json")]);
     assert_eq!(output.status.code(), Some(0));
     assert_eq!(parsed(&output)["status"], "pass");
@@ -422,7 +474,10 @@ fn lifecycle_transition_marks_count_and_pass_the_artifact_check() {
     ]);
     assert_eq!(output.status.code(), Some(0), "{:?}", parsed(&output));
     let changes = parsed(&output)["layout"]["changes"].clone();
-    assert_eq!(changes["counts"], json!({"added": 3, "removed": 1, "changed": 0}));
+    assert_eq!(
+        changes["counts"],
+        json!({"added": 3, "removed": 1, "changed": 0})
+    );
     assert!(changes["junctions"].is_array());
 
     let html = project.0.join("life.html");

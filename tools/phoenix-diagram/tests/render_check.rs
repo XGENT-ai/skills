@@ -120,6 +120,7 @@ fn scene() -> CompiledDiagram {
             components: vec![],
             boundaries: vec![],
         },
+        changes: None,
         diagnostics: vec![],
     }
 }

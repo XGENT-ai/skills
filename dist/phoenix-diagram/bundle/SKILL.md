@@ -1,6 +1,6 @@
 ---
 name: phoenix-diagram
-description: "用于架构、工作流、时序、数据流、状态、状态机模型检查、ER、类、树、时间线、耗时瀑布图、数值图表及 Mermaid 转换；不用于仪表盘、多图联动或其他 infographic。缺必需事实时仅提必要问题，没有真实数值不画数值图表；齐备后交付经 Rust、浏览器与实际看图核对的独立 HTML，可另取可内联的静态 SVG。品牌采集、本地预览和架构比较仅在明确请求时启用。"
+description: "用于架构、工作流、时序、数据流、状态、状态机模型检查、ER、类、树、时间线、耗时瀑布图、数值图表、逐词标注及 Mermaid 转换；不用于仪表盘、多图联动或其他 infographic。缺必需事实时仅提必要问题，没有真实数值不画数值图表，缺原句不逐词标注；齐备后交付经 Rust、浏览器与实际看图核对的独立 HTML，可另取可内联的静态 SVG。品牌采集、本地预览和架构比较仅在明确请求时启用。"
 license: MIT
 metadata:
   internal: true
@@ -37,6 +37,7 @@ metadata:
 | `waterfall` | 时间花在哪：一次请求或运行的跨度时长、重叠与嵌套 | [最小耗时瀑布](examples/minimal.waterfall.json) |
 | `statechart` | 流程会不会违反规则或卡住：有限模型穷举，画出状态图与最短出错路径 | [最小状态机](examples/minimal.statechart.json) |
 | `chart` | 数值的比较、趋势、占比与限额：柱状图、折线图、饼图、限额对比图 | [最小数值图表](examples/minimal.chart.json) |
+| `annotation` | 逐词审视已写好的文字：标出该改或该留意的词段，编号对应点评与改法 | [最小逐词标注](examples/minimal.annotation.json) |
 
 要判断流程会不会违反规则、找出出错路径时用 statechart；只画出已知的状态流时用 lifecycle。不明确时运行 `guide`，按返回的包内 `schema`、`commonSchema`、`example` 路径选择。仪表盘、多图联动、实时数据和其他 infographic 不在范围内，不能改称上述图型来绕过。要讲「改完以后和现在差在哪」时，在 workflow、lifecycle、tree、erd 的一份输入里标记新增、删除、变更，读[变更视图](references/change-view.md)；不画前后两张图，也不改用架构比较。
 
@@ -70,6 +71,8 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
    statechart 另读[状态机模型检查](references/statechart.md)：先写变量、动作与规则（规则写成读者认同的一句话，不为通过而放宽），再写 view；它没有 `sources`、品牌或架构比较。
 
    chart 另读[数值图表](references/chart.md)；它没有 `sources`、品牌或架构比较。
+
+   annotation 另读[逐词标注](references/annotation.md)；它只评材料里已经写好的句子，没有 `sources`、品牌或架构比较，也不做整篇文档的批注。
 
    类图分别核对关系、生命周期和数量：保留“一个/多个”等已给数量，不能只保留组合或创建销毁而漏掉数量。没有依据的下界不补数字；按[创作默认值](references/authoring-defaults.md)的 Class 规则处理，只有无依据的可选数值标注可以省略。
 

@@ -8,6 +8,7 @@ use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 
 pub mod anchors;
+mod annotation;
 mod change;
 mod chart;
 mod class;
@@ -1049,6 +1050,7 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
             Some(DiagramType::Waterfall) => waterfall::content(svg, metadata),
             Some(DiagramType::Statechart) => statechart::content(svg, metadata),
             Some(DiagramType::Chart) => chart::content(svg, metadata),
+            Some(DiagramType::Annotation) => annotation::content(svg, metadata),
             _ => Vec::new(),
         };
         for (code, path, message, evidence) in findings {
@@ -1156,7 +1158,10 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
         .iter()
         .filter(|route| {
             !before_pairs.contains(&(
-                route.relation["from"].as_str().unwrap_or_default().to_owned(),
+                route.relation["from"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .to_owned(),
                 route.relation["to"].as_str().unwrap_or_default().to_owned(),
             ))
         })

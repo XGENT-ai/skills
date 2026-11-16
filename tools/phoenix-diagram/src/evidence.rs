@@ -129,7 +129,8 @@ impl SourceEvidence {
 }
 
 /// The authored elements that may cite sources; a statechart derives its
-/// states, so it has none.
+/// states, a chart takes its stance in meta, and annotated prose is editorial,
+/// so these have none.
 fn collection(kind: DiagramType) -> Option<&'static str> {
     Some(match kind {
         DiagramType::Architecture => "components",
@@ -140,7 +141,7 @@ fn collection(kind: DiagramType) -> Option<&'static str> {
         DiagramType::Class => "types",
         DiagramType::Timeline => "events",
         DiagramType::Waterfall => "spans",
-        DiagramType::Statechart | DiagramType::Chart => return None,
+        DiagramType::Statechart | DiagramType::Chart | DiagramType::Annotation => return None,
     })
 }
 

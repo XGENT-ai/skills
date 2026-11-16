@@ -7,12 +7,12 @@ const { createHash } = require('node:crypto');
 
 const root = path.resolve(__dirname, '../..');
 const skill = path.join(root, 'skills/phoenix-diagram');
-const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall', 'statechart', 'chart'];
+const types = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle', 'erd', 'class', 'tree', 'timeline', 'waterfall', 'statechart', 'chart', 'annotation'];
 const references = ['authoring-defaults', 'delivery-contract', 'viewer-runtime', 'repository-authoring',
-  'brand-marks', 'preview', 'architecture-compare', 'extending-types', 'statechart', 'chart'];
+  'brand-marks', 'preview', 'architecture-compare', 'extending-types', 'statechart', 'chart', 'annotation', 'change-view'];
 const read = file => fs.readFileSync(path.join(skill, file), 'utf8');
 
-test('the skill has a bounded twelve-type description with its exclusions up front and normal automatic discovery', () => {
+test('the skill has a bounded thirteen-type description with its exclusions up front and normal automatic discovery', () => {
   const entry = read('SKILL.md');
   const frontmatter = /^---\n([\s\S]*?)\n---\n/.exec(entry)?.[1];
   assert.ok(frontmatter, 'valid frontmatter boundary');
@@ -21,7 +21,7 @@ test('the skill has a bounded twelve-type description with its exclusions up fro
   assert.equal(typeof description, 'string');
   assert.ok(Array.from(description).length <= 200);
   const first100 = Array.from(description).slice(0, 100).join('');
-  for (const word of ['架构', '工作流', '时序', '数据流', '状态', 'ER', '类', '树', '时间线', '瀑布', 'Mermaid', '数值图表', '仪表盘', 'infographic']) assert.ok(first100.includes(word), word);
+  for (const word of ['架构', '工作流', '时序', '数据流', '状态', 'ER', '类', '树', '时间线', '瀑布', 'Mermaid', '数值图表', '逐词标注', '仪表盘', 'infographic']) assert.ok(first100.includes(word), word);
   assert.match(frontmatter, /^ {2}version: "0\.2\.0"$/m);
   assert.doesNotMatch(frontmatter, /disable-model-invocation|allow_implicit_invocation/);
   assert.equal(fs.existsSync(path.join(skill, 'agents/openai.yaml')), false);
@@ -44,10 +44,10 @@ test('entry and conditional references resolve within the installed skill packag
   assert.ok(fs.statSync(path.join(skill, 'scripts/phoenix-diagram')).isFile());
 });
 
-test('all twelve guide examples are complete semantic inputs with automatic routes', () => {
+test('all thirteen guide examples are complete semantic inputs with automatic routes', () => {
   const collections = { architecture: ['components', 'connections'], workflow: ['nodes', 'edges'],
     sequence: ['participants', 'messages'], dataflow: ['nodes', 'flows'], lifecycle: ['states', 'transitions'],
-    erd: ['entities', 'relationships'], class: ['types', 'relationships'], tree: ['nodes'], timeline: ['events'], waterfall: ['spans'], chart: ['rows'] };
+    erd: ['entities', 'relationships'], class: ['types', 'relationships'], tree: ['nodes'], timeline: ['events'], waterfall: ['spans'], chart: ['rows'], annotation: ['sentences'] };
   // Only the original five label every relationship; erd/class labels are optional and tree edges derive from parent.
   const labelled = ['architecture', 'workflow', 'sequence', 'dataflow', 'lifecycle'];
   for (const type of types) {
@@ -66,7 +66,7 @@ test('all twelve guide examples are complete semantic inputs with automatic rout
     assert.ok(nodes.length >= 2, type);
     const identities = new Set(nodes.map(node => node.id));
     assert.equal(identities.size, nodes.length);
-    if (type !== 'timeline' && type !== 'waterfall' && type !== 'chart') assert.ok(relationships.length >= 1, type);
+    if (type !== 'timeline' && type !== 'waterfall' && type !== 'chart' && type !== 'annotation') assert.ok(relationships.length >= 1, type);
     for (const relation of collections[type][1] ? relationships : []) {
       assert.ok(identities.has(relation.from) && identities.has(relation.to), type);
       if (labelled.includes(type)) assert.ok(relation.label.trim(), type);

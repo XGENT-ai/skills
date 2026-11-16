@@ -140,6 +140,9 @@ fn example(kind: DiagramType) -> CompiledDiagram {
         DiagramType::Chart => {
             include_str!("../../../skills/phoenix-diagram/examples/minimal.chart.json")
         }
+        DiagramType::Annotation => {
+            include_str!("../../../skills/phoenix-diagram/examples/minimal.annotation.json")
+        }
     };
     compile(serde_json::from_str(raw).unwrap(), kind)
 }

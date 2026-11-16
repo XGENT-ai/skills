@@ -5,8 +5,14 @@
   "files": [
     {
       "path": "SKILL.md",
-      "size": 19641,
-      "sha256": "52013ccb48a008eb806450c08dc0b4fd5aa8a57eb653dcc4895300a5168479aa",
+      "size": 20039,
+      "sha256": "9a4af29476810e99ee7865ae784944c8db0776976861313415758f498031881a",
+      "mode": 420
+    },
+    {
+      "path": "examples/minimal.annotation.json",
+      "size": 1040,
+      "sha256": "ca0fe8f5535a161bdab110085158b4a22c22d2f87278c8bacb68c2402af70010",
       "mode": 420
     },
     {
@@ -79,6 +85,12 @@
       "path": "examples/minimal.workflow.json",
       "size": 576,
       "sha256": "04a33e30210e826cf4d163b462a5cc42ebc4c5b9cb22bfed6273d3f301cfafef",
+      "mode": 420
+    },
+    {
+      "path": "references/annotation.md",
+      "size": 1943,
+      "sha256": "0c9dba15e2fa739eb852e0367f305bced18b1b0be096a415ad3a907af719e92a",
       "mode": 420
     },
     {
@@ -157,6 +169,12 @@
       "path": "schemas/README.md",
       "size": 2183,
       "sha256": "5eb8804215cde23db5c8e5454fe6fe0f4ba6fb5f3153cbec628786831ebad310",
+      "mode": 420
+    },
+    {
+      "path": "schemas/annotation.schema.json",
+      "size": 3607,
+      "sha256": "116977c65d9d79bcd1bceb70e1aed0132aba783eafa6844fa90a40294fdf3135",
       "mode": 420
     },
     {

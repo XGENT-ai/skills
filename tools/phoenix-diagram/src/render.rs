@@ -9,8 +9,9 @@ use crate::scene::{Card, CompiledDiagram, DiagramFacts, Point, Rect, Text};
 use serde_json::{json, Value};
 use std::fmt::Write;
 
-mod chart;
+mod annotation;
 mod changes;
+mod chart;
 mod class;
 mod erd;
 mod statechart;
@@ -54,6 +55,7 @@ fn type_renderer(kind: DiagramType) -> Option<TypeRenderer> {
         DiagramType::Waterfall => Some(waterfall::RENDERER),
         DiagramType::Statechart => Some(statechart::RENDERER),
         DiagramType::Chart => Some(chart::RENDERER),
+        DiagramType::Annotation => Some(annotation::RENDERER),
         _ => None,
     }
 }
@@ -1486,14 +1488,13 @@ fn render_with_layers(
             .expect("metadata object")
             .remove("brandResources");
     }
-    if scene.changes.is_some() {
+    if let Some(changes) = &scene.changes {
         public_metadata
             .as_object_mut()
             .expect("metadata object")
             .insert(
                 "changes".to_owned(),
-                serde_json::to_value(scene.changes.as_ref().expect("changes present"))
-                    .expect("change facts serialize"),
+                serde_json::to_value(changes).expect("change facts serialize"),
             );
     }
     let metadata = serde_json::to_string(&public_metadata)

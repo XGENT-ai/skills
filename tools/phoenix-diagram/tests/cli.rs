@@ -120,12 +120,12 @@ fn cli_help_and_engine_probe_work_without_writing_project_files() {
     }
     assert!(text.starts_with("phoenix-diagram 0.2.0\n"));
     assert!(text.contains(
-        "Types: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart, chart."
+        "Types: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart, chart, annotation."
     ));
 }
 
 #[test]
-fn cli_guide_routes_the_twelve_types_and_lists_alternatives_when_ambiguous() {
+fn cli_guide_routes_the_thirteen_types_and_lists_alternatives_when_ambiguous() {
     let guide = |scenario: &str| {
         let output = run(&[flag("guide"), flag(scenario), flag("--json")]);
         assert!(output.status.success());
@@ -146,6 +146,11 @@ fn cli_guide_routes_the_twelve_types_and_lists_alternatives_when_ambiguous() {
         ("检查结账流程会不会死锁、找出违规路径", "statechart"),
         ("convert this erDiagram", "erd"),
         ("convert this classDiagram", "class"),
+        ("逐词点评一句文案的用词", "annotation"),
+        ("word by word copy review", "annotation"),
+        ("wording review for the launch copy", "annotation"),
+        ("这句要标注一下用词", "annotation"),
+        ("点评这句话的措辞", "annotation"),
     ] {
         assert_eq!(guide(scenario), [kind], "{scenario}");
     }
@@ -154,7 +159,7 @@ fn cli_guide_routes_the_twelve_types_and_lists_alternatives_when_ambiguous() {
         parsed(&output)["matches"][0]["schema"],
         "schemas/class.schema.json"
     );
-    assert_eq!(guide("something vague").len(), 12);
+    assert_eq!(guide("something vague").len(), 13);
 }
 
 #[test]

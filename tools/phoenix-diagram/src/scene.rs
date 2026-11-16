@@ -220,6 +220,10 @@ pub enum DiagramFacts {
         rows: Vec<Value>,
         table: Value,
     },
+    /// Sentences with their wrapped line runs and numbered annotation spans:
+    /// each span's character range and number drive rendering and the content
+    /// check instead of re-locating the text.
+    Annotation { sentences: Vec<Value> },
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

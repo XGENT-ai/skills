@@ -279,6 +279,12 @@ fn minimal(kind: DiagramType) -> Value {
                 "rows": [{"id":"a","label":"A","values":[10]},{"id":"b","label":"B","values":[4]}],
             })
         }
+        DiagramType::Annotation => json!({
+            "sentences": [
+                {"id":"a","text":"Cache warms the page.","annotations":[{"span":"warms","note":"Name what gets faster."}]},
+                {"id":"b","text":"Nobody waits.","annotations":[{"span":"Nobody","note":"Scope the claim."}]},
+            ],
+        }),
     };
     document
         .as_object_mut()
@@ -301,6 +307,7 @@ fn collections(kind: DiagramType) -> (&'static str, &'static str) {
         DiagramType::Waterfall => ("spans", "relationships"),
         DiagramType::Statechart => ("variables", "actions"),
         DiagramType::Chart => ("rows", "relationships"),
+        DiagramType::Annotation => ("sentences", "relationships"),
     }
 }
 

@@ -676,6 +676,7 @@ fn supported_declaration(name: &str) -> bool {
                 | "shape-rendering"
                 | "text-rendering"
                 | "pointer-events"
+                | "white-space"
                 | "rx"
                 | "ry"
         )

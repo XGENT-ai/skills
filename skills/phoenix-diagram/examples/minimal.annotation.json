@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "diagram_type": "annotation",
+  "meta": { "title": "Copy review, word by word", "output": "minimal.annotation.html", "quality_profile": "showcase", "locale": "en" },
+  "sentences": [
+    {
+      "id": "headline",
+      "text": "The dashboard renders faster after the cache change.",
+      "annotations": [
+        { "span": "renders faster", "note": "State what the reader gains: sub-second load." },
+        { "span": "dashboard", "issue": true, "note": "Which dashboard? Three ship in this product.", "fix": "the usage dashboard" },
+        { "span": "after the cache", "note": "Name the cache version so the claim stays checkable." }
+      ]
+    },
+    {
+      "id": "closing",
+      "title": "Closing line",
+      "aside": "marketing owns this line",
+      "text": "Nobody waits anymore.",
+      "annotations": [
+        { "span": "Nobody", "note": "Absolute claims read as overreach; scope it." }
+      ],
+      "footnote": "Keep the numbered notes next to their words when this line is reused."
+    }
+  ]
+}

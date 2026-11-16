@@ -8,7 +8,9 @@ use crate::diagnostic::{Diagnostic, Diagnostics};
 use crate::i18n;
 use crate::input::{DiagramInput, DiagramType};
 use crate::layout::tree::wrap_text;
-use crate::scene::{ChangeBand, ChangeCounts, ChangeFacts, CompiledDiagram, DiagramFacts, Point, Rect, Text};
+use crate::scene::{
+    ChangeBand, ChangeCounts, ChangeFacts, CompiledDiagram, DiagramFacts, Point, Rect, Text,
+};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -60,9 +62,7 @@ pub(crate) fn resolve(
                 entity
                     .get("attributes")
                     .and_then(Value::as_array)
-                    .is_some_and(|fields| {
-                        fields.iter().any(|field| field.get("change").is_some())
-                    })
+                    .is_some_and(|fields| fields.iter().any(|field| field.get("change").is_some()))
             }))
         || (tree && nodes.iter().any(|item| item.get("parent_before").is_some()));
     if !has_marks {
@@ -124,9 +124,9 @@ pub(crate) fn resolve(
                     ));
                     let error = errors.last_mut().expect("just inserted diagnostic");
                     error.subject.identity = Some(endpoint.to_owned());
-                    error.evidence = json!({"endpoint": endpoint, "endpointMark": node_mark, "view": view});
-                    error.supported_fixes =
-                        vec![format!("Set {path}/change to {expected}")];
+                    error.evidence =
+                        json!({"endpoint": endpoint, "endpointMark": node_mark, "view": view});
+                    error.supported_fixes = vec![format!("Set {path}/change to {expected}")];
                 }
             }
         }
@@ -137,7 +137,11 @@ pub(crate) fn resolve(
         for (entity_index, entity) in nodes.iter().enumerate() {
             let entity_mark = entity["change"].as_str();
             let attributes = entity["attributes"].as_array();
-            for (field_index, field) in attributes.map(Vec::as_slice).unwrap_or(&[]).iter().enumerate()
+            for (field_index, field) in attributes
+                .map(Vec::as_slice)
+                .unwrap_or(&[])
+                .iter()
+                .enumerate()
             {
                 let field_mark = field["change"].as_str();
                 match (entity_mark, field_mark) {
@@ -159,14 +163,20 @@ pub(crate) fn resolve(
                             json!({"entityMark": entity_mark, "fieldMark": field_mark});
                         error.supported_fixes = vec![
                             format!("Set {path} to {entity_mark}"),
-                            format!("Remove {path} so the field inherits {entity_mark} from the entity"),
+                            format!(
+                                "Remove {path} so the field inherits {entity_mark} from the entity"
+                            ),
                         ];
                     }
                     (Some(entity_mark), _) => {
-                        field_marks.insert(field_path(entity_index, field_index), entity_mark.to_owned());
+                        field_marks.insert(
+                            field_path(entity_index, field_index),
+                            entity_mark.to_owned(),
+                        );
                     }
                     (None, Some(field_mark)) => {
-                        field_marks.insert(field_path(entity_index, field_index), field_mark.to_owned());
+                        field_marks
+                            .insert(field_path(entity_index, field_index), field_mark.to_owned());
                     }
                     (None, None) => {}
                 }
@@ -176,8 +186,10 @@ pub(crate) fn resolve(
 
     let mut reparents = 0usize;
     if tree {
-        let identities: HashSet<&str> =
-            nodes.iter().filter_map(|item| item["id"].as_str()).collect();
+        let identities: HashSet<&str> = nodes
+            .iter()
+            .filter_map(|item| item["id"].as_str())
+            .collect();
         // parent_before is only meaningful for a kept node moving between
         // two different existing parents.
         for (index, item) in nodes.iter().enumerate() {
@@ -215,8 +227,7 @@ pub(crate) fn resolve(
                 ));
                 let error = errors.last_mut().expect("just inserted diagnostic");
                 error.subject.identity = Some(id.clone());
-                error.supported_fixes =
-                    vec![format!("Remove /nodes/{index}/parent_before")];
+                error.supported_fixes = vec![format!("Remove /nodes/{index}/parent_before")];
             }
             if !identities.contains(old_parent) {
                 let mut candidates: Vec<_> = identities.iter().copied().collect();
@@ -245,12 +256,13 @@ pub(crate) fn resolve(
                 _ => None,
             };
             if let Some(mark) = mark {
-                relation_marks
-                    .insert(format!("/nodes/{index}/parent"), mark.to_owned());
+                relation_marks.insert(format!("/nodes/{index}/parent"), mark.to_owned());
             }
             if item.get("parent_before").is_some() {
-                relation_marks
-                    .insert(format!("/nodes/{index}/parent_before"), "removed".to_owned());
+                relation_marks.insert(
+                    format!("/nodes/{index}/parent_before"),
+                    "removed".to_owned(),
+                );
             }
             // Dangling: the connection only exists in the views where both
             // endpoints exist.
@@ -278,7 +290,9 @@ pub(crate) fn resolve(
                         ),
                     ]
                 } else {
-                    vec![format!("Set /nodes/{index}/parent to a node that exists in the {view} view")]
+                    vec![format!(
+                        "Set /nodes/{index}/parent to a node that exists in the {view} view"
+                    )]
                 };
                 errors.push(Diagnostic::error(
                     Some(kind.as_str()),
@@ -295,7 +309,10 @@ pub(crate) fn resolve(
                 error.supported_fixes = fixes;
             }
             if let Some(old_parent) = item["parent_before"].as_str() {
-                if matches!(node_marks.get(old_parent).map(String::as_str), Some("added" | "removed")) {
+                if matches!(
+                    node_marks.get(old_parent).map(String::as_str),
+                    Some("added" | "removed")
+                ) {
                     let path = format!("/nodes/{index}/parent_before");
                     errors.push(Diagnostic::error(
                         Some(kind.as_str()),
@@ -309,8 +326,9 @@ pub(crate) fn resolve(
                     let error = errors.last_mut().expect("just inserted diagnostic");
                     error.subject.identity = Some(node_id(item));
                     error.evidence = json!({"oldParent": old_parent, "view": "before"});
-                    error.supported_fixes =
-                        vec![format!("Set /nodes/{index}/parent_before to a node that exists in the before view")];
+                    error.supported_fixes = vec![format!(
+                        "Set /nodes/{index}/parent_before to a node that exists in the before view"
+                    )];
                 }
             }
         }
@@ -350,7 +368,10 @@ fn node_id(item: &Value) -> String {
 }
 
 fn relation_identity(item: &Value) -> String {
-    if let Some(label) = item["label"].as_str().filter(|label| !label.trim().is_empty()) {
+    if let Some(label) = item["label"]
+        .as_str()
+        .filter(|label| !label.trim().is_empty())
+    {
         return label.to_owned();
     }
     format!(
@@ -400,9 +421,7 @@ fn check_before_cycle(
         if node_marks.get(node_id(item).as_str()).map(String::as_str) == Some("added") {
             return None;
         }
-        let parent = item["parent_before"]
-            .as_str()
-            .or(item["parent"].as_str())?;
+        let parent = item["parent_before"].as_str().or(item["parent"].as_str())?;
         id_of.get(parent).copied()
     };
     let mut state: HashMap<usize, usize> = HashMap::new();
@@ -415,8 +434,10 @@ fn check_before_cycle(
         while let Some(node) = current {
             if let Some(&first) = state.get(&node) {
                 if first == start {
-                    let cycle: Vec<String> =
-                        path[first..].iter().map(|&index| node_id(&nodes[index])).collect();
+                    let cycle: Vec<String> = path[first..]
+                        .iter()
+                        .map(|&index| node_id(&nodes[index]))
+                        .collect();
                     let mut member = None;
                     for &index in &path[first..] {
                         if nodes[index].get("parent_before").is_some() {
@@ -451,7 +472,10 @@ fn check_before_cycle(
 /// Map resolved marks onto the laid-out scene and add the description band.
 /// Trunk and junction views are derived with the erd/lifecycle rendering in
 /// their own milestone; this attach covers node, relation and field marks.
-pub(crate) fn attach(diagram: &mut CompiledDiagram, input: &DiagramInput) -> Result<(), Diagnostics> {
+pub(crate) fn attach(
+    diagram: &mut CompiledDiagram,
+    input: &DiagramInput,
+) -> Result<(), Diagnostics> {
     let Some(resolved) = resolve(&input.document, diagram.diagram_type)? else {
         return Ok(());
     };
@@ -493,7 +517,12 @@ fn trunk_views(diagram: &CompiledDiagram, resolved: &Resolved) -> BTreeMap<Strin
             .authored
             .geometry_provenance
             .iter()
-            .filter_map(|path| resolved.relations.get(path.as_str()).map(|mark| Some(mark.as_str())))
+            .filter_map(|path| {
+                resolved
+                    .relations
+                    .get(path.as_str())
+                    .map(|mark| Some(mark.as_str()))
+            })
             .collect();
         if marks.is_empty() {
             continue;
@@ -530,12 +559,14 @@ fn junction_views(diagram: &CompiledDiagram, relations: &[Option<String>]) -> Ve
                     .zip(relations.iter())
                     .filter(|(relation, mark)| {
                         visible_in(mark.as_deref(), view)
-                            && relation.points.iter().zip(relation.points.iter().skip(1)).any(
-                                |(start, end)| {
+                            && relation
+                                .points
+                                .iter()
+                                .zip(relation.points.iter().skip(1))
+                                .any(|(start, end)| {
                                     crate::geometry::point_segment_distance(*junction, *start, *end)
                                         <= 0.5
-                                },
-                            )
+                                })
                     })
                     .count();
                 if visible < 2 {
@@ -556,7 +587,11 @@ fn build_band(diagram: &CompiledDiagram, resolved: &Resolved) -> ChangeBand {
     let title_font = BAND_TITLE_FONT * scale;
     let body_font = BAND_BODY_FONT * scale;
 
-    let mut changes_lines = wrap_text(&locale.text("change.view.changes", &[]), title_font, band_width);
+    let mut changes_lines = wrap_text(
+        &locale.text("change.view.changes", &[]),
+        title_font,
+        band_width,
+    );
     let items: Vec<String> = [
         ("+", "change.count.added", resolved.counts.added),
         ("\u{2212}", "change.count.removed", resolved.counts.removed),
@@ -564,9 +599,7 @@ fn build_band(diagram: &CompiledDiagram, resolved: &Resolved) -> ChangeBand {
     ]
     .into_iter()
     .filter(|(_, _, count)| *count > 0)
-    .map(|(symbol, key, count)| {
-        format!("{symbol} {} {count}", locale.text(key, &[]))
-    })
+    .map(|(symbol, key, count)| format!("{symbol} {} {count}", locale.text(key, &[])))
     .collect();
     changes_lines.extend(pack_items(&items, body_font, band_width));
     let note = (resolved.counts.changed > 0).then(|| {
@@ -594,8 +627,7 @@ fn build_band(diagram: &CompiledDiagram, resolved: &Resolved) -> ChangeBand {
         .len()
         .max(before_lines.len())
         .max(after_lines.len());
-    let height =
-        (BAND_TOP_PADDING + lines as f64 * BAND_LINE_HEIGHT + BAND_BOTTOM_PADDING) * scale;
+    let height = (BAND_TOP_PADDING + lines as f64 * BAND_LINE_HEIGHT + BAND_BOTTOM_PADDING) * scale;
     let band = |group_lines: &[String]| -> Vec<Text> {
         group_lines
             .iter()
@@ -607,11 +639,8 @@ fn build_band(diagram: &CompiledDiagram, resolved: &Resolved) -> ChangeBand {
                     content: line.clone(),
                     position: Point {
                         x,
-                        y: y
-                            + (BAND_TOP_PADDING
-                                + index as f64 * BAND_LINE_HEIGHT
-                                + font * 0.8)
-                                * scale,
+                        y: y + (BAND_TOP_PADDING + index as f64 * BAND_LINE_HEIGHT + font * 0.8)
+                            * scale,
                     },
                     font_size: font,
                     anchor: "start".to_owned(),
