@@ -3082,6 +3082,42 @@ html:has(svg[data-diagram-type="statechart"]) .node-outline-item small {
   outline: 2px solid var(--frontend-stroke);
   outline-offset: -4px;
 }
+/* Change view switch: one wrapping row of view buttons under the page
+   header. The selected view is marked on the SVG root only; it is never
+   stored or written to share links. */
+.change-view-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+.change-view-switch[hidden] { display: none; }
+.change-view-switch button {
+  background: transparent;
+  color: var(--text-muted);
+  border: 0;
+  padding: 0.35rem 0.7rem;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 2.25rem;
+}
+.change-view-switch button:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+.change-view-switch button[aria-pressed="true"] {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+.change-view-switch button:focus-visible {
+  outline: 2px solid var(--frontend-stroke);
+  outline-offset: -4px;
+}
+.change-view-status { color: var(--text-muted); font-size: 0.8125rem; }
 .toolbar { gap: 0.5rem; }
 .toolbar #btn-export { margin-left: 0; }
 .toolbar #btn-export::before { inset: 0.25rem 0; border-radius: 0.6875rem; }

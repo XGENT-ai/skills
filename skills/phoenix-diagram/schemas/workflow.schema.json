@@ -304,6 +304,9 @@
             "type": "string",
             "minLength": 1
           },
+          "change": {
+            "$ref": "common.schema.json#/$defs/elementChange"
+          },
           "sublabel": {
             "type": "string"
           },
@@ -354,6 +357,9 @@
           },
           "label": {
             "type": "string"
+          },
+          "change": {
+            "$ref": "common.schema.json#/$defs/relationChange"
           },
           "variant": {
             "$ref": "common.schema.json#/$defs/variant"

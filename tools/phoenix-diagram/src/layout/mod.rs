@@ -49,6 +49,7 @@ pub fn compile(
     }?;
     clear_sigil_labels(&mut diagram.nodes);
     attach_brands(&mut diagram, input)?;
+    crate::changes::attach(&mut diagram, input)?;
     Ok(diagram)
 }
 

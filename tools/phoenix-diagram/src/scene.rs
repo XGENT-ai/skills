@@ -2,6 +2,7 @@ use crate::diagnostic::Diagnostics;
 use crate::input::{DiagramType, Quality};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::BTreeMap;
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct Point {
@@ -243,6 +244,47 @@ pub struct WaterfallSpan {
     pub service: Option<String>,
 }
 
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangeCounts {
+    pub added: usize,
+    pub removed: usize,
+    pub changed: usize,
+}
+
+/// Single-input change marking: effective per-element marks, counts and the
+/// description band added below the canvas. Present only when the input
+/// marks changes; rendering and checks read these facts instead of
+/// re-deriving them from the authored document.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangeFacts {
+    pub counts: ChangeCounts,
+    /// Effective node marks by node id.
+    pub nodes: BTreeMap<String, String>,
+    /// Relation marks aligned with `relations` (`None` keeps a relation
+    /// unmarked, including tree connections that follow the child node).
+    pub relations: Vec<Option<String>>,
+    /// Effective erd field marks by field source path.
+    pub fields: BTreeMap<String, String>,
+    /// erd trunk container id → the view where the trunk does not exist.
+    pub trunks: BTreeMap<String, String>,
+    /// Lifecycle junction points in scene order; each entry lists the views
+    /// where the point is hidden.
+    pub junctions: Vec<Vec<String>>,
+    /// The description band added below the canvas.
+    pub band: ChangeBand,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangeBand {
+    pub bounds: Rect,
+    pub changes: Vec<Text>,
+    pub before: Vec<Text>,
+    pub after: Vec<Text>,
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CompiledDiagram {
@@ -259,5 +301,7 @@ pub struct CompiledDiagram {
     pub legends: Vec<Card>,
     pub cards: Vec<Card>,
     pub facts: DiagramFacts,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub changes: Option<ChangeFacts>,
     pub diagnostics: Diagnostics,
 }

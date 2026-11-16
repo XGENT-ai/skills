@@ -1401,6 +1401,9 @@ Full license: LICENSE.txt; bundled fonts: JetBrainsMono-OFL.txt.
         if (PhoenixDiagram.treeBranches && PhoenixDiagram.treeBranches.active) {
           normalized.forEach(function (id) { PhoenixDiagram.treeBranches.reveal(id); });
         }
+        if (PhoenixDiagram.changeView && PhoenixDiagram.changeView.active) {
+          normalized.forEach(function (id) { PhoenixDiagram.changeView.reveal(id); });
+        }
         if (normalized.length === activeIds.length && normalized.every(function (id, index) { return activeIds[index] === id; }) && options.toggle !== false) {
           clear();
           return true;

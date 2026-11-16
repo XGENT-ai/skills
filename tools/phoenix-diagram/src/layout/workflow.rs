@@ -784,6 +784,7 @@ fn compile_plan(
                 .map(|id| id.as_str().unwrap_or_default().into())
                 .collect(),
         },
+        changes: None,
         diagnostics: Vec::new(),
     };
     measure::clear_group_titles(&measured, &mut scene);

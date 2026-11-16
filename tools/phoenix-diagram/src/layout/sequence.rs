@@ -731,6 +731,7 @@ pub fn compile(
             activations: list(&document["activations"]).to_vec(),
             segments: list(&document["segments"]).to_vec(),
         },
+        changes: None,
         diagnostics: vec![],
     })
 }

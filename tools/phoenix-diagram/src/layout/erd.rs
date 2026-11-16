@@ -1231,6 +1231,7 @@ pub fn compile(
             entities: raw_entities.to_vec(),
             relationships: relationships.to_vec(),
         },
+        changes: None,
         diagnostics: vec![],
     })
 }

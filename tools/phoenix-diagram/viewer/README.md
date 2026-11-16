@@ -8,7 +8,7 @@ mise exec --no-deps -- node scripts/assemble-phoenix-diagram-reader.mjs --check
 mise exec --no-deps -- node --test test/phoenix-diagram/reader-assets.test.js
 ```
 
-`template.source.html`、CSS 与 14 个 classic JavaScript 片段是维护源；`assets/template.html` 与 `assets/catalogs.json` 是供 Rust 嵌入的生成物，不要直接编辑。装配器按固定顺序把片段拼进模板，Export 保持唯一的私有 Export Cleanup 子片段；`--check` 不写文件，只核对生成物是否与维护源一致。
+`template.source.html`、CSS 与 15 个 classic JavaScript 片段是维护源；`assets/template.html` 与 `assets/catalogs.json` 是供 Rust 嵌入的生成物，不要直接编辑。装配器按固定顺序把片段拼进模板，Export 保持唯一的私有 Export Cleanup 子片段；`--check` 不写文件，只核对生成物是否与维护源一致。
 
 `locales/` 下的五个语言目录是唯一的目录来源，新文案直接写进各目录。装配器生成唯一的 `assets/catalogs.json`，模板嵌入同一对象，Rust `src/i18n.rs` 也读取它；`--check` 断言五目录键集合与占位符逐键一致且无 Archify 残留。初始可读英文在装配时生成，启动后按元数据中的语言与有效覆写通过 `textContent`、安全属性更新，不将作者内容写入 HTML sink。
 

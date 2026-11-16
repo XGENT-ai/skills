@@ -38,7 +38,7 @@ metadata:
 | `statechart` | 流程会不会违反规则或卡住：有限模型穷举，画出状态图与最短出错路径 | [最小状态机](examples/minimal.statechart.json) |
 | `chart` | 数值的比较、趋势、占比与限额：柱状图、折线图、饼图、限额对比图 | [最小数值图表](examples/minimal.chart.json) |
 
-要判断流程会不会违反规则、找出出错路径时用 statechart；只画出已知的状态流时用 lifecycle。不明确时运行 `guide`，按返回的包内 `schema`、`commonSchema`、`example` 路径选择。仪表盘、多图联动、实时数据和其他 infographic 不在范围内，不能改称上述图型来绕过。
+要判断流程会不会违反规则、找出出错路径时用 statechart；只画出已知的状态流时用 lifecycle。不明确时运行 `guide`，按返回的包内 `schema`、`commonSchema`、`example` 路径选择。仪表盘、多图联动、实时数据和其他 infographic 不在范围内，不能改称上述图型来绕过。要讲「改完以后和现在差在哪」时，在 workflow、lifecycle、tree、erd 的一份输入里标记新增、删除、变更，读[变更视图](references/change-view.md)；不画前后两张图，也不改用架构比较。
 
 Mermaid 作为语义材料处理：`flowchart` / `graph` 转为 workflow，组件连接图可选 architecture；`sequenceDiagram` 保留参与者、消息方向、同步/异步与 return；`stateDiagram` 保留主路径、waiting、终止及真实 recovery 边；`erDiagram` 转为 erd，保留实体、字段、键与两端基数；`classDiagram` 转为 class，保留类型种类、所选成员与关系种类。由宿主写新的 JSON，不运行 Mermaid 或 Node 图解 renderer，不照搬 Mermaid 样式。
 
@@ -88,7 +88,7 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
    第二种用于带来源的仓库图。退出码 0 不代表来源已核对：读回执 `evidence.status`（`verified`、`partial`、`unverified` 或 `none`）及 `evidence.unverified`、`evidence.unsourced`。
 
 3. 每轮失败后，在可回读的进度或本次项目记录中写明实际失败门、诊断阶段、客观 error 数、历史最佳值和停滞计数；首次失败的停滞计数为0。同一门每次修复后，只有 error 低于该门历史最佳才更新最佳并清零，否则停滞计数加1。修改 candidate 或修复前先核对该门计数：达到2立即停止并列出未解决项；即使不再运行命令，也不能继续修改 candidate 或将它回退到历史较好版本。错误种类变化不能重置计数，也不允许再试一次。修复前实际读到失败 diagnostic 的 `subject`、`evidence`、`supportedFixes`；宿主返回截断或提取遗漏时先补齐，不能把原有实测或字符串修法筛掉、转成空对象后视为已读。只修相关邻域。修复后重新 finalize；必要时用 `validate <type> candidate.json --layout-json --json` 定向诊断。重建 candidate 或交付、调整布局或卡片、返回已记录门时，沿用该门历史，不因新回执重新初始化；对最小示例的只读对照或验证不计修复，也不重置历史。环境失败也不允许无限重试。已通过前门而首次进入后门属于实际进展，按新门初始化记录；同一 validate 门内诊断 `stage` 首次由 `input` 变为 `layout` 也算进入后门。`supportedFixes` 写明经整图验证时，选定的一项修法所列全部路径是同一整组方案，须一次完整应用，不挑单个路径先试；保留每轮全部门的真实状态，不把不同门的顶层 error 数拼成同一停滞序列。不能删语义、降低质量、缩字或隐藏溢出来换通过。
-4. 按[交付合同](references/delivery-contract.md)实际打开 summary 列出的 1440×900 亮、暗两张截图，检查主图、标签、卡片、关系遮挡、层级和控件。默认必须做实际图像审核；DOM 数值、截图存在或测试通过不能替代看图。随后写审核记录并 `review-record` 登记，再回读同一 summary。只为登记审核或取得完整状态不得再次 finalize。
+4. 按[交付合同](references/delivery-contract.md)实际打开 summary 列出的 1440×900 亮、暗两张截图，检查主图、标签、卡片、关系遮挡、层级和控件。默认必须做实际图像审核；DOM 数值、截图存在或测试通过不能替代看图。带变更标记的图，两张截图是变更视图；另核对徽标、计数与图下方的视图说明是否与输入相符。随后写审核记录并 `review-record` 登记，再回读同一 summary。只为登记审核或取得完整状态不得再次 finalize。
 
 自动三门（validate、deliver、browser-check）通过后，视觉状态仍是 `required-pending`；只有三门 `pass`、`automatedStatus: "pass"`、`visualReview.status: "passed"`、`deliveryStatus: "complete"` 时，才能报告完整交付。修改 candidate 后须重新 finalize 并重新看图审核。
 

@@ -150,6 +150,7 @@ fn scene(
                 .collect(),
             presentation: Default::default(),
         },
+        changes: None,
         diagnostics: vec![],
     }
 }

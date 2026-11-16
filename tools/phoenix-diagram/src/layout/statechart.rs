@@ -1010,6 +1010,7 @@ pub fn compile(
             arrows: facts_arrows,
             model: report::receipt(&analysis, &locale),
         },
+        changes: None,
         diagnostics: analysis.warnings.clone(),
     })
 }

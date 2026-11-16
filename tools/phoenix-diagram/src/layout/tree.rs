@@ -51,7 +51,7 @@ fn wraps_alone(character: char) -> bool {
     matches!(character as u32, 0x2E80..=0x9FFF | 0xAC00..=0xD7AF | 0xF900..=0xFAFF | 0xFF00..=0xFFEF)
 }
 
-fn tokens(text: &str) -> Vec<String> {
+pub(crate) fn tokens(text: &str) -> Vec<String> {
     let characters: Vec<char> = text.chars().collect();
     let mut result = Vec::new();
     let mut index = 0;
@@ -77,7 +77,7 @@ fn tokens(text: &str) -> Vec<String> {
     result
 }
 
-fn wrap_text(text: &str, font: f64, max_width: f64) -> Vec<String> {
+pub(crate) fn wrap_text(text: &str, font: f64, max_width: f64) -> Vec<String> {
     let limit = 4f64.max((max_width / (font * ADVANCE)).floor());
     if units(text) <= limit {
         return vec![text.to_owned()];
@@ -961,6 +961,7 @@ pub fn compile(
             nodes: nodes.to_vec(),
             direction: if down { "down" } else { "right" }.into(),
         },
+        changes: None,
         diagnostics: vec![],
     })
 }

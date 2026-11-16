@@ -8,6 +8,7 @@ use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 
 pub mod anchors;
+mod change;
 mod chart;
 mod class;
 mod erd;
@@ -1051,6 +1052,9 @@ pub fn check_html(bytes: &[u8], quality: Quality) -> ArtifactCheck {
             _ => Vec::new(),
         };
         for (code, path, message, evidence) in findings {
+            content_errors.push(inspection.diagnostic(code, &path, message, evidence));
+        }
+        for (code, path, message, evidence) in change::content(svg, metadata) {
             content_errors.push(inspection.diagnostic(code, &path, message, evidence));
         }
     }

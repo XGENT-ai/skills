@@ -763,6 +763,7 @@ pub fn compile(
                 })
                 .collect(),
         },
+        changes: None,
         diagnostics: vec![],
     })
 }

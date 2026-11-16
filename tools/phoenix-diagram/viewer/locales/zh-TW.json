@@ -561,5 +561,17 @@
   "statechart.when.or": " 或 ",
   "statechart.join.or": " 或 ",
   "statechart.join.list": "、",
-  "statechart.join.regions": "，"
+  "statechart.join.regions": "，",
+  "change.view.label": "變更檢視",
+  "change.view.changes": "變更檢視",
+  "change.view.before": "變更前",
+  "change.view.after": "變更後",
+  "change.view.returned": "已回到變更檢視",
+  "change.count.added": "新增",
+  "change.count.removed": "刪除",
+  "change.count.changed": "變更",
+  "change.note.changed": "標為變更的 {count} 項顯示的是輸入中的描述，不代表變更前的取值。",
+  "change.mark.added": "新增",
+  "change.mark.removed": "刪除",
+  "change.mark.changed": "變更"
 }

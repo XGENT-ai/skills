@@ -562,7 +562,19 @@
     "statechart.when.or": " or ",
     "statechart.join.or": " or ",
     "statechart.join.list": ", ",
-    "statechart.join.regions": ", "
+    "statechart.join.regions": ", ",
+    "change.view.label": "Change views",
+    "change.view.changes": "Changes",
+    "change.view.before": "Before",
+    "change.view.after": "After",
+    "change.view.returned": "Returned to the changes view",
+    "change.count.added": "added",
+    "change.count.removed": "removed",
+    "change.count.changed": "changed",
+    "change.note.changed": "The {count} changed items show the description from the input; they do not represent their earlier values.",
+    "change.mark.added": "Added",
+    "change.mark.removed": "Removed",
+    "change.mark.changed": "Changed"
   },
   "zh-CN": {
     "page.title": "{title}",
@@ -1127,7 +1139,19 @@
     "statechart.when.or": " 或 ",
     "statechart.join.or": " 或 ",
     "statechart.join.list": "、",
-    "statechart.join.regions": "，"
+    "statechart.join.regions": "，",
+    "change.view.label": "变更视图",
+    "change.view.changes": "变更视图",
+    "change.view.before": "变更前",
+    "change.view.after": "变更后",
+    "change.view.returned": "已回到变更视图",
+    "change.count.added": "新增",
+    "change.count.removed": "删除",
+    "change.count.changed": "变更",
+    "change.note.changed": "标为变更的 {count} 项显示的是输入中的描述，不代表变更前的取值。",
+    "change.mark.added": "新增",
+    "change.mark.removed": "删除",
+    "change.mark.changed": "变更"
   },
   "zh-TW": {
     "page.title": "{title}",
@@ -1692,7 +1716,19 @@
     "statechart.when.or": " 或 ",
     "statechart.join.or": " 或 ",
     "statechart.join.list": "、",
-    "statechart.join.regions": "，"
+    "statechart.join.regions": "，",
+    "change.view.label": "變更檢視",
+    "change.view.changes": "變更檢視",
+    "change.view.before": "變更前",
+    "change.view.after": "變更後",
+    "change.view.returned": "已回到變更檢視",
+    "change.count.added": "新增",
+    "change.count.removed": "刪除",
+    "change.count.changed": "變更",
+    "change.note.changed": "標為變更的 {count} 項顯示的是輸入中的描述，不代表變更前的取值。",
+    "change.mark.added": "新增",
+    "change.mark.removed": "刪除",
+    "change.mark.changed": "變更"
   },
   "es": {
     "page.title": "{title} · Diagrama",
@@ -2257,7 +2293,19 @@
     "statechart.when.or": " o ",
     "statechart.join.or": " o ",
     "statechart.join.list": ", ",
-    "statechart.join.regions": ", "
+    "statechart.join.regions": ", ",
+    "change.view.label": "Vistas de cambios",
+    "change.view.changes": "Cambios",
+    "change.view.before": "Antes",
+    "change.view.after": "Después",
+    "change.view.returned": "De vuelta a la vista de cambios",
+    "change.count.added": "añadidos",
+    "change.count.removed": "eliminados",
+    "change.count.changed": "cambiados",
+    "change.note.changed": "Los {count} elementos marcados como cambiados muestran la descripción de la entrada; no representan sus valores anteriores.",
+    "change.mark.added": "Añadido",
+    "change.mark.removed": "Eliminado",
+    "change.mark.changed": "Cambiado"
   },
   "ko": {
     "page.title": "{title} 다이어그램",
@@ -2822,6 +2870,18 @@
     "statechart.when.or": " 또는 ",
     "statechart.join.or": " 또는 ",
     "statechart.join.list": ", ",
-    "statechart.join.regions": ", "
+    "statechart.join.regions": ", ",
+    "change.view.label": "변경 보기",
+    "change.view.changes": "변경",
+    "change.view.before": "이전",
+    "change.view.after": "이후",
+    "change.view.returned": "변경 보기로 돌아왔습니다",
+    "change.count.added": "추가",
+    "change.count.removed": "삭제",
+    "change.count.changed": "변경",
+    "change.note.changed": "변경으로 표시된 {count}개 항목은 입력의 설명을 보여주며 이전 값을 나타내지 않습니다.",
+    "change.mark.added": "추가",
+    "change.mark.removed": "삭제",
+    "change.mark.changed": "변경"
   }
 }

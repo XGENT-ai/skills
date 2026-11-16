@@ -1176,6 +1176,7 @@ pub fn compile(
                 .collect(),
             breaks: axis.breaks.iter().map(|gap| [gap.from, gap.to]).collect(),
         },
+        changes: None,
         diagnostics: vec![],
     })
 }

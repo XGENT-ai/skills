@@ -5,8 +5,8 @@
   "files": [
     {
       "path": "SKILL.md",
-      "size": 19277,
-      "sha256": "1273d68a3b1a70a7a4c58b55c98d954a09865691afdc5c3a5f8113ce117f46c5",
+      "size": 19641,
+      "sha256": "52013ccb48a008eb806450c08dc0b4fd5aa8a57eb653dcc4895300a5168479aa",
       "mode": 420
     },
     {
@@ -100,6 +100,12 @@
       "mode": 420
     },
     {
+      "path": "references/change-view.md",
+      "size": 2128,
+      "sha256": "66e5df6b1561340bb1119e41c352146083598a4e06fd870e4cdb16a995cfac2e",
+      "mode": 420
+    },
+    {
       "path": "references/chart.md",
       "size": 1363,
       "sha256": "90fd97651c9e4ff9828efeb0c177185f72ec9cc03a4db2eb161c685be5333e0f",
@@ -173,8 +179,8 @@
     },
     {
       "path": "schemas/common.schema.json",
-      "size": 6857,
-      "sha256": "e867dc673fd823b2215cdcc92758fd899348e1b6609c47469757d295beaf3e58",
+      "size": 7055,
+      "sha256": "f25fd271f4edaf47ff5c9a8a6d87260e7d1532fbaf65fd27e77fc8abc824db59",
       "mode": 420
     },
     {
@@ -227,8 +233,8 @@
     },
     {
       "path": "schemas/workflow.schema.json",
-      "size": 10388,
-      "sha256": "76f58c88cbe04b8fa9518b96a370bbac804b60b5e226ec456b0fb3e0029e8f78",
+      "size": 10583,
+      "sha256": "8d8bc8a48894cc5168559b9de8302a835219a78cc9023fdfc91b946f8a2d7ae0",
       "mode": 420
     },
     {

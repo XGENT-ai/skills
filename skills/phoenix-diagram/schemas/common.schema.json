@@ -319,6 +319,19 @@
           }
         }
       }
+    },
+    "elementChange": {
+      "enum": [
+        "added",
+        "removed",
+        "changed"
+      ]
+    },
+    "relationChange": {
+      "enum": [
+        "added",
+        "removed"
+      ]
     }
   }
 }

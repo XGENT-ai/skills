@@ -368,6 +368,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <h1>{{PHOENIX:HEADING}}</h1>
       </div>
       {{PHOENIX:SUBTITLE}}
+      <div class="change-view-switch no-print" id="change-view-switch" role="group" aria-label="{{i18n:change.view.label}}" data-change-view-returned="{{i18n:change.view.returned}}" hidden>
+        <button type="button" data-change-view-select="changes" aria-pressed="true">{{i18n:change.view.changes}}</button>
+        <button type="button" data-change-view-select="before" aria-pressed="false">{{i18n:change.view.before}}</button>
+        <button type="button" data-change-view-select="after" aria-pressed="false">{{i18n:change.view.after}}</button>
+        <span class="change-view-status" id="change-view-status" role="status" aria-live="polite"></span>
+      </div>
     </div>
 
     <script type="application/json" id="phoenix-diagram-metadata">{{PHOENIX:METADATA}}</script>
@@ -947,6 +953,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     })();
 
 /* PHOENIX:TREE_BRANCHES */
+
+/* PHOENIX:CHANGE_VIEW */
 
 /* PHOENIX:FOCUS */
 

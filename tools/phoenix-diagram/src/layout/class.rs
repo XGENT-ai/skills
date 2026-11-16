@@ -928,6 +928,7 @@ pub fn compile(
             types: raw_types.to_vec(),
             relationships: raw_relationships.to_vec(),
         },
+        changes: None,
         diagnostics: vec![],
     })
 }

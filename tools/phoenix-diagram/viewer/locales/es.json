@@ -561,5 +561,17 @@
   "statechart.when.or": " o ",
   "statechart.join.or": " o ",
   "statechart.join.list": ", ",
-  "statechart.join.regions": ", "
+  "statechart.join.regions": ", ",
+  "change.view.label": "Vistas de cambios",
+  "change.view.changes": "Cambios",
+  "change.view.before": "Antes",
+  "change.view.after": "Después",
+  "change.view.returned": "De vuelta a la vista de cambios",
+  "change.count.added": "añadidos",
+  "change.count.removed": "eliminados",
+  "change.count.changed": "cambiados",
+  "change.note.changed": "Los {count} elementos marcados como cambiados muestran la descripción de la entrada; no representan sus valores anteriores.",
+  "change.mark.added": "Añadido",
+  "change.mark.removed": "Eliminado",
+  "change.mark.changed": "Cambiado"
 }

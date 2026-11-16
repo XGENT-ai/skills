@@ -561,5 +561,17 @@
   "statechart.when.or": " 또는 ",
   "statechart.join.or": " 또는 ",
   "statechart.join.list": ", ",
-  "statechart.join.regions": ", "
+  "statechart.join.regions": ", ",
+  "change.view.label": "변경 보기",
+  "change.view.changes": "변경",
+  "change.view.before": "이전",
+  "change.view.after": "이후",
+  "change.view.returned": "변경 보기로 돌아왔습니다",
+  "change.count.added": "추가",
+  "change.count.removed": "삭제",
+  "change.count.changed": "변경",
+  "change.note.changed": "변경으로 표시된 {count}개 항목은 입력의 설명을 보여주며 이전 값을 나타내지 않습니다.",
+  "change.mark.added": "추가",
+  "change.mark.removed": "삭제",
+  "change.mark.changed": "변경"
 }

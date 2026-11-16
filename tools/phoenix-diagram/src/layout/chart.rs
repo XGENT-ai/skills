@@ -1663,6 +1663,7 @@ pub fn compile(
             rows: rows_facts,
             table,
         },
+        changes: None,
         diagnostics: vec![],
     })
 }

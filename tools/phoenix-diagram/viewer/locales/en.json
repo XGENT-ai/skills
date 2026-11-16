@@ -561,5 +561,17 @@
   "statechart.when.or": " or ",
   "statechart.join.or": " or ",
   "statechart.join.list": ", ",
-  "statechart.join.regions": ", "
+  "statechart.join.regions": ", ",
+  "change.view.label": "Change views",
+  "change.view.changes": "Changes",
+  "change.view.before": "Before",
+  "change.view.after": "After",
+  "change.view.returned": "Returned to the changes view",
+  "change.count.added": "added",
+  "change.count.removed": "removed",
+  "change.count.changed": "changed",
+  "change.note.changed": "The {count} changed items show the description from the input; they do not represent their earlier values.",
+  "change.mark.added": "Added",
+  "change.mark.removed": "Removed",
+  "change.mark.changed": "Changed"
 }

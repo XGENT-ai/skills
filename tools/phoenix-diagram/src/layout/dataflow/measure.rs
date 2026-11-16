@@ -791,6 +791,7 @@ pub(super) fn scene(mut context: Context<'_>) -> Result<CompiledDiagram, Diagnos
         quality: input.quality,
         meta: input.document["meta"].clone(),
         view_box: context.view_box,
+        changes: None,
         reader_fit: if input.document.pointer("/meta/viewBox").is_none() {
             "intrinsic-height".into()
         } else {

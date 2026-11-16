@@ -498,6 +498,7 @@ pub fn compile(
             components: list(&document["components"]).to_vec(),
             boundaries: list(&document["boundaries"]).to_vec(),
         },
+        changes: None,
         diagnostics: vec![],
     })
 }

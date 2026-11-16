@@ -234,6 +234,9 @@ pub(super) fn validate(document: &Value, kind: DiagramType) -> Result<(), Diagno
         DiagramType::Chart => chart_checks(document, nodes, &mut checks),
         _ => {}
     }
+    if let Err(change_errors) = crate::changes::resolve(document, kind) {
+        checks.errors.extend(change_errors);
+    }
     if checks.errors.is_empty() {
         Ok(())
     } else {

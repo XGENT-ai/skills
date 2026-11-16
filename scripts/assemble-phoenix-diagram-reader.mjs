@@ -19,6 +19,7 @@ export const fragments = [
   ['/* PHOENIX:NODE_FINDER */', 'node-finder.js'],
   ['/* PHOENIX:NODE_OUTLINE */', 'node-outline.js'],
   ['/* PHOENIX:TREE_BRANCHES */', 'tree-branches.js'],
+  ['/* PHOENIX:CHANGE_VIEW */', 'change-view.js'],
   ['/* PHOENIX:FOCUS */', 'focus.js'],
   ['/* PHOENIX:INTENT_TRACE */', 'intent-trace.js'],
   ['/* PHOENIX:SEMANTIC_LENS */', 'semantic-lens.js'],
@@ -80,7 +81,7 @@ function localizeShell(source, english) {
   return source.split(/(<[^>]*>)/g).map(part => {
     if (part.startsWith('<')) {
       const replaced = part.replace(/([a-zA-Z0-9:-]+)="\{\{i18n:([a-zA-Z0-9_.]+)\}\}"/g, (_, attribute, key) => {
-        if (!/^(?:aria-label|title|placeholder|data-preset-badge-[a-z-]+)$/.test(attribute)) throw new Error(`Unsafe Reader translated attribute ${attribute}`);
+        if (!/^(?:aria-label|title|placeholder|data-preset-badge-[a-z-]+|data-change-view-returned)$/.test(attribute)) throw new Error(`Unsafe Reader translated attribute ${attribute}`);
         return `${attribute}="${valueFor(key)}" data-phoenix-i18n-${attribute}="${key}"`;
       });
       if (replaced.match(token)) throw new Error('Reader i18n token must occupy one whole safe attribute');

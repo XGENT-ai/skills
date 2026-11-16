@@ -561,5 +561,17 @@
   "statechart.when.or": " 或 ",
   "statechart.join.or": " 或 ",
   "statechart.join.list": "、",
-  "statechart.join.regions": "，"
+  "statechart.join.regions": "，",
+  "change.view.label": "变更视图",
+  "change.view.changes": "变更视图",
+  "change.view.before": "变更前",
+  "change.view.after": "变更后",
+  "change.view.returned": "已回到变更视图",
+  "change.count.added": "新增",
+  "change.count.removed": "删除",
+  "change.count.changed": "变更",
+  "change.note.changed": "标为变更的 {count} 项显示的是输入中的描述，不代表变更前的取值。",
+  "change.mark.added": "新增",
+  "change.mark.removed": "删除",
+  "change.mark.changed": "变更"
 }

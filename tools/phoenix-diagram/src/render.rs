@@ -10,6 +10,7 @@ use serde_json::{json, Value};
 use std::fmt::Write;
 
 mod chart;
+mod changes;
 mod class;
 mod erd;
 mod statechart;
@@ -875,6 +876,7 @@ fn render_svg_layers(scene: &CompiledDiagram, layers: Option<&DeltaLayers>) -> S
     if let Some(renderer) = &extended {
         svg.push_str(&(renderer.root_attributes)(scene));
     }
+    svg.push_str(&changes::root_attributes(scene));
     svg.push('>');
     write!(svg,"<title id=\"phoenix-diagram-title\">{}</title><desc id=\"phoenix-diagram-description\">{}</desc>",attribute(&scene.meta,"title"),attribute(&scene.meta,"subtitle")).unwrap();
     svg.push_str(include_str!("../assets/svg-definitions.svg"));
@@ -884,6 +886,7 @@ fn render_svg_layers(scene: &CompiledDiagram, layers: Option<&DeltaLayers>) -> S
     if let Some(renderer) = &extended {
         svg.push_str(&(renderer.defs)(scene));
     }
+    svg.push_str(&changes::defs(scene));
     if layers.is_some() {
         svg.push_str(&namespace_svg(
             include_str!("../assets/svg-definitions.svg"),
@@ -893,6 +896,8 @@ fn render_svg_layers(scene: &CompiledDiagram, layers: Option<&DeltaLayers>) -> S
     svg.push_str("<rect width=\"100%\" height=\"100%\" fill=\"url(#grid)\"/>");
     if let Some(renderer) = &extended {
         (renderer.body)(scene, &mut svg);
+        svg.push_str(&changes::edge_marks(scene));
+        svg.push_str(&changes::band(scene));
         write_legends(scene, &mut svg, Some(renderer.legend_glyph));
         return svg;
     }
@@ -933,6 +938,8 @@ fn render_svg_layers(scene: &CompiledDiagram, layers: Option<&DeltaLayers>) -> S
         svg.push_str(&namespace_svg(&fragment, "base"));
         write_delta_markers(scene, &layers.head, &mut svg);
     }
+    svg.push_str(&changes::edge_marks(scene));
+    svg.push_str(&changes::band(scene));
     write_legends(scene, &mut svg, None);
     svg
 }
@@ -1004,6 +1011,7 @@ fn write_relation_paths(scene: &CompiledDiagram, svg: &mut String, delta: Option
         }
         let facts = &relation.authored.facts;
         let attrs = comparison_edge_attributes(relation, index, delta);
+        let attrs = format!("{attrs}{}", changes::relation_attribute(scene, index));
         let animation_attr = if delta.is_some_and(|d| d.ghost) {
             "data-delta-animate"
         } else {
@@ -1050,7 +1058,7 @@ fn write_relation_paths(scene: &CompiledDiagram, svg: &mut String, delta: Option
             .collect::<Vec<_>>()
             .join(";");
         if relation.crossover_halo {
-            write!(svg,"<g data-graph-role=\"automatic-crossover\"><path data-graph-role=\"automatic-crossover-underlay\" d=\"{route}\" fill=\"none\" stroke=\"var(--mask)\" stroke-width=\"{}\" stroke-linecap=\"round\" stroke-linejoin=\"round\" pointer-events=\"none\"/>",number(width+4.0)).unwrap();
+            write!(svg,"<g data-graph-role=\"automatic-crossover\"{}><path data-graph-role=\"automatic-crossover-underlay\" d=\"{route}\" fill=\"none\" stroke=\"var(--mask)\" stroke-width=\"{}\" stroke-linecap=\"round\" stroke-linejoin=\"round\" pointer-events=\"none\"/>",changes::relation_attribute(scene,index),number(width+4.0)).unwrap();
         }
         write!(svg,"<path {attrs} data-graph-role=\"edge\" data-composition-points=\"{points}\" d=\"{route}\" class=\"a-{variant}\" {animation_attr}=\"edge\" style=\"--step:{}\" stroke-width=\"{}\" marker-end=\"url(#{marker})\"",index.min(12),number(width)).unwrap();
         if direction_cue.is_some() {
@@ -1136,6 +1144,7 @@ fn write_nodes(scene: &CompiledDiagram, svg: &mut String, delta: Option<&DeltaLa
         if let Some(delta) = delta {
             svg.push_str(&delta.attributes("component", &node.authored.id));
         }
+        svg.push_str(&changes::node_attribute(scene, node));
         svg.push('>');
         let radius = match scene.diagram_type {
             DiagramType::Sequence | DiagramType::Dataflow => 6.0,
@@ -1218,6 +1227,7 @@ fn write_nodes(scene: &CompiledDiagram, svg: &mut String, delta: Option<&DeltaLa
         if let Some(delta) = delta {
             delta_node_marker(node, delta, svg);
         }
+        svg.push_str(&changes::node_mark(scene, node));
         svg.push_str("</g>");
     }
 }
@@ -1257,6 +1267,7 @@ fn write_relation_labels(scene: &CompiledDiagram, svg: &mut String, delta: Optio
             continue;
         }
         let attrs = comparison_edge_attributes(relation, index, delta);
+        let attrs = format!("{attrs}{}", changes::relation_attribute(scene, index));
         write!(
             svg,
             "<g data-detail=\"{}\" {attrs}>",
@@ -1468,6 +1479,16 @@ fn render_with_layers(
             .as_object_mut()
             .expect("metadata object")
             .remove("brandResources");
+    }
+    if scene.changes.is_some() {
+        public_metadata
+            .as_object_mut()
+            .expect("metadata object")
+            .insert(
+                "changes".to_owned(),
+                serde_json::to_value(scene.changes.as_ref().expect("changes present"))
+                    .expect("change facts serialize"),
+            );
     }
     let metadata = serde_json::to_string(&public_metadata)
         .expect("serializable metadata")
