@@ -298,7 +298,7 @@ function usage() {
                   .claude 写入全部 hook、agent 并在 settings.json 中启用
                   对应配置,.agents 写入全部 agent;并安装
                   Phoenix UI(设计 skill 与 hooks;engine 校验后
-                  放入用户 cache;默认删除旧 impeccable,可选择保留)${includesDiagram ? ',\n                  以及 Phoenix Diagram(十二类图解 skill 与独立原生 engine;\n                  默认删除旧 archify,可选择保留)' : ''}
+                  放入用户 cache;默认删除旧 impeccable,可选择保留)${includesDiagram ? ',\n                  以及 Phoenix Diagram(十三类图解 skill 与独立原生 engine;\n                  默认删除旧 archify,可选择保留)' : ''}
   help            显示本帮助
 
 install 选项:

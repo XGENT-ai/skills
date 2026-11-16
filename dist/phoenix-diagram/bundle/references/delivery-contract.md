@@ -11,7 +11,7 @@
 
 带 `sources` 或 `meta.repository` 的图用第二种，单图的 `--repo-root` 接受 `validate`、`deliver`、`finalize`；双输入架构比较另由 `compare --repo-root` 处理。来源核对独立于自动门：回执与 summary 的 `evidence.status` 为 `verified`、`partial`、`unverified` 或 `none`，校验与交付回执另列 `evidence.unverified`（pointer、元素、原因）与 `evidence.unsourced`。结构错误（凭据 URL、路径逃逸、非法行区间、provider 与主机不符、网页链接用了不支持的主机）在 input 阶段失败且不生成 HTML。
 
-固定顺序为 `validate → deliver → browser-check`。首个非 pass 阶段后其余阶段保持 `not-run`。`validate` 做输入/布局与 artifact 检查；`deliver` 写出本次 HTML；`browser-check` 检查浏览器实测并采集截图。读取每个阶段真实 status，不能补造通过。
+固定顺序为 `validate → deliver → browser-check`。首个非 pass 阶段后其余阶段保持 `not-run`。`validate` 做输入/布局与 artifact 检查；`deliver` 写出本次 HTML；`browser-check` 检查浏览器实测并采集截图。读取每个阶段真实 status，不能补造通过。带变更标记的输入，交付的静态图呈现变更视图，不含变更前、变更后。
 
 stdout 是单一 JSON，同时写入 HTML 旁唯一的 summary `<名称>.finalize-summary.json`（路径见 `evidence.summaryPath`）。summary 记录三门回执、`candidate` / `artifact` 的 `path` 与 `identity:{sha256,bytes}`、`configSha256`、`engine`、`screenshots` 与审核状态；`locale` 给出请求、解析后的界面语言与是否回退英文。自动三门通过后，`visualReview.status` 仍为 `required-pending`，`deliveryStatus` 为 `incomplete`。
 
@@ -19,7 +19,7 @@ stdout 是单一 JSON，同时写入 HTML 旁唯一的 summary `<名称>.finaliz
 
 ## 浏览器与实际看图
 
-自动检查仍覆盖 1440×900、1600×1000、1920×1080、2048×1320 桌面与窄屏；实际审核只使用 summary `screenshots` 列出的两张 1440×900 截图，light/dark 各一张，默认在 HTML 旁，`--out-dir` 可指定目录。打开每张图片，检查主图、全部标签/notes、卡片、关系遮挡、层级和控件。截图存在、DOM 数值或测试输出都不代表已经观察。
+自动检查仍覆盖 1440×900、1600×1000、1920×1080、2048×1320 桌面与窄屏；实际审核只使用 summary `screenshots` 列出的两张 1440×900 截图，light/dark 各一张，默认在 HTML 旁，`--out-dir` 可指定目录。打开每张图片，检查主图、全部标签/notes、卡片、关系遮挡、层级和控件。带变更标记的图，两张截图是变更视图；另核对徽标、计数与图下方的视图说明是否与输入相符。截图存在、DOM 数值或测试输出都不代表已经观察。
 
 每个桌面尺寸必须无水平溢出。纵向滚动仅按 Reader 声明和测量接受：`intrinsic-height` / `width-first` 的自动画布，或 Architecture 显式 viewBox 的 `authored-height`，需完整内容留在 panel 内，无内部滚动或裁剪，页面允许纵向滚动，且回执确认可读并给出 `verticalScrollAccepted: true` / `overflowDisposition: "readable-vertical-scroll"`。未知声明、水平溢出、不可读文字和 chrome 遮挡仍失败。不能手工改 DOM 属性伪造该例外。
 

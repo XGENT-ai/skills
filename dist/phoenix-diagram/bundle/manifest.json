@@ -5,8 +5,8 @@
   "files": [
     {
       "path": "SKILL.md",
-      "size": 20039,
-      "sha256": "9a4af29476810e99ee7865ae784944c8db0776976861313415758f498031881a",
+      "size": 19949,
+      "sha256": "a6c30d1d7856e0f2eaceafdcdfce671ebb356da96c1a250bc8774c72de7758ac",
       "mode": 420
     },
     {
@@ -125,20 +125,20 @@
     },
     {
       "path": "references/delivery-contract.md",
-      "size": 9137,
-      "sha256": "ca25fe675b4216a810b3fbb99f983cb0cac588348e217a0ca64c93f578458ef9",
+      "size": 9362,
+      "sha256": "bdb4c82b4675d1a5c8823f94ae5952d994b6b938f11b3482dee60dc9ff42ac34",
       "mode": 420
     },
     {
       "path": "references/extending-types.md",
       "size": 2053,
-      "sha256": "ea49b310f8a3be52ef771c78975c4856e89b70fa0e1aac13ab7a10bf88461c55",
+      "sha256": "e6be836246301ba6ccc373027323c5a27b1ff58e3ffb47f84202fce3b7d4cbde",
       "mode": 420
     },
     {
       "path": "references/preview.md",
       "size": 4121,
-      "sha256": "09f573d7e08dc850b9f002a637a8df880909f2295f5fca516e82e47bec709b6a",
+      "sha256": "0d33e1def7c552632c2daf299262515a0e6b197946885a1168185f2a41c38a92",
       "mode": 420
     },
     {
@@ -155,20 +155,20 @@
     },
     {
       "path": "references/static-figure.md",
-      "size": 3090,
-      "sha256": "383512c1423c8d5d399a850526d057d99281533676253cdab6a6640ed9685b49",
+      "size": 3177,
+      "sha256": "ef73876480b5c21fa561decd7346a425f9353cb975727018a404eda0785e863e",
       "mode": 420
     },
     {
       "path": "references/viewer-runtime.md",
-      "size": 3348,
-      "sha256": "ea6dcf7c323e413e4d24ccea22786c9967044df31fd98eefc82f86f98bd15c45",
+      "size": 3691,
+      "sha256": "60e9a4c1289aec9837368a631f73279a67f5ea7e8c742f020764ae52f3f4e214",
       "mode": 420
     },
     {
       "path": "schemas/README.md",
-      "size": 2183,
-      "sha256": "5eb8804215cde23db5c8e5454fe6fe0f4ba6fb5f3153cbec628786831ebad310",
+      "size": 2324,
+      "sha256": "8c9d22203f890981cb67d99cb10ae89c8463938eb3f0e2386cc7253c0fb03f51",
       "mode": 420
     },
     {
