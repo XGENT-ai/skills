@@ -206,21 +206,21 @@ REVIEW @progress_consistency:
 
 ### 恢复快照
 
-- 最近更新：2026-11-17 · M3 已提交待批末检查；M2 待批末检查；两任务均未记完成
-- 当前进度：1/5 个里程碑完成（M2/M3 实施完成，批末 V-2、V-3、V-5 未跑）
-- 当前状态：M2 已提交 `55135ea3`；M3 已提交 `9217a694`——`annotation` 已登记为第十三类型，语义定位与重叠校验、layout/render/check 三文件、五语言文案、`white-space` 静态支持、`tests/annotation.rs` 13/13、`references/annotation.md`、SKILL.md 图型表/创作路径/描述、装配与 `--sync-bundle`（45 文件）均已完成；顺带修复 M2 遗留的 `changes` 字段缺失、两处 clippy、一处测试断言写法与 rustfmt 重排，见 [M3](ELINTP-VISUALS-P5.records/M3.md)
-- 最近完成：M1 · 变更标记在 workflow 打通（已验收，记录 [M1](ELINTP-VISUALS-P5.records/M1.md)）
-- 下一步：M2–M3 批末——开发构建换新输出目录后缀，连续跑 V-2、V-3、V-5（含 1440×900 亮暗看图与 review-record、两张静态图、窄屏与打印），写批末里程碑记录，回填 M2/M3 两行并分别提交；本地辅助物在 `local/phoenix-diagram/`（均不入库）
+- 最近更新：2026-11-17 · M2、M3 已验收完成；M4 未开始
+- 当前进度：3/5 个里程碑完成
+- 当前状态：M2–M3 批末通过——4 类 candidate 的阅读器与两种字体静态图共 24 张 1440×900 截图逐张审核，12 份 summary 为 `deliveryStatus: complete`；三视图切换、树折叠开关、erd 干线、lifecycle 合流点 22 项交互断言全过；窄屏 360 与打印、导出通过；6 份错误输入均以约定诊断码失败且未产出 HTML；V-5 的 Rust 91 项与 Node 34 项、装配检查全过。批末修复三处：标注节点缺 `id`、同级换父连线绕行、静态图残留视图切换样式（`6330c17b`、`679e2d08`），见 [M2–M3 批末记录](ELINTP-VISUALS-P5.records/M2M3.md)
+- 最近完成：M3 · 逐词标注图型（记录 [M3](ELINTP-VISUALS-P5.records/M3.md)）
+- 下一步：M4 · 接口文字同步与 elintp 选图（§6.2 其余文字、§6.3、V-4 与 V-5 的 `skill.test.js`），完成后进入 M5 收口；本地辅助物在 `local/phoenix-diagram/`（均不入库）
 - 当前阻塞：无
-- 代码基线：`84f91b5e`（批内实现提交：`b7fab31a` M1、`55135ea3` M2、`9217a694` M3）
+- 代码基线：`84f91b5e`（批内实现提交：`b7fab31a` M1、`55135ea3` M2、`9217a694` M3；批末修复 `6330c17b`、`679e2d08`）
 
 ### 完成记录
 
 | Milestone | 状态 | 更新时间 | 简要记录 | 实现与验收记录 | 提交 |
 | --- | --- | --- | --- | --- | --- |
 | M1 | 已完成 | 2026-11-17 | 十二类基线与指纹已记录；变更标记在 workflow 全链路打通，阅读器三视图切换/导出/打印/探索回退与错误输入诊断均通过 | [M1 记录](ELINTP-VISUALS-P5.records/M1.md) | `b7fab31a` |
-| M2 | 进行中 | 2026-11-17 | lifecycle、tree、erd 的变更标记与批内测试已交付；批末 V-2、V-3、V-5 未跑 | [M2–M3 批末记录](ELINTP-VISUALS-P5.records/M2M3.md) | `55135ea3` |
-| M3 | 进行中 | 2026-11-17 | annotation 图型、定位与重叠校验、布局/渲染/检查、五语言与静态支持已交付；批末 V-2、V-3、V-5 未跑 | [M3 记录](ELINTP-VISUALS-P5.records/M3.md) | `9217a694` |
+| M2 | 已完成 | 2026-11-17 | lifecycle、tree、erd 的变更视图、静态图、三视图与错误输入均通过 V-2；批末修复同级换父连线绕行与静态图样式残留 | [M2–M3 批末记录](ELINTP-VISUALS-P5.records/M2M3.md) | `55135ea3`；修复 `6330c17b` |
+| M3 | 已完成 | 2026-11-17 | annotation 的看图、搜索与他人详情、主题/预设、导出与错误输入均通过 V-3；批末修复节点身份缺失 | [M3 记录](ELINTP-VISUALS-P5.records/M3.md) | `9217a694`；修复 `679e2d08` |
 
 ## 0. 需求、范围与决策
 
