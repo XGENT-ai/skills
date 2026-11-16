@@ -248,6 +248,7 @@ fn band_group(
     counts: &ChangeCounts,
 ) {
     write!(out, "<g data-change-when=\"{when}\">").unwrap();
+    let mut next_run = 0usize;
     for (index, line) in lines.iter().enumerate() {
         let mut attributes = String::new();
         if index == 0 {
@@ -266,7 +267,7 @@ fn band_group(
         )
         .unwrap();
         if with_counts && index > 0 {
-            count_runs(out, &line.content, counts);
+            count_runs(out, &line.content, counts, &mut next_run);
         } else {
             out.push_str(&escape_text(&line.content));
         }
@@ -276,8 +277,11 @@ fn band_group(
 }
 
 /// Split a packed counts line back into its " · " items and emit each item
-/// as a label run plus a `data-change-count` run, in counts order.
-fn count_runs(out: &mut String, content: &str, counts: &ChangeCounts) {
+/// as a label run plus a `data-change-count` run, in counts order. The mark
+/// index carries over to the next line, so a counts row that wraps keeps
+/// every run on its own mark; a line without a trailing count (a wrapped
+/// view name) consumes none.
+fn count_runs(out: &mut String, content: &str, counts: &ChangeCounts, next: &mut usize) {
     let marks: [(&str, usize); 3] = [
         ("added", counts.added),
         ("removed", counts.removed),
@@ -288,15 +292,16 @@ fn count_runs(out: &mut String, content: &str, counts: &ChangeCounts) {
         if index > 0 {
             out.push_str("<tspan> \u{b7} </tspan>");
         }
-        let Some((mark, _)) = marks.get(index) else {
-            out.push_str(&escape_text(piece));
-            continue;
-        };
         let digits: String = piece
             .chars()
             .rev()
             .take_while(|character| character.is_ascii_digit())
             .collect();
+        let Some((mark, _)) = marks.get(*next).filter(|_| !digits.is_empty()) else {
+            out.push_str(&escape_text(piece));
+            continue;
+        };
+        *next += 1;
         let split = piece.len() - digits.len();
         write!(
             out,

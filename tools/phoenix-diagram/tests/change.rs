@@ -347,6 +347,152 @@ fn relation_and_value_marks_outside_the_contract_are_schema_errors() {
 }
 
 #[test]
+fn tree_connections_dangle_when_the_parent_is_marked_and_the_child_is_kept() {
+    let project = Project::new();
+    let validate = |name: &str, nodes: Value| {
+        let value = json!({
+            "schema_version": 1,
+            "diagram_type": "tree",
+            "meta": {"title": "Tree marks", "output": "tree.html"},
+            "nodes": nodes
+        });
+        let candidate = project.write(name, &value);
+        let output = run(&[
+            flag("validate"),
+            flag("tree"),
+            candidate.as_os_str(),
+            flag("--layout-json"),
+            flag("--json"),
+        ]);
+        (output.status.code(), parsed(&output))
+    };
+
+    // A changed child stays in both views, so its connection to a removed
+    // parent has no second endpoint after the change.
+    let (status, receipt) = validate(
+        "removed-parent.json",
+        json!([
+            {"id": "r", "label": "Root"},
+            {"id": "p", "parent": "r", "label": "Old parent", "change": "removed"},
+            {"id": "c", "parent": "p", "label": "Changed child", "change": "changed"}
+        ]),
+    );
+    assert_eq!(status, Some(1), "{receipt}");
+    assert!(
+        codes(&receipt).iter().any(|(code, path)| {
+            code == "change/dangling-relation" && path == "/nodes/2/parent"
+        }),
+        "{receipt}"
+    );
+
+    // The same holds for a reparented child: its after-view connection only
+    // exists where the new parent does.
+    let (status, receipt) = validate(
+        "moved-to-removed.json",
+        json!([
+            {"id": "r", "label": "Root"},
+            {"id": "p", "parent": "r", "label": "New parent", "change": "removed"},
+            {"id": "c", "parent": "p", "parent_before": "r", "label": "Moved child", "change": "changed"}
+        ]),
+    );
+    assert_eq!(status, Some(1), "{receipt}");
+    assert!(
+        codes(&receipt).iter().any(|(code, path)| {
+            code == "change/dangling-relation" && path == "/nodes/2/parent"
+        }),
+        "{receipt}"
+    );
+
+    // Moving a kept child onto an added parent is what a new directory plus a
+    // moved file looks like: both connections keep one endpoint in their view.
+    let (status, receipt) = validate(
+        "moved-to-added.json",
+        json!([
+            {"id": "r", "label": "Root"},
+            {"id": "a", "parent": "r", "label": "New parent", "change": "added"},
+            {"id": "c", "parent": "a", "parent_before": "r", "label": "Moved child", "change": "changed"}
+        ]),
+    );
+    assert_eq!(status, Some(0), "{receipt}");
+    assert_eq!(
+        receipt["layout"]["changes"]["relations"],
+        json!(["added", "added", "removed"])
+    );
+
+    // A changed child of an added parent is in the before view while its
+    // parent is not.
+    let (status, receipt) = validate(
+        "added-parent.json",
+        json!([
+            {"id": "r", "label": "Root"},
+            {"id": "a", "parent": "r", "label": "New parent", "change": "added"},
+            {"id": "c", "parent": "a", "label": "Changed child", "change": "changed"}
+        ]),
+    );
+    assert_eq!(status, Some(1), "{receipt}");
+    assert!(
+        codes(&receipt).iter().any(|(code, path)| {
+            code == "change/dangling-relation" && path == "/nodes/2/parent"
+        }),
+        "{receipt}"
+    );
+
+    // A changed child of a parent that exists in both views is ordinary.
+    let (status, receipt) = validate(
+        "kept-parent.json",
+        json!([
+            {"id": "r", "label": "Root"},
+            {"id": "p", "parent": "r", "label": "Parent"},
+            {"id": "c", "parent": "p", "label": "Changed child", "change": "changed"}
+        ]),
+    );
+    assert_eq!(status, Some(0), "{receipt}");
+    assert_eq!(receipt["layout"]["changes"]["counts"]["changed"], 1);
+}
+
+#[test]
+fn band_counts_keep_their_marks_when_the_description_wraps() {
+    let project = Project::new();
+    // es labels push the counts past the narrowest tree band width, so the
+    // counts wrap; the runs on the second row must keep their own marks.
+    let value = json!({
+        "schema_version": 1,
+        "diagram_type": "tree",
+        "meta": {"title": "Band wrap", "locale": "es", "output": "band.html"},
+        "nodes": [
+            {"id": "r", "label": "Raíz"},
+            {"id": "a", "parent": "r", "label": "Nueva", "change": "added"},
+            {"id": "d", "parent": "r", "label": "Vieja", "change": "removed"},
+            {"id": "m", "parent": "r", "label": "Editada", "change": "changed"}
+        ]
+    });
+    let candidate = project.write("band-wrap.json", &value);
+    let html = project.0.join("band-wrap.html");
+    let output = run(&[
+        flag("deliver"),
+        flag("tree"),
+        candidate.as_os_str(),
+        html.as_os_str(),
+        flag("--json"),
+    ]);
+    assert_eq!(output.status.code(), Some(0), "{:?}", parsed(&output));
+    let body = fs::read_to_string(&html).unwrap();
+    let start = body.find("<g data-change-when=\"changes\">").unwrap();
+    let group = &body[start..start + body[start..].find("</g>").unwrap()];
+    assert_eq!(
+        group.matches("<text").count(),
+        3,
+        "the count row must wrap under the title: {group}"
+    );
+    for (mark, count) in [("added", 1), ("removed", 1), ("changed", 1)] {
+        assert!(
+            group.contains(&format!("data-change-count=\"{mark}\">{count}</tspan>")),
+            "the {mark} run must carry {count}: {group}"
+        );
+    }
+}
+
+#[test]
 fn tree_reparent_appends_a_before_connection_and_counts_both_views() {
     let project = Project::new();
     let value = json!({

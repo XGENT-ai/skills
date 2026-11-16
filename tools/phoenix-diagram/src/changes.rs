@@ -264,35 +264,43 @@ pub(crate) fn resolve(
                     "removed".to_owned(),
                 );
             }
-            // Dangling: the connection only exists in the views where both
-            // endpoints exist.
-            let parent_mark = node_marks.get(parent);
+            // Dangling: a connection only exists in the views where both of
+            // its ends exist, and its effective mark says which views those
+            // are. A removed parent therefore only strands a connection that
+            // itself stays after the change, an added parent only one that
+            // exists before.
+            let parent_mark = node_marks.get(parent).map(String::as_str);
             let child_mark = item["change"].as_str();
-            let mut dangling_view: Option<(&str, &str)> = None;
-            if child_mark == Some("removed") && parent_mark == Some(&"added".to_owned()) {
-                dangling_view = Some(("before", "the child only exists in the after view"));
-            } else if child_mark == Some("added") && parent_mark == Some(&"removed".to_owned()) {
-                dangling_view = Some(("after", "the parent only exists in the before view"));
-            } else if child_mark.is_none() {
-                if parent_mark == Some(&"removed".to_owned()) {
-                    dangling_view = Some(("after", "the parent is removed"));
-                } else if parent_mark == Some(&"added".to_owned()) {
-                    dangling_view = Some(("before", "the parent is added"));
-                }
-            }
+            let dangling_view: Option<(&str, &str)> =
+                if parent_mark == Some("removed") && mark != Some("removed") {
+                    Some(("after", "the parent is removed"))
+                } else if parent_mark == Some("added") && mark != Some("added") {
+                    Some(("before", "the parent is added"))
+                } else {
+                    None
+                };
             if let Some((view, reason)) = dangling_view {
                 let path = format!("/nodes/{index}/parent");
-                let fixes: Vec<String> = if child_mark.is_none() && view == "after" {
-                    vec![
+                // A kept child keeps the connection in both views; a
+                // reparented one only in the view of its new parent.
+                let kept_here = matches!(child_mark, None | Some("changed"))
+                    && item.get("parent_before").is_none();
+                let fixes: Vec<String> = match (kept_here, view) {
+                    (true, "after") => vec![
                         format!("Set /nodes/{index}/change to removed"),
                         format!(
                             "Set /nodes/{index}/parent_before to {parent} and change /nodes/{index}/parent to the new parent"
                         ),
-                    ]
-                } else {
-                    vec![format!(
+                    ],
+                    (true, _) => vec![
+                        format!("Set /nodes/{index}/change to added"),
+                        format!(
+                            "Set /nodes/{index}/parent_before to the node's parent in the before view"
+                        ),
+                    ],
+                    (false, _) => vec![format!(
                         "Set /nodes/{index}/parent to a node that exists in the {view} view"
-                    )]
+                    )],
                 };
                 errors.push(Diagnostic::error(
                     Some(kind.as_str()),
