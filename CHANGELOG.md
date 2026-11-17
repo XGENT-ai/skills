@@ -2,6 +2,14 @@
 
 记录版本变更与历史开发事项；安装和使用方法见 [README.md](README.md)。以下为从 README 迁出的历史记录，不是完整发布历史。
 
+## 0.7.13
+
+- Phoenix Diagram 图类型增至十三类：新增 chart（柱状、折线、饼图与限额对比四种形态，每图附可展开数据表）与 annotation（逐词点评）类型；变更标记扩展到 workflow、lifecycle、tree、erd；新增静态图命令与字体策略，及多项渲染修复（饼图图例、负值条、limits 行、批注卡、树连线等）。
+- Phoenix UI 新增 compare 对比命令与对比页、capture 页面证据命令（多状态截图、拼接与隐藏/遮挡/禁用目标的定位器建议）；新增参考媒体搜索与交付图片流程，预览媒体与浏览器网络边界收紧；新增 xgent/cjk-* 中文排版页面规则与中文排版指引。
+- elintp 改为离线模板渲染图文解释，可内嵌 phoenix-diagram 静态图、页面卡片与图表数据表，支持本地审阅轮次与可恢复的离线终稿。
+- 新增 software-copyright-docs、feature-demo skill；review-code 评审中收集证据并指名缺口执行人；portal-dev-setup 升级保留一盒已有数据；xgent-app-release 接受审批通过的 HTTPS connect scheme。
+- 更新 rustls TLS 依赖栈并复钉 RustSec 数据库。
+
 ## 0.7.12
 
 - 安装器默认删除旧工具：发现 impeccable 或 archify 时，删除所选 provider 下项目级与个人级的旧入口（impeccable 含 hooks）及 `skills-lock.json`、`.agents/.skill-lock.json` 中的记录，不备份；交互终端以 `[Y/n]` 确认，`--keep-impeccable`、`--keep-archify` 保留。`--no-impeccable` 与 `--replace-impeccable` 已移除，传入按未知参数退出。
