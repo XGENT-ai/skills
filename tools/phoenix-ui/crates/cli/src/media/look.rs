@@ -75,12 +75,12 @@ pub(super) fn describe(image: &Image) -> Value {
     let edge_flat = strips
         .iter()
         .all(|(_, strip)| strip.deviation < 0.06 && strip.gradient < 0.02);
-    let edge_mean = strips.iter().map(|(_, strip)| strip.mean).sum::<f64>() / 4.0;
-    let edge_saturation = strips
-        .iter()
-        .map(|(_, strip)| strip.saturation)
-        .sum::<f64>()
-        / 4.0;
+    // paper requires every edge strip to clear both thresholds individually;
+    // averaging the strips would let one dark or saturated edge hide behind the rest.
+    let paper = edge_flat
+        && strips
+            .iter()
+            .all(|(_, strip)| strip.mean > 0.75 && strip.saturation < 0.2);
     let edge_rgb =
         [0, 1, 2].map(|i| strips.iter().map(|(_, strip)| strip.rgb[i]).sum::<f64>() / 4.0);
     let regions = [
@@ -105,7 +105,7 @@ pub(super) fn describe(image: &Image) -> Value {
         "edges": edges,
         "edge": hex(edge_rgb),
         "edgeFlat": edge_flat,
-        "paper": edge_flat && edge_mean > 0.75 && edge_saturation < 0.2,
+        "paper": paper,
         "calm": calm,
         "ratio": (image.width as f64 / image.height as f64 * 100.0).round() / 100.0
     })
@@ -152,5 +152,39 @@ mod tests {
         assert_eq!(look["edgeFlat"], false);
         assert_eq!(look["calm"], json!(["top"]));
         assert_ne!(look["edges"]["top"], look["edges"]["bottom"]);
+    }
+
+    #[test]
+    fn single_failing_edge_disqualifies_paper() {
+        // gentle vertical gradient keeps every edge strip flat while the bottom
+        // strip alone misses the brightness threshold (mean ≈ 0.73)
+        let mut image = create_image(48, 48, [235, 235, 235, 255]);
+        for y in 0..48 {
+            let shade = (235.0 - 50.0 * y as f64 / 47.0).round() as u8;
+            for x in 0..48 {
+                let start = (y * 48 + x) * 4;
+                image.data[start..start + 3].fill(shade);
+            }
+        }
+        let look = describe(&image);
+        assert_eq!(look["edgeFlat"], true);
+        assert_eq!(look["paper"], false);
+
+        // same shape, but the bottom strip misses the saturation threshold instead
+        let mut image = create_image(48, 48, [235, 235, 235, 255]);
+        for y in 0..48 {
+            let t = y as f64 / 47.0;
+            let r = (235.0 + 20.0 * t).round() as u8;
+            let g = (235.0 - 56.0 * t).round() as u8;
+            for x in 0..48 {
+                let start = (y * 48 + x) * 4;
+                image.data[start] = r;
+                image.data[start + 1] = g;
+                image.data[start + 2] = g;
+            }
+        }
+        let look = describe(&image);
+        assert_eq!(look["edgeFlat"], true);
+        assert_eq!(look["paper"], false);
     }
 }

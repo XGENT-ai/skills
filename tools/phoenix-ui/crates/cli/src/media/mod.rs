@@ -249,10 +249,20 @@ fn parse(args: &[String]) -> Result<Option<Options>, String> {
 
 /// Runs an explicitly requested media command.
 pub fn run(args: &[String], io: &mut Io) -> i32 {
-    run_with(args, io, &sources::Endpoints::default())
+    run_with(
+        args,
+        io,
+        &sources::Endpoints::default(),
+        impeccable_context::http::agent_builder(),
+    )
 }
 
-fn run_with(args: &[String], io: &mut Io, endpoints: &sources::Endpoints) -> i32 {
+fn run_with(
+    args: &[String],
+    io: &mut Io,
+    endpoints: &sources::Endpoints,
+    builder: ureq::AgentBuilder,
+) -> i32 {
     let options = match parse(args) {
         Ok(Some(options)) => options,
         Ok(None) => {
@@ -264,7 +274,7 @@ fn run_with(args: &[String], io: &mut Io, endpoints: &sources::Endpoints) -> i32
             return 1;
         }
     };
-    match execute(&options, io, endpoints) {
+    match execute(&options, io, endpoints, builder) {
         Ok((result, code)) => {
             if options.json {
                 io.out(&format!("{result}\n"));
@@ -289,6 +299,7 @@ fn execute(
     options: &Options,
     io: &Io,
     endpoints: &sources::Endpoints,
+    builder: ureq::AgentBuilder,
 ) -> Result<(Value, i32), String> {
     let area = if options.command == "audit" {
         index::resolve_readonly(&io.cwd, &options.dir)?
@@ -306,7 +317,7 @@ fn execute(
         result["findings"] = json!(findings);
         return Ok((result, code));
     }
-    let agent = impeccable_context::http::agent_builder()
+    let agent = builder
         .user_agent(&format!(
             "phoenix-ui-media/{} (+https://github.com/XGENT-ai/skills)",
             env!("CARGO_PKG_VERSION")
@@ -427,10 +438,17 @@ fn print_result(io: &mut Io, result: &Value) {
     }
     if let Some(items) = result["items"].as_array() {
         for item in items {
+            let label = rights::use_label(text(item, "use"));
+            let license = text(item, "license");
+            let grade = if license.is_empty() {
+                label.to_string()
+            } else {
+                format!("{label}（{license}）")
+            };
             io.out(&format!(
                 "{}  {}  {}x{}  {}  {}\n",
                 text(item, "ref"),
-                rights::use_label(text(item, "use")),
+                grade,
                 item["originalWidth"],
                 item["originalHeight"],
                 text(item, "provider"),
@@ -585,6 +603,8 @@ mod tests {
                 &args.iter().map(|s| s.to_string()).collect::<Vec<_>>(),
                 &mut io,
                 endpoints,
+                // A direct agent: a proxy inherited from the shell would answer for the dead source.
+                ureq::AgentBuilder::new(),
             );
             let out: Value = serde_json::from_slice(&captured.stdout.borrow()).unwrap();
             (code, out)
@@ -605,6 +625,21 @@ mod tests {
         assert_eq!(again["count"], 1);
         assert_eq!(again["items"][0]["ref"], first["items"][0]["ref"]);
         assert_eq!(again["items"][0]["use"], "page");
+        let (mut io, captured) = Io::captured("", dir.clone(), Default::default());
+        let code = run_with(
+            &["search", "world map", "--kind=map"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>(),
+            &mut io,
+            &endpoints,
+            ureq::AgentBuilder::new(),
+        );
+        assert_eq!(code, 2);
+        let output = captured.stdout.borrow();
+        let plain = String::from_utf8_lossy(&output);
+        assert!(plain.contains("可上线（CC0）"));
+        assert!(plain.contains("仅参考（CC BY-NC）"));
         let before = std::fs::read(dir.join(".phoenix-ui/media/index.json")).unwrap();
         endpoints.commons = dead_url;
         let (code, offline) = call(&["search", "world map", "--kind=map", "--json"], &endpoints);

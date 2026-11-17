@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "compare：载荷有 8 个问题，没有启动对比页：\n  - lang 只能是 \"zh-CN\" 或 \"en\"\n  - proposals[0].url 的主机只能是 localhost、127.0.0.1 或 [::1]（http://example.com/）；其他地址的页面先截图，改用截图方案\n  - proposals[1].pixelRatio 只用于截图方案\n  - proposals[2].id 与前面的方案重复（a）\n  - proposals[2].name 必须是非空字符串\n  - proposals[2].source 不是已存在的文件（variants/missing.html）\n  - proposals[3] 的 source 与 url 必须恰好给一个\n  - 最多只能有一个基线方案（baseline: true），现在有 2 个\n运行 phoenix-ui compare --schema 查看示例载荷与字段说明。\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

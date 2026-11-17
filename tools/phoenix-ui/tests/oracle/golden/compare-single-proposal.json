@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "compare：载荷有 1 个问题，没有启动对比页：\n  - proposals 至少需要两个方案；只有一个方案时不需要对比页\n运行 phoenix-ui compare --schema 查看示例载荷与字段说明。\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

@@ -63,7 +63,13 @@ handoff and report format), rewritten for Phoenix. `phoenix-ui media`
 (`crates/cli/src/media/`) adapts its media source mappings, license grading,
 relevance filtering, stable references, and visual analysis algorithms.
 `phoenix-ui prep-image` (`crates/cli/src/prep_image.rs`) adapts its processing
-order and image snippet format. Both are rewritten in Rust. oil-ui is used under the
+order and image snippet format. Both are rewritten in Rust. `phoenix-ui compare`
+(`crates/context/src/compare/`) adapts its comparison page's proposal fields,
+baseline marking, and ways of viewing, rewritten as a Rust loopback server with
+its own page. The phoenix-ui skill's `animate`, `craft-floor`, `routing`, and
+`vague-feedback` references adapt its methods for motion choreography and feel,
+demonstration data and icons, next steps after a delivery, and translating vague
+words into variables; all are rewritten. oil-ui is used under the
 MIT license, reproduced in full:
 
 ```text

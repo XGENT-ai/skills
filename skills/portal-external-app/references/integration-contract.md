@@ -66,7 +66,7 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 | 来路 | kind | user_id | 授权依据 |
 | --- | --- | --- | --- |
 | 自己前端（宿主注入 / callService） | user | 有 | scope + PID/ACL |
-| 其他 App 令牌交换（如 files→omni-parser） | user | 有 | 同上；scope=发起方 TDT ∩ 你声明的 scopes；`azp`=发起方（出处归因） |
+| 其他 App 令牌交换（如 files→omni-parser） | user | 有 | 同上；scope 交集及 consent 见 [跨应用交换](app-exchange.md)；`azp`=发起方（出处归因） |
 | 服务账号 client_credentials（服务直调） | service | **无** | **只按 scope**（permissions 空、bypass=false、isPlatformAdmin=false，勿走 PID 门；用户拥有的写操作应拒绝） |
 
 ### 3.1 服务账号从哪来：平台代建 vs 租户自助
@@ -141,7 +141,6 @@ SDK 的 EndUserAuthContext 使用相应驼峰字段。终端用户正缓存上�
 - 平台/其他 App 调你：有用户上下文走令牌交换、无用户上下文走服务账号 client_credentials（scope 落你的命名空间）——不是给平台发你体系内的 API-Key。吊销、审计、租户策略都收口在门户。
 - 若有 MCP/stdio 之类**免鉴权信任面**：只限本地可信进程，发货镜像不得暴露（知识库的 `--role mcp` 规则）。
 
-## 7. 无前端服务的租户管理员配置
+## 7. 配置入口
 
-- 外部团队实现 `GET/PUT /v1/settings`（四道闸；读/写门槛按 scope），存租户级覆盖，运行时 `内置默认 → 租户覆盖 → 单次请求参数` 叠加。
-- 门户侧需按 App 补三件（平台方工作量，不是零改码）：`<key>-token` admin-TDT 铸造端点 + 前端 config-api + 应用配置页 Section。浏览器直连你的 `/svc/<key>/v1/settings`，门户不经手敏感配置。
+配置归属和唯一接入合同见 [配置分层](config-placement.md)。micro/service 的平台与租户页均可在 `adminPages` 声明 schema；独立租户设置也可用 `tenantConfig.schema`，使用已有 GET/PUT policy API 和门户通用签票/表单。新 App 不复制按 key 定制的 token 端点、config-api 或 AppForm Section。

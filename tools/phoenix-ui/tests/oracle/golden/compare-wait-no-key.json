@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "compare：--wait 需要 --key <键>\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

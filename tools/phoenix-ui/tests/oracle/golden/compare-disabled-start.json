@@ -1,0 +1,7 @@
+{
+  "stdout": "compare：本会话已停用浏览器页面（PHOENIX_UI_QUESTION_DISABLED），没有启动对比页；改用结构化提问。\n",
+  "stderr": "",
+  "exit": 2,
+  "signal": null,
+  "files": {}
+}

@@ -26,28 +26,33 @@ fn resolve(cwd: &Path, dir: &str, create: bool) -> Result<PathBuf, String> {
     if !area.starts_with(&base) {
         return Err(outside());
     }
-    // Check existing ancestors before mkdir: an escaping symlink must not create directories outside the area.
+    // Check existing ancestors before mkdir: an escaping symlink must not create
+    // directories outside the area. The physical root is anchored to the canonicalized
+    // project's own `.phoenix-ui`, so a symlinked root cannot redirect the area into
+    // another directory inside the project (e.g. `public/`).
     let real_cwd = cwd.canonicalize().map_err(|e| e.to_string())?;
+    let root = real_cwd.join(".phoenix-ui");
     let mut parent = area.as_path();
     while !parent.exists() {
         parent = parent.parent().ok_or_else(outside)?;
     }
     let real_parent = parent.canonicalize().map_err(|e| e.to_string())?;
-    if base.exists() {
-        let real_base = base.canonicalize().map_err(|e| e.to_string())?;
-        if !real_base.starts_with(&real_cwd) || !real_parent.starts_with(&real_base) {
-            return Err(outside());
-        }
-    } else if !real_parent.starts_with(&real_cwd) {
+    if !real_parent.starts_with(&root) && base.exists() {
+        // The only allowed exception is a media root that does not exist yet:
+        // then nothing under `base` exists and the nearest existing ancestor is
+        // the project directory itself. Once the root or any path under it
+        // exists, its real location must already be inside the anchored root,
+        // so a link jumping back to the project (`.phoenix-ui -> .` or an
+        // up-jump inside the root) is rejected before any directory is created
+        // and before a readonly area is accepted.
         return Err(outside());
     }
     if !create {
         return Ok(area);
     }
     fs::create_dir_all(&area).map_err(|e| e.to_string())?;
-    let real_base = base.canonicalize().map_err(|e| e.to_string())?;
     let real_area = area.canonicalize().map_err(|e| e.to_string())?;
-    if !real_area.starts_with(&real_base) {
+    if !real_area.starts_with(&root) {
         return Err(outside());
     }
     match OpenOptions::new()
@@ -285,6 +290,37 @@ mod tests {
             assert!(resolve_area(&cwd, ".phoenix-ui/escape/new").is_err());
             assert!(!cwd.join("public/new").exists());
         }
+        fs::remove_dir_all(cwd).unwrap();
+    }
+    #[test]
+    #[cfg(unix)]
+    fn area_rejects_root_symlink_to_product_directory() {
+        let cwd = project();
+        fs::create_dir_all(cwd.join("public")).unwrap();
+        std::os::unix::fs::symlink(cwd.join("public"), cwd.join(".phoenix-ui")).unwrap();
+        let err = resolve_area(&cwd, ".phoenix-ui/media").unwrap_err();
+        assert!(err.contains("在 .phoenix-ui/ 之外"));
+        assert!(!cwd.join("public/media").exists());
+        assert!(resolve_readonly(&cwd, ".phoenix-ui/media").is_err());
+        fs::remove_dir_all(cwd).unwrap();
+    }
+    #[test]
+    #[cfg(unix)]
+    fn area_rejects_existing_links_to_project_ancestors() {
+        let cwd = project();
+        // root link back to the project itself
+        std::os::unix::fs::symlink(".", cwd.join(".phoenix-ui")).unwrap();
+        assert!(resolve_area(&cwd, ".phoenix-ui/public/media").is_err());
+        assert!(resolve_readonly(&cwd, ".phoenix-ui/public/media").is_err());
+        assert!(!cwd.join("public/media").exists());
+        fs::remove_file(cwd.join(".phoenix-ui")).unwrap();
+        // first-time initialization of a fresh root still works
+        resolve_area(&cwd, ".phoenix-ui/media").unwrap();
+        // an up-jump link inside the existing root
+        std::os::unix::fs::symlink("..", cwd.join(".phoenix-ui/escape")).unwrap();
+        assert!(resolve_area(&cwd, ".phoenix-ui/escape/public/media").is_err());
+        assert!(resolve_readonly(&cwd, ".phoenix-ui/escape/public/media").is_err());
+        assert!(!cwd.join("public").exists());
         fs::remove_dir_all(cwd).unwrap();
     }
     #[test]

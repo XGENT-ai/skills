@@ -72,6 +72,7 @@ fn run(args: &[String], io: &mut Io) -> i32 {
         "concept-seed" => impeccable_context::run_concept_seed(rest, io),
         "generate-image" => impeccable_context::run_generate_image(rest, io),
         "serve-question" => impeccable_context::run_serve_question(rest, io),
+        "compare" => impeccable_context::run_compare(rest, io),
         "component-review" => impeccable_context::component_review::run_with_capturer(rest, io, Some(&mut impeccable::component_capture::NativeComponentCapturer)),
         // comp-fidelity verbs (crates/comp-verbs over crates/comp)
         "comp-spec" => impeccable_comp_verbs::run_comp_spec(rest, io),

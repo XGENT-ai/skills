@@ -17,7 +17,7 @@ disable-model-invocation: true
 INTENT:
   GOAL: assess_actionable_defects_and_promised_behavior_of_code_changes
   SCOPE: [requested_diff, relevant_cross_file_impact, requirement_compliance,
-          verification_evidence, repair_effect_recheck]
+          unneeded_defenses_tests_and_comments, verification_evidence, repair_effect_recheck]
   SUCCESS: [evidence_grounded_conclusions, explicit_coverage_and_limits,
             complete_report_delivered]
   NON_GOALS: [plan_only_review, whole_repository_audit, unrequested_repairs]
@@ -200,7 +200,7 @@ RULE @new_finding_admission:
              pure_style_personal_preference_unrelated_refactor_or_speculative_defense,
              rely_on_unexpressed_author_intent,
              intentional_behavior_change_alone_as_bug]
-  # 旧问题按复审表独立核对。
+  # 旧问题按复审表独立核对。@change_burden 的问题没有失败输入，以其不必要性依据代替。
 
 RULE @fr_before_nfr:
   MUST: [functional_correctness_and_promised_behavior_before_nfr,
@@ -244,13 +244,21 @@ RULE @evidence_ownership:
   MUST_NOT: ["把评审边界内可执行的验证留给下一步或用户",
              "没有执行者的待核实项"]
 
-RULE @test_burden:
-  WHEN: reviewed_change_adds_or_changes_tests
-  MUST: ["把缺陷写成预期或例外的测试，随被掩盖的缺陷定级",
-         "断言绑定内部结构、为本方代码新造 fixture 或内存替身、重复场景 E2E 已覆盖行为的测试，按维护后果报告，修复方向优先删除或并入场景；默认 P3，有证据拖累当次迭代时 P2",
-         "测试增量远超实现增量时作为调查线索，指出哪些测试不值得保留；同根因合并为一条，不逐个测试报告"]
-  MUST_NOT: ["按固定行数比例判错",
-             "要求删减用户、计划、仓库规则明确要求或保护高后果路径的测试"]
+RULE @change_burden:
+  WHEN: reviewed_change_adds_changes_or_obsoletes_defenses_tests_or_comments
+  MUST: ["不必要的防御、测试与注释同缺陷一样是评审对象：逐项核对本次新增、改动或因本次变更而失效的部分，修复方向是删除或并入已有场景，并列出要删的具体对象与应保留的部分",
+         "过度防御：对类型、上游校验、全部调用方或框架已保证的内部值重复检查，为不可达状态写分支、兜底或重试，未被要求的兼容层、开关与配置。须指出使它不可达或无人使用的保证；会吞掉错误的兜底随它掩盖的后果定级",
+         "不必要的测试：只为上述防御而写，断言常量、语言、框架或第三方库自身的行为，绑定内部结构或调用次序，为本方代码新造 fixture 或内存替身，重复已有测试或场景 E2E 覆盖的行为，对同一等价类逐值枚举。依据是删掉它之后，没有哪种现实会犯的错误变得无人发现；把缺陷写成预期或例外的测试随被掩盖的缺陷定级",
+         "不必要的注释：复述代码，记录修改过程或评审往来，被注释掉的代码，以及因本次变更而与实际行为矛盾的注释与文档字符串；后者不在 diff 内也算本次引入",
+         "定级看后果不看类别：会让后续开发或调用方照着做错的矛盾注释与文档，冗余占本次增量的主要部分，或有证据拖慢相关检查的，P2；零星且不误导的 P3",
+         "同根因合并为一条，不逐个分支、测试或注释报告；测试增量远超实现增量是调查线索"]
+  MUST_NOT: ["按固定行数、比例或数量判错",
+             "把系统边界对用户输入、外部接口、文件与配置的校验当作过度防御",
+             "要求删减用户、计划、仓库规则明确要求的，或保护高后果路径、关键边界与真实回归的防御和测试",
+             "要求删除说明原因、约束或非显然逻辑的注释，以及仓库约定要求的接口文档",
+             "指不出不必要性依据时凭观感报告",
+             "把与本次变更无关的存量冗余列为本轮新增问题",
+             "以补充防御、测试或注释作为任何问题的默认修复方向"]
 
 RULE @historical_verification:
   WHEN: reviewing_historical_commit_or_range
@@ -315,7 +323,7 @@ OUTPUT:
   verdict_source: references/report-contract.md
 
 REVIEW:
-  CHECK: [@new_finding_admission, @fr_before_nfr, @evidence_ownership, @recheck_coverage, @snapshot_consistency,
+  CHECK: [@new_finding_admission, @fr_before_nfr, @change_burden, @evidence_ownership, @recheck_coverage, @snapshot_consistency,
           @complete_report, @report_persistence]
   ALSO: [coverage_disclosure, evidence_traceability, actual_report_links]
   EXPOSE: on_issue

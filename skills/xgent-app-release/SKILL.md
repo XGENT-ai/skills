@@ -368,18 +368,9 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
 
 ### 业务参数：能不进清单就不进；进了就写 `requiredEnvNotes`
 
-审批你发版的平台管理员只负责**环境**：地址、连接串、密钥、这台机器上的事。你的业务参数他不懂，
-也**不该被要求懂**。照这个顺序判一个配置项该放哪：
+配置归属统一见 [portal-external-app：配置分层与 schema](../portal-external-app/references/config-placement.md)。环境依赖才进 `requiredEnv`；业务参数先给代码默认值，确需部署覆盖时配 `requiredEnvNotes`。全平台热配置走 `adminPages.platform`；micro 租户配置走 `adminPages.tenant`，service 普通租户配置走 `tenantConfig.schema`。`adminPages` 是 App 页面嵌入，不接受配置项 schema。
 
-1. **环境依赖、全平台一份、部署后不变（改了就要换版）** ⇒ `requiredEnv`，键名尽量按上表的约定名，零手填。
-2. **业务参数、全平台一份、改了要换版** ⇒ **先在代码里给缺省值，不进清单**。确实要让平台在部署时
-   覆盖，才进 `requiredEnv`，并且**必须**在 `requiredEnvNotes` 里写一句：填什么、不确定时填什么。
-   进了 `requiredEnv` 的键批准前**必须有值**（缺了就是 `REQUIRED_ENV_MISSING`），审批人照你这句话填。
-3. **全平台一份、要能随时改、不想换版** ⇒ 这不是环境变量。做成你自己的「平台设置」页，由门户嵌进
-   应用市场的编辑页（见 portal-external-app skill「配置放哪一层」）。
-4. **每个租户不同** ⇒ 有前端的 App 用 `adminPages.tenant` 嵌入自己的配置页；无前端 service 用 `tenantConfig`
-   声明数字、静态选项和开关 schema，由门户渲染动态表单（同上）。
-5. **应用内的业务设置** ⇒ 你应用里的设置页，按 ACL 授权（租户管理员默认可改）。
+进入 `requiredEnv` 的键在批准前必须完成供给、生成或配置，否则 `REQUIRED_ENV_MISSING`。环境值变更需要重启/重部署生效，不等于必须重建镜像；新增/改名/删除必需键仍须更新源清单并走治理。
 
 ```jsonc
 "requiredEnv": ["WISH_LIST_DATABASE_URL", "WISH_LIST_REPORT_TITLE"],

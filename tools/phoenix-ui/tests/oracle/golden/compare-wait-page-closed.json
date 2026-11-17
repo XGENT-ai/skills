@@ -1,0 +1,9 @@
+{
+  "stdout": "PAGE CLOSED: 对比页已关闭且没有选择。用结构化提问再问一次；仍无回答时：有现状基线就保持现状并在交付里写明待选，没有基线就按你的推荐继续并写明未经用户选择。处理完运行 --stop --key k1\n",
+  "stderr": "",
+  "exit": 4,
+  "signal": null,
+  "files": {
+    ".phoenix-ui/compare/k1.state.json": "{\"pid\":<PID>,\"port\":1,\"url\":\"http://127.0.0.1:1/\",\"lastBeat\":1000}"
+  }
+}

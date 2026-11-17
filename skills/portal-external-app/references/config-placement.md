@@ -1,20 +1,20 @@
 # 配置放哪一层
 
 一个配置项放错层，后果都不在开发时出现：业务参数进了 `requiredEnv`，每次发版审批人都要对着一个看不懂的键发愁；
-本该随时改的配置做成了环境变量，改一次就得换一次版；每租户不同的值写成了全平台一份，第二个租户一来就互相覆盖。
+本该随时改的配置做成了环境变量，改一次就得重启或重部署；每租户不同的值写成了全平台一份，第二个租户一来就互相覆盖。
 **先按下表判，再写代码。**
 
 ## 一张表
 
-| 这个配置是… | 放哪 | 谁改 | 改了要换版吗 |
+| 这个配置是… | 放哪 | 谁改 | 生效方式 |
 | --- | --- | --- | --- |
-| **环境依赖**：地址、连接串、证书、第三方密钥；全平台一份 | 清单 `requiredEnv`（键名，值归平台）。连接类键用约定名或 `requiredServices[].envKey` 绑定，平台自动供给 | 平台管理员 | 要 |
-| **业务参数**：超时、阈值、默认文案、开关；全平台一份、部署后不变 | **先在代码里给缺省值，不进清单**。确实要部署时可覆盖，才进 `requiredEnv`，并且**必须**在 `requiredEnvNotes` 里写清填什么 | 平台管理员（照你的说明填） | 要 |
-| **全平台一份、要随时改、不换版** | **平台级管理页**：你自己的页面，清单 `adminPages.platform` 声明，门户嵌进 控制台 › 应用市场 › 编辑你的应用 | 平台管理员 | 不要 |
-| **每个租户不同** | micro：清单 `adminPages.tenant` 嵌入 App 页面；service：清单 `tenantConfig` 声明受限 schema，门户渲染动态表单。都进 租户 › 应用管理 › 配置 | 租户管理员 | 不要 |
-| **应用内的业务设置**：模板、字典、流程规则… | 你应用里的设置页，用 `aclManifest` 声明权限（不给 `defaultForMember` ⇒ 默认只有租户管理员能进） | 被授权的角色 | 不要 |
-| **每个用户的偏好** | 你自己的库，按 `userId` 存 | 用户本人 | 不要 |
-| **每租户的密钥**（租户自己的第三方 API key） | 租户级管理页里录入，你的后端加密存库，**只写不回显** | 租户管理员 | 不要 |
+| **环境依赖**：地址、连接串、证书、第三方密钥；全平台一份 | 清单 `requiredEnv`（键名，值归平台）。连接类键用约定名配合 `requiredServices` 供给；非约定名由管理员绑定来源，不声明 `requiredServices[].envKey` | 平台管理员 | 修改运行环境后重启/重部署，无须为改值重建镜像 |
+| **业务参数**：超时、阈值、默认文案、开关；全平台一份、部署后不变 | **先在代码里给缺省值，不进清单**。确实要部署时可覆盖，才进 `requiredEnv`，并且**必须**在 `requiredEnvNotes` 里写清填什么 | 平台管理员（照你的说明填） | 修改运行环境后重启/重部署，无须为改值重建镜像 |
+| **全平台一份、要随时改** | **平台级管理页**：清单 `adminPages.platform` 声明 schema 表单或 App 嵌入页，入口在 控制台 › 应用市场 › 编辑你的应用 | 平台管理员 | 保存后由 App 应用，无须重新部署 |
+| **每个租户不同** | micro/service：`adminPages.tenant` 或 `tenantConfig` 声明 schema；micro 也可用 `adminPages.tenant.route` 嵌入 App 页面。入口在 租户 › 应用管理 › 配置 | 租户管理员 | 保存后由 App 应用，无须重新部署 |
+| **应用内的业务设置**：模板、字典、流程规则… | 你应用里的设置页，用 `aclManifest` 声明权限（不给 `defaultForMember` ⇒ 默认只有租户管理员能进） | 被授权的角色 | 保存后由 App 应用，无须重新部署 |
+| **每个用户的偏好** | 你自己的库，按 `userId` 存 | 用户本人 | 保存后由 App 应用，无须重新部署 |
+| **每租户的密钥**（租户自己的第三方 API key） | 租户级管理页里录入，你的后端加密存库，**只写不回显** | 租户管理员 | 保存后由 App 应用，无须重新部署 |
 
 另外几类**根本不是配置**，别给它们留任何入口：
 
@@ -36,29 +36,53 @@
   审批屏会把它贴在键名旁：
 
   ```jsonc
-  "requiredEnv": ["WISH_LIST_DATABASE_URL", "WISH_LIST_REPORT_TITLE"],
-  "requiredEnvNotes": { "WISH_LIST_REPORT_TITLE": "导出报表的抬头。不确定就填「心愿单月报」" }
+  "requiredEnv": ["MY_APP_DATABASE_URL", "MY_APP_WORKER_CONCURRENCY"],
+  "requiredEnvNotes": { "MY_APP_WORKER_CONCURRENCY": "部署时固定的 worker 数量；不确定时填 4。" }
   ```
 
 - 说明会原样给审批人看：**别写任何值或密钥**。
 
-## Service 动态配置（`tenantConfig`）
+## schema 组件和管理页分别在哪里
 
-无前端 service 的普通租户配置不再向平台申请手写页面。在 manifest 声明一个 Tab、同源 GET/PUT 路径、所需 scopes 和受限 schema：
+平台/租户决定权限与数据作用域；schema/嵌入页决定呈现方式。
+
+| 场景 | 清单声明 | 谁渲染配置项 | 支持范围 |
+| --- | --- | --- | --- |
+| 平台管理员配置 | `adminPages.platform: { label, path, scopes, schema }` | 门户通用表单 | micro/service，不要求 embed |
+| 租户管理员配置 | `adminPages.tenant: { label, path, scopes, schema }` | 门户通用表单 | micro/service，不要求 embed |
+| 独立租户配置 Tab | `tenantConfig: { label, path, scopes, schema }` | 同一门户通用表单 | micro/service |
+| 复杂管理页面 | `adminPages.platform/tenant: { route, label }` | App 前端，门户 iframe 嵌入 | micro + embed |
+| 既有 Skills revision/CAS 设置 | `tenantConfig.protocol: "skills-settings-v1"` | 门户协议适配组件 | micro/service，不带 schema |
+
+同一层管理页选择 schema 或 route，不能混写。平台与租户可以分别选不同模式。普通数字、枚举、开关配置优先 schema；需要文本、密钥或复杂业务交互时用 App 页面。同一个租户设置不要在 `tenantConfig` 和 `adminPages.tenant` 重复声明，否则会出现两个 Tab。
+
+实现定位（均为门户仓文件，外部项目按本文合同接入）：
+
+- `packages/shared/src/tenant-config.ts`：`AppTenantConfig` 及字段类型；`dto.ts`：`AppAdminPageDecl = AppEmbeddedAdminPage | AppTenantConfig`。
+- `apps/api/src/modules/market/{tenant-config,admin-pages}.ts`：字段归一、类型与权限准入。
+- `apps/api/src/modules/apps/tenant-config-ticket.ts`：同源管理票及平台/租户授权。
+- `apps/web/src/pages/admin/AppConfigSection.tsx`：两级复用的动态表单；`apps/web/src/lib/tenant-config-api.ts`：读写、单位换算与 policy 合并。
+- `apps/web/src/components/apps/AppAdminPagePanel.tsx`：按 schema/route 分派；入口分别是 `MarketListingForm.tsx` / `AppForm.tsx`。
+
+## 通用 schema 配置
+
+micro 和 service 均可声明一个 Tab、同源 GET/PUT 路径、所需 scopes 和受限 schema，无须为 App 新增门户页面代码。以下字段结构既适用于 `tenantConfig`，也适用于 `adminPages.platform` / `adminPages.tenant`。
+
+以下为虚构服务 `my-service` 的示例，仅演示分组、单位换算与字段类型；路径、权限、业务字段和默认值由各 App 自行定义：
 
 ```jsonc
 "tenantConfig": {
-  "label": { "zh-CN": "解析预算", "en": "Parsing budget" },
-  "path": "/v2/policy",
-  "scopes": ["omni_parser.read", "omni_parser.govern"],
+  "label": { "zh-CN": "任务设置", "en": "Task settings" },
+  "path": "/v1/policy",
+  "scopes": ["my-service.read", "my-service.admin"],
   "schema": {
     "type": "object",
     "properties": {
-      "foreground": {
+      "execution": {
         "type": "object",
-        "title": { "zh-CN": "前程预算", "en": "Foreground budget" },
+        "title": { "zh-CN": "执行设置", "en": "Execution settings" },
         "properties": {
-          "wall_time_ms": {
+          "timeout_ms": {
             "type": "integer", "title": { "zh-CN": "最多等待", "en": "Wait limit" },
             "default": 10, "unit": { "zh-CN": "秒", "en": "s" }, "scale": 1000
           },
@@ -75,17 +99,17 @@
 ```
 
 - 支持 `integer` / `number`、`select` 静态 options、`boolean` 和 object 嵌套分组；标签、说明与单位支持多语。
-  `scale` 表示「界面值 × scale = wire 值」，例如秒→1000 毫秒、MiB→1048576 字节；integer 缩放后必须是安全整数。
+  `scale` 表示「界面值 × scale = wire 值」，例如秒→1000 毫秒、MiB→1048576 字节；integer 缩放后必须是安全整数。`default` / `minimum` / `maximum` 使用界面单位；后端 policy/effective 使用 wire 单位。
 - 配置 GET 返回 `{ "policy": {…}, "effective": {…} }`。Portal 展示 effective 与继承/覆盖状态；保存前重新 GET 最新
   policy，只合并本次编辑或清除的 schema 路径，再整份 PUT，保留未展示字段。PUT 接收合并后的完整 policy 并返回同一形状。
 - 字段缺省时 effective 必须已有应用默认值；旧后端没有返回 schema 所需 effective 字段时，Portal 显示版本不支持并禁止写入。
-  App 必须在每次读写时重新校验租户管理员和 scopes，不能只信 Portal 签票或浏览器校验。
-- 无 `protocol` 的 schema 声明只支持 `type:"service"`，scopes 必须已在 listing `scopes` 中。字段新增、修改和撤回都是治理档；
-  批准后按 listing 现值对所有租户生效，不进安装快照。首版不支持动态选项、远程 `$ref`、脚本或密钥录入。
+  schema 的 `default` 不替后端生成 effective，也不自动保存默认值。App 必须在每次读写时重新校验对应层级的管理员和 scopes，不能只信 Portal 签票或浏览器校验。
+- schema 声明支持 `type:"micro"` 和 `type:"service"`，scopes 必须已在 listing `scopes` 中。字段新增、修改和撤回都是治理档；
+  批准后按 listing 现值对所有租户生效，不进安装快照。不支持自由文本/string、数组、动态选项、远程 `$ref`、脚本或密钥录入。字段最多 100 个；object 从根深度 0 起最多到 4，select 最多 100 个 options，scopes 为 1–20 项。
 
 ### 既有 revision/CAS 设置（`skills-settings-v1`）
 
-已有 Skills 设置线协议的 micro/service 可复用 `tenantConfig`，无需新增门户 key 分支。新 micro App 的默认接入仍是 `adminPages.tenant`；此协议只适配既有的设置格式。
+已有 Skills 设置线协议的 micro/service 可复用 `tenantConfig`，无需新增门户 key 分支。新配置使用 schema 或嵌入页；此协议只适配既有的设置格式。
 
 ```jsonc
 "tenantConfig": {
@@ -104,53 +128,29 @@
 - 旧 null 不自动恢复；平台有权者须在支持新协议的 API 上明确治理恢复。先升级 Portal API，再提交并批准 bump 后的正式清单，最后升级宿主前端；声明样例不是已批准事实。
 - `@xgent/shared` 联合类型从 0.11.0 起提供（实际可安装状态以门户发布回执为准）：先用 `isSkillsSettingsConfig` 分派，再访问旧 `AppTenantConfig.schema`。所有 DTO 消费方均须加守卫。
 
-### OmniParser：六项 `foreground` 后端接入清单
+## 两级管理页（`adminPages`）
 
-OmniParser 的 manifest 已按上面的 `tenantConfig` 形状声明。后端要实现的是**现有 `/v2/policy` 的增量契约**，不要另建配置 API，也不要把 `foreground_limits`（单次请求字段）写成 policy 字段。
+schema 示例（字段定义遵循上一节；外层 manifest 的 `scopes` 还须包含两级声明的权限）：
 
-| `policy.foreground` / `effective.foreground` 键 | wire 类型与单位 | 无覆盖时的应用默认 | Portal 展示 |
-| --- | --- | --- | --- |
-| `wall_time_ms` | 整数毫秒 | `10000` | 10 秒（`scale=1000`） |
-| `max_input_bytes` | 整数字节 | `16777216` | 16 MiB（`scale=1048576`） |
-| `max_result_bytes` | 整数字节 | `4194304` | 4 MiB（`scale=1048576`） |
-| `max_nodes` | 整数项 | `100000` | 100000 个节点 |
-| `max_container_depth` | 整数层 | `8` | 8 层 |
-| `max_embedded_items` | 整数项 | `10000` | 10000 个资源项 |
-
-DTO 规则：
-
-- `policy.foreground` 是**可选、可部分覆盖**的对象；缺整个对象或缺某一键都表示继承。已有 policy 的其他键必须原样保留。
-- `effective.foreground` 必须**始终包含全部六键**，值是应用默认、租户覆盖和平台安全界共同决定的当前有效值；不能只回显 raw 覆盖值。它不包含单次请求 `foreground_limits` 的临时收紧。
-- 例如，raw 只覆盖等待时间时，GET 仍返回完整 effective：
-
-  ```json
-  {
-    "policy": { "foreground": { "wall_time_ms": 12000 } },
-    "effective": {
-      "foreground": {
-        "wall_time_ms": 12000,
-        "max_input_bytes": 16777216,
-        "max_result_bytes": 4194304,
-        "max_nodes": 100000,
-        "max_container_depth": 8,
-        "max_embedded_items": 10000
-      }
-    }
+```jsonc
+"adminPages": {
+  "platform": {
+    "label": "平台默认值", "path": "/v1/platform-settings", "scopes": ["my-app.admin"],
+    "schema": { "type": "object", "properties": { "enabled": { "type": "boolean", "title": "默认启用", "default": true } } }
+  },
+  "tenant": {
+    "label": "租户设置", "path": "/v1/settings", "scopes": ["my-app.read", "my-app.admin"],
+    "schema": { "type": "object", "properties": { "enabled": { "type": "boolean", "title": "启用", "default": true } } }
   }
-  ```
+}
+```
 
-后端行为与验收：
+- 两级 schema 共用 GET/PUT `{ policy, effective }` 协议，浏览器请求 `/svc/<listingKey><path>`。门户不保存业务配置值；App 的平台端点保存全局值，租户端点按 `tenant_id` 隔离。平台租户只是运行身份，不能把平台默认值误存为仅该租户可见的配置。
+- 门户向 `GET /api/admin/apps/:appKey/admin-page-token?level=platform|tenant` 请求管理票，同时携带 `expectedUserId` / `expectedTenantId`。平台级额外要求平台管理员及当前平台租户；两级均要求有效安装、listing 来源一致、声明仍有效、安装 scopes 覆盖声明 scopes。返回 `{ token, expiresIn: 600, serviceBase }`，浏览器只向规范同源服务发送 Bearer，不带 Cookie。
+- `tenantConfig` 的 schema 继续走 `tenant-config-token`，权限与租户级 schema 一致。声明撤回立即停止新票，已签票遵循自省资格检查与最长 600 秒有效期。
+- `@xgent/shared` 从 0.12.0 提供管理页联合类型。消费方用 `"schema" in page` 分派后再访问 `page.schema` 或 `page.route`；仅 iframe 的组件使用 `AppEmbeddedAdminPage`。需先升级 Portal API 和宿主前端，再提交并批准新声明；升级类型包本身不会升级门户运行件。
 
-1. 沿用现有租户管理员 + `omni_parser.read` / `omni_parser.govern` 双闸和租户隔离，不新增 scope。每次读写都重新判权，不能信任浏览器或 Portal 的预检。
-2. PUT 接受合并后的完整 policy，校验六键的类型和实际安全范围；非法或超界时**整份拒绝、原 policy 不变**。成功 PUT 后返回与 GET 同形的最新 `{ policy, effective }`。
-3. 清除某个 raw 覆盖键后，该键在 effective 中回到继承值；编辑一个键不得重置其他覆盖键，也不得改变已有 Jobs 的冻结策略、预算或 fragment topology。
-4. `budget: EnhancementBudget` 继续独立表示模型调用/费用预算，不能用 `foreground` 替代。实际 Probe / Inspect / FastParse 必须把应用默认、租户 policy、请求 `foreground_limits` 和平台硬界按既定规则取交集；**只把六键加入 DTO 而不接入实际执行路径不算完成**。
-5. 旧后端没有 `effective.foreground` 时，Portal 会显示「当前服务版本不支持」且不会 PUT。不要为了制造“支持”假象而在旧版本补一个空对象或静态默认值，然后让实际执行绕开这些限制。
-6. 至少验证：完整/部分 raw 的 GET、六键逐一保存与刷新读回、清除覆盖、非法值原样拒绝、未编辑旧键保留、普通成员/无 govern/跨租户拒绝，以及真实执行确实遵守六项限制。
-
-## 管理页嵌入（`adminPages`）
-
-门户不为你写配置界面。你在自己的前端里做好页面，在清单里声明它的路由，门户把它嵌进管理面：
+需要自定义页面时仍可使用嵌入模式：
 
 ```jsonc
 "adminPages": {
@@ -165,18 +165,27 @@ DTO 规则：
 | 以谁的身份运行 | **平台租户**里的平台管理员（你那一份装在平台租户里的实例） | 当前租户的管理员 |
 | 你的服务端怎么判权 | 自省结果 `isPlatformAdmin === true`（且 `tenant_scope === "platform"`）；数据存「不分租户」的那一份 | 令牌的 `tenant_id` + 管理员（`role` / `bypass`）；按租户存 |
 
-- **形状**：`route` 是你应用内的路由（以 `/` 开头，不能 `//`、`..`、编码分隔符）；`label` 是 Tab 名，字符串或
+- **嵌入模式形状**：`route` 是你应用内的路由（以 `/` 开头，不能 `//`、`..`、编码分隔符）；`label` 是 Tab 名，字符串或
   多语对象（`zh-CN` 必填，≤40 字）。两级都可选，`null` 清空。
-- **只有可嵌入的前端应用能声明**：`type` 是 `micro`，`openModes` 含 `embed`。service 型提交即拒。
+- **route 模式只支持可嵌入前端**：`type` 是 `micro`，`openModes` 含 `embed`。service 可声明 schema，不能声明 route。
 - **治理档**：新增或改动都会进「发布审核」，因为它决定什么页面以管理员身份跑在门户管理面里。
 - **被嵌入时收起你自己的导航**：SDK 握手的 `init.adminPage` 为 `"platform"` / `"tenant"` 时，只渲染那一页，
   不要侧栏、不要顶栏。宿主固定把 `route` 交给你，不同步你的内部路由跳转。
 - **平台级的前提**：你的应用要装在平台租户里（每次生产部署会把已上架的应用补装进平台租户，管理员在那里卸载过的除外；没装时 Tab 里会给安装按钮）。平台管理员的
   当前租户不是平台租户时，Tab 里会先让他切换过去，门户不会替他换签票身份。
 - **门户读的是 listing 现值**：批准后立刻对所有租户生效，不用等安装快照同步。
-- **旧版门户不认识这个字段**：不会拒收，但会把那次发布转人工审一次，字段被忽略。
 
 ## 已有的门户手写配置页
 
 文件管理、大模型网关、知识库等早期应用的租户配置页是门户代码里按应用手写的（签票端点 + 配置 API +
-配置区块）。那是过渡做法：新 micro App 用 `adminPages`，新 service 的普通配置用 `tenantConfig`；不要再向平台申请这类按应用写的门户代码。
+配置区块）。那是过渡做法。当前已发布契约的接入按上表选择；新能力优先扩展通用声明与组件，不再向平台申请按应用写的门户代码。
+
+
+## 配置接入验收
+
+按本次涉及的配置层级检查：
+
+- 环境依赖：清单键名与镜像实际读取一致，值不进入 manifest/dist；已获批运行件具备所用供给能力。
+- 平台配置：租户管理员不能操作；保存全局值后在实际业务路径生效，不误存为平台租户的一份租户配置。
+- 租户配置：A 租户修改不影响 B；非法值拒绝且原值不变；保存/刷新读回一致。schema 表单还要验证单位换算、清除覆盖恢复继承，以及保留未展示字段。
+- UI：从门户相应管理入口进入；管理页只展示当前配置内容，权限由后端重新校验。

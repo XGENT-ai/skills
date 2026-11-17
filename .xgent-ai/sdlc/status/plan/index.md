@@ -19,15 +19,19 @@
 | b41a85fb-9c61-4d64-a2ad-58483ebc7aa9 | [Phoenix Diagram P3](../../../../docs/plan/PHOENIX-DIAGRAM-P3.md) | [状态](b41a85fb-9c61-4d64-a2ad-58483ebc7aa9.md) | 活动 |
 | b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460 | [Codex goal 上下文收尾提醒](../../../../docs/plan/codex-context-goal-guard.md) | [状态](b67ee46a-c9c1-4c5b-bd57-65fe9f1b6460.md) | 活动 |
 | beb7ee04-62ec-4ec9-8e00-0ff2e45a5c87 | [Phoenix UI 取证与盲测走查 P1 gaps](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P1-gaps.md) | [状态](beb7ee04-62ec-4ec9-8e00-0ff2e45a5c87.md) | 活动 |
+| ddfc2db0-1081-4c9e-8cee-8aecf3179c7e | [Phoenix UI 中文排版检测与口径 P2](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.md) | [状态](ddfc2db0-1081-4c9e-8cee-8aecf3179c7e.md) | 活动 |
+| 3fafbda8-0f05-482b-8320-18ca474ee753 | [Phoenix UI 预览素材与交付图片处理 P3](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P3.md) | [状态](3fafbda8-0f05-482b-8320-18ca474ee753.md) | 活动 |
 | bbae83cd-7065-4f90-a350-5e6439fdfed6 | AGENTS.md 与 Skills 自进化（原文已删除） | [状态](bbae83cd-7065-4f90-a350-5e6439fdfed6.md) | 归档 |
 | 49a107bf-abd1-462b-9910-ff664d6be67d | 指令质量评测与自进化 v2（原文已删除） | [状态](49a107bf-abd1-462b-9910-ff664d6be67d.md) | 归档 |
 | a2287695-163a-4569-ba21-0fff8bf83af5 | [Phoenix Diagram P2](../../../../docs/plan/PHOENIX-DIAGRAM-P2.md) | [状态](a2287695-163a-4569-ba21-0fff8bf83af5.md) | 活动 |
-| ec8cc07f-20e5-4d64-8b77-406df2820e71 | [ELINTP-VISUALS P1](../../../../docs/plan/ELINTP-VISUALS-P1.md) | [状态](ec8cc07f-20e5-4d64-8b77-406df2820e71.md) | 活动 |
+| db4510c9-7ece-40a0-9908-7600a14db4a5 | [Phoenix UI 预览素材与交付图片处理 P3 gaps](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.md) | [状态](db4510c9-7ece-40a0-9908-7600a14db4a5.md) | 活动 |
+| 90398f71-e485-4511-9662-74fc2d8ca76f | [Phoenix UI 方案对比页与动效、反馈、细节指引 P4](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4.md) | [状态](90398f71-e485-4511-9662-74fc2d8ca76f.md) | 活动 |
 | e2fd7621-6529-41cf-8bce-db18e451cadf | [ELINTP-VISUALS P2](../../../../docs/plan/ELINTP-VISUALS-P2.md) | [状态](e2fd7621-6529-41cf-8bce-db18e451cadf.md) | 活动 |
 | fe520dbf-8382-43e6-b26f-765b0735dc14 | [ELINTP-VISUALS P3](../../../../docs/plan/ELINTP-VISUALS-P3.md) | [状态](fe520dbf-8382-43e6-b26f-765b0735dc14.md) | 活动 |
 | 0a7a3bc3-20cf-4b45-8120-cdacfd82e7cf | [ELINTP-VISUALS P3 gaps](../../../../docs/plan/ELINTP-VISUALS-P3-gaps.md) | [状态](0a7a3bc3-20cf-4b45-8120-cdacfd82e7cf.md) | 活动 |
 | f26efbb2-765d-4594-b43e-44175917300f | [ELINTP-VISUALS P4](../../../../docs/plan/ELINTP-VISUALS-P4.md) | [状态](f26efbb2-765d-4594-b43e-44175917300f.md) | 活动 |
 | 0553be18-05b2-4d94-9946-c20253a7b890 | [ELINTP-VISUALS P5](../../../../docs/plan/ELINTP-VISUALS-P5.md) | [状态](0553be18-05b2-4d94-9946-c20253a7b890.md) | 活动 |
+| ec8cc07f-20e5-4d64-8b77-406df2820e71 | [ELINTP-VISUALS P1](../../../../docs/plan/ELINTP-VISUALS-P1.md) | [状态](ec8cc07f-20e5-4d64-8b77-406df2820e71.md) | 活动 |
 
 ## 维护约定
 

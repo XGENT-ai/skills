@@ -15,11 +15,6 @@ use std::time::Duration;
 use serde_json::{json, Value};
 
 static NEXT: AtomicUsize = AtomicUsize::new(0);
-// Observed on Linux Chrome / Chromium; see docs/phoenix-ui.md.
-#[cfg(target_os = "linux")]
-const BROWSER_RESIDUAL_HOSTS: &[&str] = &["update.googleapis.com", "android.clients.google.com"];
-#[cfg(not(target_os = "linux"))]
-const BROWSER_RESIDUAL_HOSTS: &[&str] = &[];
 const PROXY_KEYS: &[&str] = &[
     "ALL_PROXY",
     "HTTPS_PROXY",
@@ -422,10 +417,7 @@ fn browser_commands_only_request_page_resources_and_documented_residuals() {
                 serde_json::from_slice::<Value>(&output.stdout).expect("detect returned JSON");
             }
             let observed = hosts(&browser_requests);
-            let mut allowed: BTreeSet<String> = BROWSER_RESIDUAL_HOSTS
-                .iter()
-                .map(|host| (*host).to_owned())
-                .collect();
+            let mut allowed: BTreeSet<String> = BTreeSet::new();
             if external {
                 allowed.insert("boundary-probe.invalid".to_owned());
                 assert!(

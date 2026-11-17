@@ -12,12 +12,12 @@ use std::sync::{Arc, Mutex};
 
 const NEXT_CLAIM_GRACE_MS: f64 = 10000.0;
 
-struct Args<'a> {
-    argv: &'a [String],
+pub(crate) struct Args<'a> {
+    pub(crate) argv: &'a [String],
 }
 
 impl<'a> Args<'a> {
-    fn arg(&self, name: &str) -> Option<String> {
+    pub(crate) fn arg(&self, name: &str) -> Option<String> {
         let i = self.argv.iter().position(|a| a == &format!("--{}", name))?;
         let v = self.argv.get(i + 1)?;
         if !v.is_empty() && !v.starts_with("--") {
@@ -26,15 +26,15 @@ impl<'a> Args<'a> {
             None
         }
     }
-    fn arg_or(&self, name: &str, fallback: &str) -> String {
+    pub(crate) fn arg_or(&self, name: &str, fallback: &str) -> String {
         self.arg(name).unwrap_or_else(|| fallback.to_string())
     }
-    fn has(&self, name: &str) -> bool {
+    pub(crate) fn has(&self, name: &str) -> bool {
         self.argv.iter().any(|a| a == &format!("--{}", name))
     }
 }
 
-fn env_set(env: &Env, key: &str) -> bool {
+pub(crate) fn env_set(env: &Env, key: &str) -> bool {
     env.get(key).map(|v| !v.is_empty()).unwrap_or(false)
 }
 
@@ -52,7 +52,7 @@ fn next_file(qdir: &str, key: &str) -> String {
 }
 
 /// `process.kill(pid, 0)`: Ok(()) alive, Err(true) EPERM (alive but unsignalable), Err(false) dead.
-fn pid_probe(pid: i64) -> Result<(), bool> {
+pub(crate) fn pid_probe(pid: i64) -> Result<(), bool> {
     match impeccable_common::proc::kill0(pid) {
         Ok(()) => Ok(()),
         Err("EPERM") => Err(true),
@@ -61,7 +61,7 @@ fn pid_probe(pid: i64) -> Result<(), bool> {
 }
 
 /// `process.kill(pid)` (SIGTERM; TerminateProcess on Windows), errors ignored.
-fn kill_pid(pid: i64) {
+pub(crate) fn kill_pid(pid: i64) {
     impeccable_common::proc::terminate(pid);
 }
 
@@ -197,7 +197,7 @@ fn read_hand(qdir: &str, key: &str) -> Option<Map<String, Value>> {
 
 /// Temp file beside the target, then rename: a polling `--wait` never reads
 /// half an answer.
-fn write_atomic(target: &str, text: &str) -> std::io::Result<()> {
+pub(crate) fn write_atomic(target: &str, text: &str) -> std::io::Result<()> {
     let temp = format!("{}.tmp-{}", target, std::process::id());
     std::fs::write(&temp, text)?;
     std::fs::rename(&temp, target)
@@ -370,11 +370,11 @@ fn js_number_arg(a: &Args, name: &str, fallback: &str) -> f64 {
     crate::critique_storage::js_number(&a.arg_or(name, fallback))
 }
 
-fn sleep_ms(ms: u64) {
+pub(crate) fn sleep_ms(ms: u64) {
     std::thread::sleep(std::time::Duration::from_millis(ms));
 }
 
-fn read_json_file(p: &str) -> Result<Value, String> {
+pub(crate) fn read_json_file(p: &str) -> Result<Value, String> {
     let text = std::fs::read(p).map_err(|e| crate::util::node_read_error(p, &e))?;
     let text = String::from_utf8_lossy(&text).into_owned();
     serde_json::from_str::<Value>(&text).map_err(|e| format!("SyntaxError: {}", js_json_error(&text, &e)))
@@ -942,7 +942,7 @@ use std::io::Write;
 
 /// JS: serve-question.mjs#allowedHost — browsers omit the :80 suffix on the
 /// default HTTP port, so a server on --port 80 sees bare loopback hosts.
-fn allowed_host(host: Option<&str>, port: u16) -> bool {
+pub(crate) fn allowed_host(host: Option<&str>, port: u16) -> bool {
     let Some(host) = host else { return false };
     if host == format!("127.0.0.1:{}", port) || host == format!("localhost:{}", port) {
         return true;
@@ -951,7 +951,7 @@ fn allowed_host(host: Option<&str>, port: u16) -> bool {
 }
 
 /// JS: serve-question.mjs#allowedOrigin
-fn allowed_origin(origin: &str, port: u16) -> bool {
+pub(crate) fn allowed_origin(origin: &str, port: u16) -> bool {
     if origin == format!("http://127.0.0.1:{}", port) || origin == format!("http://localhost:{}", port) {
         return true;
     }
@@ -960,7 +960,12 @@ fn allowed_origin(origin: &str, port: u16) -> bool {
 
 /// JS: serve-question.mjs#rejectDetachedPost. Returns the status to answer
 /// with (401/403) when the POST must be rejected, None when it may proceed.
-fn reject_detached_post(detached_key: Option<&str>, origin: Option<&str>, query: &str, port: u16) -> Option<u16> {
+pub(crate) fn reject_detached_post(
+    detached_key: Option<&str>,
+    origin: Option<&str>,
+    query: &str,
+    port: u16,
+) -> Option<u16> {
     if let Some(key) = detached_key {
         if query_param(query, "key").as_deref() != Some(key) {
             return Some(401);
@@ -975,7 +980,7 @@ fn reject_detached_post(detached_key: Option<&str>, origin: Option<&str>, query:
 }
 
 /// JS: url.searchParams.get(name) over the search string (no leading '?').
-fn query_param(query: &str, name: &str) -> Option<String> {
+pub(crate) fn query_param(query: &str, name: &str) -> Option<String> {
     for pair in query.split('&') {
         if pair.is_empty() {
             continue;
@@ -1027,7 +1032,7 @@ fn form_decode(s: &str) -> String {
 /// JS: `new URL(req.url, 'http://127.0.0.1')` -> (pathname, search sans '?').
 /// None where the URL constructor would throw (a protocol-relative target
 /// whose host carries forbidden code points).
-fn parse_request_url(raw: &str) -> Option<(String, String)> {
+pub(crate) fn parse_request_url(raw: &str) -> Option<(String, String)> {
     // Same input cleaning the URL parser applies.
     let trimmed = raw.trim_matches(|c: char| (c as u32) <= 0x20);
     let cleaned: String = trimmed.chars().filter(|c| !matches!(c, '\t' | '\n' | '\r')).collect();
@@ -1053,7 +1058,7 @@ fn touch_now(p: &str) {
     }
 }
 
-fn random_key() -> String {
+pub(crate) fn random_key() -> String {
     // Math.random().toString(16).slice(2, 10)
     let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0);
     let mut x = (t as u64) ^ ((std::process::id() as u64) << 32) ^ 0x9E3779B97F4A7C15;

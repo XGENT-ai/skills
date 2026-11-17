@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>方案对比 · Phoenix UI</title>
+  <link rel="stylesheet" href="/compare.css">
+</head>
+<body>
+  <header class="bar">
+    <div class="bar-text">
+      <h1 id="title"></h1>
+      <p id="question" hidden></p>
+    </div>
+    <div class="tools">
+      <div class="switch" id="view" role="radiogroup">
+        <button type="button" class="opt" id="view-side" role="radio" data-value="side"><span data-t="viewSide"></span></button>
+        <button type="button" class="opt" id="view-single" role="radio" data-value="single"><span data-t="viewSingle"></span></button>
+      </div>
+      <div class="switch" id="viewport" role="radiogroup">
+        <button type="button" class="opt" id="vp-desktop" role="radio" data-value="desktop"><span data-t="vpDesktop"></span><span class="dim">1440×900</span></button>
+        <button type="button" class="opt" id="vp-mobile" role="radio" data-value="mobile"><span data-t="vpMobile"></span><span class="dim">390×844</span></button>
+      </div>
+      <div class="switch" id="zoom" role="radiogroup">
+        <button type="button" class="opt" id="zoom-fit" role="radio" data-value="fit"><span data-t="zoomFit"></span></button>
+        <button type="button" class="opt" id="zoom-100" role="radio" data-value="actual"><span>100%</span></button>
+      </div>
+    </div>
+  </header>
+
+  <div id="done" role="status" hidden>
+    <strong id="done-choice"></strong>
+    <span data-t="doneClose"></span>
+  </div>
+
+  <main id="stage" data-view="side">
+    <nav id="tabs" hidden></nav>
+    <div id="columns"></div>
+  </main>
+
+  <footer class="hint" id="hint"></footer>
+
+  <dialog id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title">
+    <form id="panel-form" method="dialog">
+      <h2 id="panel-title"></h2>
+      <label for="liked" data-t="liked"></label>
+      <textarea id="liked" rows="3"></textarea>
+      <label for="disliked" data-t="disliked"></label>
+      <textarea id="disliked" rows="3"></textarea>
+      <p id="panel-error" role="alert" hidden></p>
+      <div class="panel-actions">
+        <button type="button" class="ks-button ks-button-ghost" id="cancel" data-t="cancel"></button>
+        <button type="submit" class="ks-button ks-button-primary" id="confirm" data-t="confirm"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="application/json" id="compare-data">__COMPARE_JSON__</script>
+  <script src="/compare.js" defer></script>
+</body>
+</html>

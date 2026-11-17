@@ -108,8 +108,9 @@ false、空数组。资源路径填 App 内部路径，如 `/mcp` 或 `/`，不�
 
 来源是精确 origin（协议、主机、可选端口），生产只接受 HTTPS；仅 connectSrc 另接受 WSS。
 允许末尾 `/`，不允许路径、query、fragment、凭据、通配符、控制字符、嵌入空白或未知字段。
-唯一例外：connectSrc 可原样申报 `blob:`、`data:`（前端 `fetch()` 本地 blob/data URL 时需要），
-其余字段不接受，`blob:https://…`、`data:,x` 等带内容的写法也不接受。
+唯一例外：connectSrc 可原样申报小写完整的 `blob:`、`data:`（前端 `fetch()` 本地 blob/data URL 时需要）
+和 `https:`（连接运行时才知道的 HTTPS 地址，如对象存储直传；允许该 App 连接任意 HTTPS 站点，新增与撤回均进审）。
+其余字段不接受，`blob:https://…`、`data:,x`、`HTTPS:`、`http:` 等写法也不接受。
 不能申报 unsafe-inline、unsafe-eval、self、nonce、hash 等 CSP 关键字，也不能申报其他 scheme 源。
 App 不能修改 frame-ancestors、base-uri、object-src；平台既有兼容基线不是可自行申请的权限。
 开发环回 HTTP/WS 仅在服务端显式开发模式允许，本发布预检按生产规则拒绝。

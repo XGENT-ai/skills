@@ -4,6 +4,9 @@
 按「你看到什么」编排。
 下文在 App repo 根目录执行命令；`SKILL_DIR` 表示本 skill 的 `SKILL.md` 所在目录（本文件的上一级），`S="$SKILL_DIR/scripts/onebox.sh"`；`portal-onebox/` = `init` 铺出来的那个目录。
 
+除非用户明确不要原数据，排障和升级都保留原配置、密钥及持久卷；不以重种、`init --force`、`down -v` 或换空卷作为默认修法。
+先确认宿主 `onebox.sh` 已更新为仅空库播种的版本，旧脚本的 `up` 会清掉门户身份与安装数据。
+
 ## 目录
 
 - [§1 假红与假绿（先读这节）](#1-假红与假绿先读这节)
@@ -58,7 +61,7 @@
 | 卡在 `Retrying in N seconds` 直到超时 | 链路或代理。把 `HTTP_PROXY`/`HTTPS_PROXY` 与 Docker Desktop 的代理设置对齐，或临时关掉代理重试 |
 | `x509: certificate signed by unknown authority` | 多半是仓库地址写错（不带端口、不带 `https://`）。**不要**去 `daemon.json` 加 `insecure-registries` 绕过 |
 | `init` 说「镜像里没有 /app/deploy」 | 你给的不是门户一盒镜像（比如给成了自己 App 的镜像，或代理镜像）。`--image` 要的是 **runtime** 那个 |
-| `init` 说 compose.env 已存在 | 保护你的密钥不被覆盖。只想补配置就直接往那份文件**末尾**加；确实要整份重来才加 `--force` |
+| `init` 说 compose.env 已存在 | 保护你的密钥不被覆盖。升级用 `upgrade`；补配置往那份文件**末尾**加。只有用户明确丢弃原配置和数据时才走重置流程 |
 | 后续命令报「没找到一盒目录」 | 你不在 repo 里跑，或 `init` 落在了别处。用 `XGENT_ONEBOX_HOME=/abs/path/to/portal-onebox` 显式指定 |
 
 ---
@@ -117,11 +120,13 @@
 | --- | --- |
 | `register-app` 成功、控制台「清单管理」也看得到，但**演示租户的应用市场里没有卡片** | 授予行没写成。市场对租户是 **fail-closed** 的：没有 `tenant_listing_grants` 行就连卡片都不出现，且**不报错**。dev 模式的 `register-app` 本该顺手授予现有租户——**旧一点的一盒镜像里没有这段代码**，所以按 SKILL.md §6 更新缓存后 `upgrade` → `up` 换新镜像与资产重跑一遍；换了还没有，就用平台管理员账号在控制台「租户 → 可用应用」里把它勾上（或 `PUT /api/console/tenants/<id>/apps`），再回市场安装 |
 | `register-app` 报 `VALIDATION_FAILED`（scope） | manifest 声明了**别的 App 的 scope**，却没把那个 App 列进 `exchangeTargets`。规则：一个 listing 能声明的 scope = 平台基础 scope ∪ 本 namespace（`<listingKey>` 及其下划线变体，如 `omni-parser` → `omni_parser`）∪ 已声明 `exchangeTargets` 的 namespace |
-| `register-app` 报 `DEPENDENCY_UNAVAILABLE`（依赖的应用清单不存在：`<dep>`） | 清单 `dependencies` 里的 App 在这台一盒里还没有**注册**（跟装没装无关）。先 `"$S" add <dep>`（`add` 会在拉镜像之前预检，把缺的一次列全）。如果你自己的 App 是靠 `up` 注册的，补完依赖后**单独**重跑注册那一条：`"$S" dc run --rm -v "$PWD:/devkit:ro" portal-api bun run register-app /devkit/app.manifest.json`。**别重跑 `up`**：它的种子会 truncate 清单表，刚加的依赖又没了。之后在「应用管理 → 应用市场」里安装你的 App，依赖会一起装上 |
+| `register-app` 报 `DEPENDENCY_UNAVAILABLE`（依赖的应用清单不存在：`<dep>`） | 清单 `dependencies` 里的 App 在这台一盒里还没有**注册**（跟装没装无关）。先 `"$S" add <dep>`（`add` 会在拉镜像之前预检，把缺的一次列全），再单独重跑注册：`"$S" dc run --rm -v "$PWD:/devkit:ro" portal-api bun run register-app /devkit/app.manifest.json`。新版 `up` 也会跳过已有门户的种子，保留刚加的依赖；旧版 `up` 会清库，必须先更新宿主脚本。之后在「应用管理 → 应用市场」里安装你的 App，依赖会一起装上 |
 | `register-app` 拒跑，提到 production | dev 模式的 `register-app` 拒绝 `NODE_ENV=production`。`compose.env` 末尾必须有 `NODE_ENV=development` |
 | 跑完 `db:seed:onebox` 后市场里找不到你的 App | **顺序反了。** 种子第一步是 `truncate … marketplace_listings … cascade`，先注册后种子 = 注册被清掉。必须 seed 在前、register-app 在后 |
 | `seed:onebox` 报 `unknown listing key` | 那个 key 既不是内置基础服务，`app-devkit/manifests/<key>.manifest.json` 也不存在。要么放一份 manifest 进去，要么把它从 `XGENT_APP_CATALOG` 里去掉 |
 | seed 之后浏览器要求重登 | 种子重新生成 UUID，会话随之失效。重走一次 dev 登录，不是坏了 |
+| `up` 跳过种子，但新版本的基础配置或租户基线缺失 | 已有数据按设计保留，不靠重种补齐。通过该配置的幂等注册/安装/租户基线入口定点补缺；无法确认安全补齐方式时保留原库并报告阻碍 |
+| `up` 无法确认门户库是否为空 | 检查 PostgreSQL 及迁移日志，修复后重试。查询失败或异常结果不会触发播种，不要手动补跑种子 |
 | 发布/上传前端产物报 `前端产物目录不可写：/srv/www/apps（EACCES）` | 同一条根因，见 **[§7](#7-命名卷属主不对eacces-一族)**。⚠️ **别照错误提示去改 `XGENT_APPS_DIR`**：那条建议只对 pm2/单机部署成立。容器栈里 `/srv/www/apps` 是**与反代共享**的卷、反代就从它服务 `/apps/<key>/`，指向别处会让发布「成功」而页面白屏/404——一个更难查的症状 |
 | dev 登录后看不到某个 App | 用 `liming@xgent.ai`（普通成员）复验 —— **ACL 成员基线没到位的问题只在非管理员身上现形**，管理员那边永远是绿的 |
 
@@ -137,9 +142,9 @@
 `one-box` / `proxy` 的 **v1.2.0 起**已在 runtime 层预建这三个目录并 chown 给 `bun`（`latest` 已指向它）。
 
 镜像升级不会自动改变已有卷的属主。先按 SKILL.md §6 更新镜像缓存，再用 `"$S" upgrade` 同步部署资产，再按下面的定点修法纠正
-这三个目录的属主；不需要删除 PostgreSQL 或对象存储卷。随后 `"$S" up` 会按一盒既有规则重种门户库。
+这三个目录的属主；不需要删除 PostgreSQL 或对象存储卷。新版 `"$S" up` 会跳过已有门户的种子，保留身份与安装数据。
 
-若主动选择丢弃所有当前联调数据，可按 SKILL.md §6 的重置路径执行 `dc down -v` → `init --force` → `up`。
+只有用户明确选择丢弃所有当前联调数据时，才按 SKILL.md §6 的重置路径执行 `dc down -v` → `init --force` → `up`。
 重置会丢失 App 数据与对象；它不是升级的必经步骤。
 
 ### 定点修复属主

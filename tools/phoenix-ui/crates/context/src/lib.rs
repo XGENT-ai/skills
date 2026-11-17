@@ -1,6 +1,6 @@
 //! Context and utility verbs: context, doctor, pin, surface-brief,
 //! critique-storage, embed-prompt, signals, detect-csp, concept-seed,
-//! serve-question, generate-image. Each verb is `run(args, io) -> exit code`.
+//! serve-question, compare, generate-image. Each verb is `run(args, io) -> exit code`.
 
 pub mod artifact_schema;
 pub mod context;
@@ -44,6 +44,8 @@ pub use generate_image::run as run_generate_image;
 pub mod question_page;
 pub mod serve_question;
 pub use serve_question::run as run_serve_question;
+pub mod compare;
+pub use compare::run as run_compare;
 
 pub mod component_review;
 

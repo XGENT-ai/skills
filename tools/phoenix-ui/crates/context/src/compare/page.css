@@ -1,0 +1,114 @@
+/* Served after the kinpaku tokens and kit. The shell stays paper, ink and
+   rules only, so nothing here competes with the proposals it frames. */
+@font-face { font-family: "Albert Sans"; src: url(/fonts/albertsans.ttf); font-weight: 100 900; }
+@font-face { font-family: "Alumni Sans"; src: url(/fonts/alumnisans.ttf); font-weight: 100 900; }
+@font-face { font-family: "JetBrains Mono"; src: url(/fonts/jetbrainsmono.ttf); font-weight: 100 800; }
+
+:root { color: var(--ks-text); background: var(--ks-paper); }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; font: 400 0.875rem/1.5 var(--ks-font); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; grid-template-columns: minmax(0, 1fr); }
+/* The kit's paper grain would sit behind every proposal. */
+body::before { content: none; }
+button, textarea { font: inherit; color: inherit; }
+:is(button, a, textarea):focus-visible { outline: 2px solid var(--ks-focus-ring); outline-offset: 2px; }
+
+/* Top bar */
+.bar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 28px; padding: 12px 20px; border-bottom: 1px solid var(--ks-rule); }
+.bar-text { flex: 1 1 280px; min-width: 0; }
+#title { margin: 0; font-size: 1.125rem; line-height: 1.3; font-weight: 600; color: var(--ks-ink); }
+#question { margin: 2px 0 0; color: var(--ks-text-muted); font-size: var(--ks-type-ui-size); }
+.tools { display: flex; flex-wrap: wrap; gap: 10px; }
+.switch { display: inline-flex; gap: 3px; padding: 3px; background: var(--ks-gray); border: 1px solid var(--ks-rule); border-radius: 6px; }
+.opt { display: inline-flex; align-items: baseline; gap: 6px; min-height: var(--ks-control-sm); padding: 4px 10px; border: 0; border-radius: var(--ks-radius-sm); font-size: var(--ks-type-ui-size); font-weight: 500; color: var(--ks-text-muted); background: transparent; cursor: pointer; transition: color var(--ks-quick) var(--ks-ease), background-color var(--ks-quick) var(--ks-ease); }
+.opt[aria-checked="true"] { color: var(--ks-ink); background: var(--ks-paper-raised); box-shadow: 0 0 0 1px var(--ks-rule); }
+.opt:not([aria-checked="true"]):not(:disabled):hover { color: var(--ks-text); }
+.opt:disabled { color: var(--ks-text-mute-deep); cursor: not-allowed; }
+.opt:disabled[aria-checked="true"] { background: transparent; box-shadow: none; }
+.dim { font-family: var(--ks-mono); font-size: var(--ks-type-label-size); color: var(--ks-text-faint); }
+.opt:disabled .dim { color: inherit; }
+
+/* After a choice */
+#done { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 10px 20px; border-bottom: 1px solid var(--ks-rule); background: var(--ks-paper-raised); color: var(--ks-ink); }
+#done strong { font-weight: 600; }
+
+/* Stage */
+/* Explicit rows: the hidden banner must not let later rows move up. */
+.bar { grid-row: 1; }
+#done { grid-row: 2; }
+#stage { grid-row: 3; overflow: auto; scrollbar-gutter: stable; }
+.hint { grid-row: 4; }
+#columns { display: flex; align-items: stretch; min-width: min-content; min-height: 100%; }
+.col { position: relative; flex: 1 0 400px; min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--ks-rule); }
+.col:last-child { border-right: 0; }
+/* An overlay, not an outline: the frame and the sticky row would paint over one. */
+body[data-kb] #stage[data-view="side"] .col[aria-current="true"]::after { content: ""; position: absolute; inset: 0; z-index: 2; border: 2px solid var(--ks-focus-ring); pointer-events: none; }
+.col.is-chosen .col-head { box-shadow: inset 0 2px 0 var(--ks-ink); }
+
+.col-head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; min-height: 44px; padding: 8px 14px; border-bottom: 1px solid var(--ks-rule); }
+.seq { font-family: var(--ks-mono); font-size: var(--ks-type-label-size); color: var(--ks-text-faint); }
+.badge { padding: 1px 6px; border: 1px solid var(--ks-edge); border-radius: var(--ks-radius-sm); font-size: var(--ks-type-label-size); font-weight: 500; line-height: 1.5; color: var(--ks-ink); white-space: nowrap; }
+.name { margin: 0; font-size: var(--ks-type-small-size); font-weight: 600; color: var(--ks-ink); overflow-wrap: anywhere; }
+.note { font-size: var(--ks-type-label-size); color: var(--ks-text-muted); }
+.open { margin-left: auto; font-size: var(--ks-type-label-size); color: var(--ks-ink); text-decoration: underline; text-decoration-color: var(--ks-edge); text-underline-offset: 3px; white-space: nowrap; }
+.open:not([href]) { color: var(--ks-text-mute-deep); text-decoration: none; }
+
+/* The frame holds a viewport-sized iframe scaled down to the column; the
+   scaler reserves the scaled box so layout follows the visual size. */
+/* Inline-size containment: the scaled content is sized from the frame's
+   width, so it must not feed back into the column's own width. */
+.frame { position: relative; min-width: 0; overflow: hidden; contain: inline-size; background: var(--ks-paper-deep); }
+.scaler { position: relative; margin: 0 auto; overflow: hidden; }
+.scaler iframe { display: block; border: 0; background: #fff; transform-origin: 0 0; }
+.frame img { display: block; max-width: none; height: auto; margin: 0 auto; }
+.frame.is-pending { min-height: 220px; background: repeating-linear-gradient(135deg, var(--ks-paper-deep) 0 8px, var(--ks-gray) 8px 9px); }
+.frame.is-pending :is(iframe, img) { visibility: hidden; }
+
+.unavailable { padding: 28px 16px; background: var(--ks-paper); border-bottom: 1px solid var(--ks-rule); }
+.unavailable p { margin: 0 0 6px; color: var(--ks-text); overflow-wrap: anywhere; }
+.unavailable .why { font-weight: 600; color: var(--ks-ink); }
+.unavailable code { padding: 1px 5px; border-radius: var(--ks-radius-sm); background: var(--ks-gray); font-family: var(--ks-mono); font-size: 0.8125rem; color: var(--ks-ink); }
+.unavailable .ks-button { min-height: var(--ks-control-md); margin-top: 8px; padding: 0 14px; font-size: var(--ks-type-ui-size); }
+
+.info { display: grid; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--ks-rule); }
+.info p { margin: 0; }
+.concept { color: var(--ks-ink); }
+.typography { font-family: var(--ks-mono); font-size: var(--ks-type-label-size); color: var(--ks-text-muted); }
+.palette, .traits { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.palette li { width: 20px; height: 20px; border: 1px solid var(--ks-rule); border-radius: var(--ks-radius-sm); }
+.traits li { padding: 1px 7px; border: 1px solid var(--ks-rule); border-radius: var(--ks-radius-sm); font-size: var(--ks-type-label-size); color: var(--ks-text); }
+
+/* Tall screenshots must not push the choice out of reach. */
+.choose-row { position: sticky; bottom: 0; margin-top: auto; padding: 12px 14px; border-top: 1px solid var(--ks-rule); background: var(--ks-paper); }
+.choose-row .ks-button { width: 100%; }
+
+/* Single view: one proposal, the frame becomes the scrolling stage. */
+#tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 14px; border-bottom: 1px solid var(--ks-rule); }
+.tab { display: inline-flex; align-items: center; gap: 8px; min-height: var(--ks-control-md); padding: 0 12px; border: 1px solid transparent; border-radius: var(--ks-radius-sm); font-size: var(--ks-type-ui-size); color: var(--ks-text-muted); background: transparent; cursor: pointer; }
+.tab:not(:disabled):hover { color: var(--ks-ink); }
+.tab[aria-current="true"] { border-color: var(--ks-edge); color: var(--ks-ink); background: var(--ks-paper-raised); }
+.tab:disabled { cursor: not-allowed; }
+#stage[data-view="single"] { display: flex; flex-direction: column; overflow: hidden; scrollbar-gutter: auto; }
+#stage[data-view="single"] #columns { flex: 1; min-width: 0; min-height: 0; }
+#stage[data-view="single"] .col { flex: 1 1 auto; min-height: 0; border-right: 0; }
+#stage[data-view="single"] .col:not([aria-current="true"]) { display: none; }
+#stage[data-view="single"] .frame { flex: 1 1 0; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+#stage[data-view="single"] .choose-row { position: static; display: flex; justify-content: center; }
+#stage[data-view="single"] .choose-row .ks-button { width: min(100%, 360px); }
+
+.hint { padding: 7px 20px; border-top: 1px solid var(--ks-rule); font-size: var(--ks-type-label-size); color: var(--ks-text-muted); }
+
+/* Choice panel */
+#panel { width: min(520px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--ks-edge); border-radius: var(--ks-radius-md); color: var(--ks-text); background: var(--ks-paper-raised); }
+#panel::backdrop { background: oklch(13% 0 0 / 0.32); }
+#panel-form { display: grid; gap: 8px; padding: 20px; }
+#panel-title { margin: 0 0 6px; font-size: 1.0625rem; line-height: 1.3; font-weight: 600; color: var(--ks-ink); }
+#panel label { font-size: var(--ks-type-ui-size); font-weight: 500; color: var(--ks-ink); }
+#panel textarea { width: 100%; min-height: 76px; margin-bottom: 6px; padding: 8px 10px; border: 1px solid var(--ks-edge); border-radius: var(--ks-radius-sm); line-height: 1.5; background: var(--ks-paper); resize: vertical; }
+#panel-error { margin: 0; font-weight: 600; color: var(--ks-ink); }
+.panel-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}

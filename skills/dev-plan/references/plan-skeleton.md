@@ -138,6 +138,7 @@ RULE @reverification:
          "同批连续改动只复验一次，未补证不能宣称新版通过",
          =>[downstream_needs_evidence_or_risk_gate_imminent, "先补必要检查"],
          =>[check_failed, "先定位原因并完成同因修复，再验失败项与修复波及项；未影响的已通过项直接引用"],
+         =>[closure_or_high_cost_check_failed, "先看全这一轮暴露的全部失败并排查同类问题，集中修完，每处用局部检查或缩小版本确认，再统一重验一次；不每修一处就从头重跑整轮"],
          =>[shared_contract_public_entry_build_or_dependency_changed, "核对波及面，必要时扩大复验，不把所有局部修复升级成整组或全量重跑"]]
   MUST_NOT: "仅因续做、汇报、回写或提交使证据失效"
 

@@ -1,0 +1,9 @@
+{
+  "stdout": "",
+  "stderr": "compare：键 k1 还留有上一轮未领取的选择；先运行 --wait --key k1 领取，或 --stop --key k1 丢弃，再重新 --start。\n",
+  "exit": 1,
+  "signal": null,
+  "files": {
+    ".phoenix-ui/compare/k1.answer.json": "{\"proposalId\":\"b\",\"name\":\"方案 B\",\"baseline\":false,\"liked\":\"\",\"disliked\":\"\"}"
+  }
+}

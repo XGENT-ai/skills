@@ -13,6 +13,8 @@ export const cases = [
   ["websocket connect", {connectSrc:["wss://events.example.com"]}, true],
   ["local schemes connect", {connectSrc:["blob:","data:"]}, true],
   ["local scheme with payload", {connectSrc:["data:,x"]}, false],
+  ["https scheme connect", {connectSrc:[" https: ","https:"]}, true],
+  ...["http:","HTTPS:","https:;","https:\n","wss:"].map((value,i)=>[`invalid connect scheme ${i}`,{connectSrc:[value]},false]),
   ["alias", {platformSources:{scriptSrc:["jsCdn"],styleSrc:["jsCdn"],fontSrc:["jsCdn"],connectSrc:["jsCdn"]}}, true],
   ["origin normalization", {imgSrc:[" https://EXAMPLE.com:443/ ","https://example.com"]}, true],
   ["empty arrays", {scriptSrc:[],platformSources:{scriptSrc:[]}}, true],
@@ -22,7 +24,7 @@ export const cases = [
   ["wrong collection", {scriptSrc:"https://example.com"}, false],
   ["wrong source", {scriptSrc:[null]}, false],
   ...["https://*.example.com","https://example.com/script.js","https://example.com?x=1","https://example.com#x",
-    "https://user:private@localhost","unsafe-inline","'unsafe-eval'","data:","blob:","http://example.com",
+    "https://user:private@localhost","unsafe-inline","'unsafe-eval'","data:","blob:","https:","http://example.com",
     "http://localhost:8080","wss://example.com","https:example.com","https://example.com\n","https://example.com;"].map((value,i)=>[`invalid origin ${i}`,{scriptSrc:[value]},false]),
 ];
 
@@ -58,6 +60,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       assert.equal(result.status,valid?0:1,label);
       passed++;
     }
+    const schemaConfig = {label:"设置",path:"/v1/settings",scopes:["demo.read"],schema:{type:"object",properties:{enabled:{type:"boolean",title:"启用"}}}};
     // requiredEnvNotes 与 Dashboard 组件：与门户提交面同口径（坏的在 CI 里就拦住）。
     for (const [label,extra,valid] of [
       ["env note ok", {requiredEnv:["DEMO_TITLE"],requiredEnvNotes:{DEMO_TITLE:"报表抬头"}}, true],
@@ -73,6 +76,13 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       ["admin page no zh-CN", {adminPages:{tenant:{route:"/s",label:{en:"S"}}}}, false],
       ["admin page unknown level", {adminPages:{console:{route:"/s",label:"x"}}}, false],
       ["tenant config ok", {type:"service",scopes:["demo.read"],tenantConfig:{label:"设置",path:"/v2/policy",scopes:["demo.read"],schema:{type:"object",properties:{limits:{type:"object",properties:{wait:{type:"integer",title:"等待",default:10,unit:"秒",scale:1000},mode:{type:"select",title:"模式",options:[{value:"auto",label:"自动"}]},strict:{type:"boolean",title:"严格",default:false}}}}}}}, true],
+      ["micro schema", {type:"micro",scopes:["demo.read"],tenantConfig:schemaConfig}, true],
+      ["both admin schema", {type:"service",scopes:["demo.read"],adminPages:{platform:schemaConfig,tenant:schemaConfig}}, true],
+      ["micro admin schema without embed", {type:"micro",openModes:["standalone"],scopes:["demo.read"],adminPages:{platform:schemaConfig}}, true],
+      ["schema route conflict", {scopes:["demo.read"],adminPages:{tenant:{...schemaConfig,route:"/settings"}}}, false],
+      ["schema unknown scope", {scopes:[],adminPages:{platform:schemaConfig}}, false],
+      ["service iframe rejected", {type:"service",adminPages:{tenant:{route:"/settings",label:"设置"}}}, false],
+      ["skills protocol", {type:"micro",scopes:["demo.read","demo.admin"],tenantConfig:{protocol:"skills-settings-v1",label:"设置",path:"/v1/settings",scopes:["demo.read","demo.admin"]}}, true],
       ["tenant config bad scope", {type:"service",scopes:["demo.read"],tenantConfig:{label:"设置",path:"/v2/policy",scopes:["demo.write"],schema:{type:"object",properties:{wait:{type:"integer",title:"等待"}}}}}, false],
       ["tenant config escape", {type:"service",scopes:["demo.read"],tenantConfig:{label:"设置",path:"//evil.example",scopes:["demo.read"],schema:{type:"object",properties:{wait:{type:"integer",title:"等待"}}}}}, false],
     ]) {
@@ -98,6 +108,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       rmSync(blob);
     }
     assert.deepEqual(normalizeEmbedCsp(cases.find(c=>c[0]==="origin normalization")[1]),{imgSrc:["https://example.com"]});passed++;
+    assert.deepEqual(normalizeEmbedCsp(cases.find(c=>c[0]==="https scheme connect")[1]),{connectSrc:["https:"]});passed++;
     assert.throws(()=>normalizeEmbedCsp(Object.defineProperty({},"scriptSrc",{get(){throw new Error("must-not-run");}})),/accessors/);passed++;
     console.log(`exported preflight: ${passed}/0`);
   } finally { rmSync(root,{recursive:true,force:true}); }
