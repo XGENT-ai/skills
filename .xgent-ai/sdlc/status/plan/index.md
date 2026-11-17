@@ -27,6 +27,7 @@
 | fe520dbf-8382-43e6-b26f-765b0735dc14 | [ELINTP-VISUALS P3](../../../../docs/plan/ELINTP-VISUALS-P3.md) | [状态](fe520dbf-8382-43e6-b26f-765b0735dc14.md) | 活动 |
 | 0a7a3bc3-20cf-4b45-8120-cdacfd82e7cf | [ELINTP-VISUALS P3 gaps](../../../../docs/plan/ELINTP-VISUALS-P3-gaps.md) | [状态](0a7a3bc3-20cf-4b45-8120-cdacfd82e7cf.md) | 活动 |
 | f26efbb2-765d-4594-b43e-44175917300f | [ELINTP-VISUALS P4](../../../../docs/plan/ELINTP-VISUALS-P4.md) | [状态](f26efbb2-765d-4594-b43e-44175917300f.md) | 活动 |
+| 0553be18-05b2-4d94-9946-c20253a7b890 | [ELINTP-VISUALS P5](../../../../docs/plan/ELINTP-VISUALS-P5.md) | [状态](0553be18-05b2-4d94-9946-c20253a7b890.md) | 活动 |
 
 ## 维护约定
 
