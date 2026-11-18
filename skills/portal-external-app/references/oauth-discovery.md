@@ -6,8 +6,8 @@
 
 ## 前置与声明
 
-目标门户须已部署 OAuth 发现迁移、API/controller 和统一 v2 网关模板（container/process 均支持）。
-不支持 v1；不依赖 `PUBLIC_SITES_ENABLED`、Sites 权益或 CSP strict 开关。安装新版 SDK、
+目标门户须已部署 OAuth 发现迁移与对应的 API/controller（container/process 均支持）。
+不依赖 `PUBLIC_SITES_ENABLED`、Sites 权益或 CSP strict 开关。安装新版 SDK、
 whoami 成功、后端 healthy 都不能证明这些平台前置已满足；能力未部署时交平台升级，不逐 App 手改 Caddy。
 需要 TypeScript 契约时，`@xgent/shared` 从 0.11.1 提供 `OAuthDiscovery`。
 
@@ -79,7 +79,7 @@ curl -i "$PORTAL_ORIGIN/svc/$LISTING_KEY/.well-known/oauth-protected-resource/mc
 
 - 标准与原嵌套地址 GET 均为 200 JSON，字段相同；HEAD 同状态、JSON Content-Type、无正文。核对 issuer/resource 和既有 OAuth 端点，不只检查 HTTP 200。
 - 已声明标准入口的 POST/PUT/OPTIONS 为 405，含 `Allow: GET, HEAD`；未声明、撤销、额外尾段为 404。使用门户 origin，站点域名继续走自己的站点上下文。
-- 标准地址 404：先查实际获批声明、本次 delivery、服务是否已停止/下架；文件已保存或平台已升级不等于声明已批准。返回 Portal HTML：核对目标 v2 模板及实际加载版本。旧嵌套地址也失败、或返回非 JSON：检查 App 元数据端点。
+- 标准地址 404：先查实际获批声明、本次 delivery、服务是否已停止/下架；文件已保存或平台已升级不等于声明已批准。返回 Portal HTML：核对目标门户版本与网关当前代次。旧嵌套地址也失败、或返回非 JSON：检查 App 元数据端点。
 - MCP 原匿名请求应继续返回约定的 401 与 `WWW-Authenticate`。元数据 HTTP 通过后，还须用目标客户端走通授权页与回调；WorkBuddy / WorkBuddy AI 等不同回调由 App 负责，不能用网关或夹具检查冒称客户端验收。
 
 交付记录包含目标环境、版本、proposalId、delivery、标准/旧路径 HTTP 和客户端结果；不提供凭据或内部 upstream。

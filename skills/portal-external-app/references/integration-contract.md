@@ -16,7 +16,7 @@
 
 ## 2. 交付物（外部团队 → 平台）
 
-1. **后端镜像**：容器内监听 **8080**（可由 env 覆盖，编排统一注 8080）；服务名/网络别名 **`<listingKey>-server`**（通用反代规则按此 DNS 命中）；多架构 **amd64 + arm64**（生产集群 amd64）；**不烘焙 `.env`/密钥**。⚠️ 只需要认这一个**容器口**；发布到宿主机的哪个口（`deployDescriptor.hostPort`）归平台按环境分配，别在镜像或 manifest 里把它当常量依赖（详见 registration-and-onebox.md）。
+1. **后端镜像**：容器内监听 **8080**（可由 env 覆盖，编排统一注 8080）；服务名/网络别名 **`<listingKey>-server`**（容器形态的网关声明地址 `<listingKey>-server:<deployDescriptor.port>` 按此 DNS 命中）；多架构 **amd64 + arm64**（生产集群 amd64）；**不烘焙 `.env`/密钥**。⚠️ 只需要认这一个**容器口**；发布到宿主机的哪个口（`deployDescriptor.hostPort`）归平台按环境分配，别在镜像或 manifest 里把它当常量依赖（详见 registration-and-onebox.md）。
 2. **`app.manifest.json`**（见 registration-and-onebox.md）。
 3. **env 契约表**：逐个列镜像**实际读取**的变量名。⚠️ 镜像内部若用自有前缀（知识库读 `XGENT_PG_DSN`，门户契约别名 `KNOWLEDGE_DATABASE_URL`；且**不读裸 `PORT`**），必须写清映射，编排按镜像认的名字注入。
 4. **运维口径**（没有默认答案，必须显式声明）：
@@ -137,7 +137,7 @@ SDK 的 EndUserAuthContext 使用相应驼峰字段。终端用户正缓存上�
 服务自带认证体系（API-Key、节点 Token、自有 admin 会话、gRPC 端口等）时：
 
 - 凡经 `/svc/<key>` 暴露给门户侧的 HTTP 面，一律 TDT 四道闸——不得让门户侧调用方复用你的自有认证。
-- 自有节点/外部客户端面保持原认证，但**不得**从 `/svc` 暴露；`/svc` 只转发 HTTP :8080，gRPC 等额外端口在网关契约之外，需单独规划暴露并写进交付契约。
+- 自有节点/外部客户端面保持原认证，但**不得**从 `/svc` 暴露；`/svc` 只转发 HTTP 到 `deployDescriptor.port`（约定 8080），gRPC 等额外端口在网关契约之外，需单独规划暴露并写进交付契约。
 - 平台/其他 App 调你：有用户上下文走令牌交换、无用户上下文走服务账号 client_credentials（scope 落你的命名空间）——不是给平台发你体系内的 API-Key。吊销、审计、租户策略都收口在门户。
 - 若有 MCP/stdio 之类**免鉴权信任面**：只限本地可信进程，发货镜像不得暴露（知识库的 `--role mcp` 规则）。
 

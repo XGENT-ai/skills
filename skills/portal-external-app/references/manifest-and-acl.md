@@ -25,7 +25,7 @@ Manifest 的权威载体是一条**市场清单（marketplace listing）**。安
 | `adminPages` | 两级管理入口：`platform` 为平台管理员、`tenant` 为当前租户管理员。各级可声明 `{ label, path, scopes, schema }`（micro/service），或 `{ route, label }` 嵌入页（仅 micro + embed）；均为治理档。嵌入时 `init.adminPage` 有值、App 只渲染该页。配置作用域与 GET/PUT 合同见 [配置分层](config-placement.md) |
 | `dependencies` | 依赖的其他清单（安装按拓扑序补装；卸载被依赖会拦截） |
 | `exchangeTargets` | 经令牌交换读取哪些 App（安装时自动建交换白名单 + consent 共授） |
-| `embedCsp` | 托管前端的精确来源声明；开发版本支持 connectSrc/scriptSrc/styleSrc/fontSrc/imgSrc/mediaSrc，须正式发布并启用 strict/v2 后使用，旧门户只支持 connectSrc |
+| `embedCsp` | 托管前端的精确来源声明；开发版本支持 connectSrc/scriptSrc/styleSrc/fontSrc/imgSrc/mediaSrc，须正式发布并启用 strict 后使用，旧门户只支持 connectSrc |
 
 运营字段（租户管理员设，非 Manifest）：`visibility` / `showInCenter` / `pinned` / `enabledNavItemIds` / `webhookUrl` / `allowExchange` / `exchangeWhitelist`。
 
@@ -87,7 +87,7 @@ interface AclAction {
 
 ## CSP 与发布确认的版本边界
 
-新增扩展能力尚未因本文更新而上线；strict 默认关闭，需平台盘点来源并受控启用 v2。六类来源
+新增扩展能力尚未因本文更新而上线；strict 默认关闭，需平台盘点来源后受控启用。六类来源
 使用 HTTPS origin（connectSrc 另允许 WSS 及原样 `blob:`/`data:`），禁止通配、路径、凭据和 unsafe-inline/unsafe-eval；
 platformSources 仅 scriptSrc/styleSrc/fontSrc/connectSrc 可声明 ["jsCdn"]，跟随平台 CDN。
 省略整个 embedCsp 沿用，null 清空，对象是完整替换；来源增删均治理，排序去重不算变更。

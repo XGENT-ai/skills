@@ -133,7 +133,7 @@ npm install
    Kafka HOST 另按 9092/19092/29092 挑选，结果写进 `KAFKA_PORT`。Kafka EXTERNAL 独立默认
    发布回环 9095，若已占用，在 `compose.env` 末尾另设 `KAFKA_EXTERNAL_PORT`；它不参与自动挑选。
    挑出来的 pg/redis/RustFS/Kafka 端口同时就是你宿主进程直连一盒基建的口（见 §5 的直连表）。
-3. **生成 `compose.env`**：三段模板拼装 + 一段本机覆盖块（随机密钥、端口、项目名、镜像 tag）。
+3. **生成 `compose.env`**：三段模板拼装 + 一段本机覆盖块（随机密钥、端口、项目名、镜像 tag、一盒存储直连三项）。
    Kafka 的 `KAFKA_CLUSTER_ID` 与 `KAFKA_ADMIN_PASSWORD` 每个新盒随机生成，密码不回显；文件权限为 600。
    覆盖块**放在文件最末尾**，因为 docker compose 读 env-file 是**后定义者胜**——以后要改配置也往那下面加，别回上面改。
 4. 把 `portal-onebox/` 加进 `.gitignore`（里面是密钥，且随时能重新生成）。
@@ -147,9 +147,9 @@ micro 型再加 `APP_FRONTEND_DIST`（前端 dist 的**绝对路径**，目录�
 
 关于 `APP_IMAGE` 的两条，不知道会各卡一次：
 
-- **容器内必须监听 8080。** 反代的通用规则是 `/svc/<key>/* → <key>-server:8080`，devkit 只注入 `PORT=8080`；
-  manifest 里的 `deployDescriptor.port` **一盒不读**（那是生产部署控制器的字段）。镜像不认 `PORT`、认自己那套变量名的，
-  把它写进 `compose.env` 末尾（例：`ZO_HTTP_PORT=8080`）。漏了的症状是 `/svc/<key>` 502。
+- **容器内监听口 = manifest 的 `deployDescriptor.port`（约定 8080）。** 网关把 `/svc/<key>/*` 发布到
+  `<key>-server:<deployDescriptor.port>`；devkit 的 `app-backend` 注入 `PORT=8080`，所以清单就写 8080。镜像不认 `PORT`、
+  认自己那套变量名的，把它写进 `compose.env` 末尾并设成同一个口。两边不一致的症状是 `/svc/<key>` 502。
 - **生产镜像是 amd64，开发机多半是 arm64。** devkit 跟随本机架构、不会替你转译；amd64 镜像在 arm64 机上
   起不来（`exec format error`）。在 `compose.env` 末尾加一行 **`APP_PLATFORM=linux/amd64`**（Apple Silicon 走
   Rosetta，慢但能跑）。留空 = 跟随本机，行为不变。
@@ -203,7 +203,7 @@ for k in files llm-gateway git org; do "$S" dc run --rm portal-api bun run db:$k
   || "$S" dc exec postgres psql -U postgres -c 'CREATE DATABASE "xgent-<你的key>"'
 #     迁移怎么跑以你的镜像为准（多数是启动自迁，或一条 --role migrate 之类的 argv）。
 
-# 4) 注册你的 App：读 manifest → 建 listing + 服务账号 + 写 /svc 放行 map
+# 4) 注册你的 App：读 manifest → 建 listing + 服务账号；gateway-publisher 数秒内发布 /svc/<key>
 "$S" dc run --rm -v "$PWD/<放 manifest 的目录>:/devkit:ro" \
    portal-api bun run register-app /devkit/app.manifest.json
 
@@ -220,8 +220,8 @@ for k in files llm-gateway git org; do "$S" dc run --rm portal-api bun run db:$k
   补救：先补 `db:org:migrate`，再对受影响租户单独运行 `apps/org-server/scripts/bootstrap-baseline.ts <tenantId>`，不重种门户库。
 - **首次空库的 `db:seed:onebox` 必须在 `register-app` 之前。** 种子第一步是 `truncate … marketplace_listings … cascade`——
   先注册后种子 = 你的 App 注册被静默清掉，市场里找不到它。
-- **`register-app` 最好在 `reverse-proxy` 之前。** 它落的是一个 `/svc` 放行 map 文件，而反代**启动时**才读那个目录。
-  反代已经在跑就补一句 `"$S" dc exec reverse-proxy caddy reload`，否则 `/svc/<key>` 一直 404。
+- **`/svc/<key>` 由 `gateway-publisher` 发布，不用也不能手工 reload 反代。** `register-app` 只登记清单，发布器数秒内生成新一代路由；
+  清单要带 `deployDescriptor`（`port` 约定 8080），路由才会指向 `<key>-server:<port>`。没生效先看 `"$S" dc logs gateway-publisher`。
 - **`register-app` 跑完先去市场里确认卡片在。** dev 模式下它会顺手把这条 listing 授予现有租户（生产是平台管理员显式勾选），
   但**旧一点的一盒镜像里没有这段代码**——症状是控制台显示已上架、租户市场里连卡片都不出现，且**没有任何报错**。
   看不到就按 §6 更新镜像缓存后 `"$S" upgrade` → `"$S" up` 同步资产，或按 troubleshooting §6 手工授予，别接着往下排查前端。
@@ -263,8 +263,9 @@ Kafka 随基础设施常驻，`up` 单独启动并最多等健康 60 秒；失�
 不要为联调把 `KAFKA_ADMIN_PASSWORD` 加进 App 的 `requiredEnv`。
 
 例如 `order-worker` 的用户名是 `app_order_worker`，主题、消费组、事务 ID 都必须以
-`app.order-worker.` 开头。机制固定 `SCRAM-SHA-512`。App 必须显式建主题（副本数 1），不能修改
-保留期或增加分区；前缀外访问被 broker 拒绝。Kafka 供给失败只告警，保留已保存的密码，按提示
+`app.order-worker.` 开头。机制固定 `SCRAM-SHA-512`。平台已打开自动建主题，前缀内首次发送会建出
+1 分区、1 副本的主题；需要其他分区数时仍在首次部署显式创建。主题名拼错也会建新主题，不会报错。
+保留期由平台统一设为 168 小时，App 不能修改保留期或增加分区；前缀外访问被 broker 拒绝。Kafka 供给失败只告警，保留已保存的密码，按提示
 修复后重跑原 `add`。一盒仍向容器注入整份 `compose.env`，不承诺 App 容器之间的密钥隔离。
 声明范例、客户端配置、最小 ACL 与可粘的手工修复命令见 [Kafka 接入指引](references/kafka.md)。
 
@@ -276,15 +277,24 @@ Kafka 随基础设施常驻，`up` 单独启动并最多等健康 60 秒；失�
 
 向量库不常驻：`up` 不启动它，`doctor` 在未启动时只说明「首次 add 时拉起」。`add` 的清单
 `requiredServices` 含 `{"kind":"vectorStore","name":"main"}` 时按顺序做：建专用桶 `xgent-vectordb` 与只授该桶的
-RustFS 用户 → 起 `vectordb` 与 `vectordb-proxy` 并等健康（首次约 1 分钟）→ 登记 `vectorStore:main` 服务与默认档案 →
+RustFS 用户 → 确认 Kafka 就绪并建只授 `vectordb-` 前缀的 `vectordb` 账号 → 起 `vectordb` 与 `vectordb-proxy`
+并等健康（首次约 1 分钟）→ 经 WAL 建删临时集合通过 → 登记 `vectorStore:main` 服务与默认档案 →
 建库 / 角色 / 用户 `app_<key>`（连字符改下划线）→ 写 `<PREFIX>_VECTOR_DB_URI`（`http://vectordb-proxy:19530`）、
 `_VECTOR_DB_TOKEN`、`_VECTOR_DB_NAME`。App 口令第一次生成即落盘、显示 `***`，重跑沿用；失败只告警并给出重试命令。
 
-`init` / `upgrade` 只补缺失的 `VECTOR_DB_ROOT_PASSWORD`、`_BUCKET`、`_MEM_LIMIT`（`2g`）、`_ADMIN_URL`、`_PORT`，
+`init` / `upgrade` 只补缺失的 `VECTOR_DB_ROOT_PASSWORD`、`_KAFKA_PASSWORD`、`_BUCKET`、`_MEM_LIMIT`（`2g`）、`_ADMIN_URL`、`_PORT`，
 不改已有值：root 口令只在空卷首启时生效，桶名决定能否看到旧数据，两者都不要手改。实例只挂私有网络，App 只够得着
-代理的 19530；宿主进程用 `http://127.0.0.1:<VECTOR_DB_PORT>`。镜像钉的是 amd64 构建，Apple Silicon 上在 `compose.env`
-末尾设 `VECTOR_DB_IMAGE=<本地 arm64 镜像>`。排查看 `"$S" dc --profile vectordb logs --tail 50 vectordb`；
-不承诺 App 容器之间的密钥隔离，一盒不放真实数据。
+代理的 19530；宿主进程用 `http://127.0.0.1:<VECTOR_DB_PORT>`。arm64 / Apple Silicon 每次调用 Compose 时自动从
+当前资产 `x-vectordb-arm64-image` 指向的 `xgent-dev` 引用取镜像，registry 使用 `VECTOR_DB_REGISTRY` 或 puller 的 `REGISTRY`。
+自动镜像值不写入 `compose.env`，升级后跟随新资产；手工设置的 `VECTOR_DB_IMAGE` 优先并保留，仅用于故障恢复，
+不能据此证明自动拉取可用。`doctor` healthy 时显示「WAL 走 Kafka」，Kafka 未就绪时先修 Kafka。
+排查看 `"$S" dc --profile vectordb logs --tail 50 vectordb`。一盒整份 `compose.env` 注入 App 容器，包含
+`VECTOR_DB_KAFKA_PASSWORD`，仅限可信团队本地联调，不承诺 App 容器之间的密钥隔离，不放真实数据。
+
+本地已有 v0.1.0 向量库不能直接换 v0.2.0。确认可丢弃测试向量后，停并删除 `vectordb` / `vectordb-proxy`
+容器、删除该实例的数据卷，在 RustFS 控制台清专用桶内 `vector-db/` 前缀，再重跑原 `add`；不要清其他 App 的桶或 Kafka 卷。
+v0.2.0 实例若也丢了数据卷，重新启动前还须用 Kafka 管理账号删除 `vectordb-rootcoord-dml_0` 到 `_15` 的 16 个主题。
+向量库连续停机不要超过 6 天，超过后未落盘写入可能丢失且不报错；App 从权威数据重建。
 
 ### 2.0a 日志与监控是怎么进来的（`up` 替你做的 ④b / ⑥）
 
@@ -294,7 +304,7 @@ RustFS 用户 → 起 `vectordb` 与 `vectordb-proxy` 并等健康（首次约 1
   走仿真）→ 注册 → 建库 `xgent-observability` + 在一盒 RustFS
   建桶 `xgent-observability` → `init-db`（清单 `deployDescriptor.migrateArgs`）→ 生成 `generated/observability.yml` 起容器。
   它要的那批 `ZO_*` 值（元数据库/对象存储）已经在 `onebox/compose.env.onebox.example` 里指向一盒的 postgres/RustFS；
-  `OBSERVABILITY_PORT=8080` 让它在 8080 上听（一盒反代只反代 `<key>-server:8080`）。
+  它按清单的 `deployDescriptor.port`（8081）监听，网关按同一端口出路由。
 - **⑥** 门户自身的控制台日志：`up` 用 `portal-self` 签一把只带 `observability.ingest` 的 `xsak_` 写进 compose.env
   的 `OBS_ACCESS_KEY`，再起 `portal-logs`（fluent-bit）；portal-api 的 stdout/stderr 走 docker 的 fluentd 日志驱动
   进去，落 `app_portal_console`（`docker logs portal-api` 照常可用）。采集段已并入
@@ -536,7 +546,7 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 "$S" doctor
 ```
 
-**先跑它，别翻文档。** 它把排查表里能自动判的都判一遍（镜像版本、命名卷属主、内联 key 撞 map、
+**先跑它，别翻文档。** 它把排查表里能自动判的都判一遍（镜像版本、命名卷属主、网关发布器与当前代次、
 架构不匹配、缺库、目录里有 key 但容器没起、每条 `/svc` 的 404/502/000），每条不过的下面直接给
 一行可粘的修法。判不了的再对着 **[references/troubleshooting.md](references/troubleshooting.md)**
 按「你看到什么」对号入座。
@@ -564,8 +574,23 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 
 ## 5. 后端想跑在宿主上（保留热重载）
 
-`app-backend` 默认是**镜像**，靠网络别名 `<key>-server` 被反代解析到；宿主上 `bun dev` 起的进程在容器网里
-没有这个名字，而每改一行就重建镜像等于没有热重载。绕法是让一个转发容器顶住那个别名：
+网关默认把 `/svc/<key>` 发到容器别名 `<key>-server`；宿主上 `bun dev` 起的进程在容器网里没有这个名字，
+而每改一行就重建镜像等于没有热重载。在 `compose.env` 末尾声明宿主地址，再重建网关发布器：
+
+```bash
+echo 'XGENT_ONEBOX_SVC_UPSTREAMS=<你的key>=http://host.docker.internal:<dev server 端口>' >> portal-onebox/compose.env
+"$S" dc up -d gateway-publisher
+curl -fsS <门户地址>/svc/<你的key>/health
+```
+
+- 多个 App 用逗号分隔：`a=http://host.docker.internal:4960,b=http://host.docker.internal:4962`。地址要从**容器里**
+  能访问，写 `host.docker.internal`，不写 `localhost`。只在一盒生效，生产没有这条来源。
+- 发布器数秒内出新一代路由，不需要也不能手工 reload 反代。`APP_IMAGE` 留空即可，`app-backend` 不起。
+- 它**优先于** `<key>-server` 别名（有部署运行证据时仍以运行证据为准）。改回容器版时删掉你那一对，再重建发布器，
+  否则容器起来了流量还在发往宿主。
+
+旧一盒镜像不认这一项（设了以后 `/svc/<key>` 仍 502、`"$S" dc logs gateway-publisher` 里也没有新一代路由）。
+按 §6 升级；暂时升不了，就让一个转发容器顶住那个别名：
 
 ```yaml
 # portal-onebox/host-backend.yml —— 叠在 app-dev.yml 之后
@@ -597,6 +622,12 @@ postgres / redis / RustFS / Kafka 都发布了宿主端口，init 挑选时会�
 写回容器配置。这样宿主进程和容器里的 App 看到的是同一份库、缓存、对象存储和消息集群。注意上面是
 **宿主侧**地址——容器网里地址不变（`postgres:5432` / `redis:6379` / `minio:9000` / `kafka:9092`）；
 `minio` 是 RustFS 的兼容别名，`MINIO_*` 配置继续使用。
+
+**Files 给的预签名地址**（上传 `uploadUrl`、下载描述符）：经门户入口 `<门户地址>/svc/files` 拿到的形如
+`<门户地址>/.onebox-s3/<桶>/…`，宿主进程与浏览器都能直接用，签名照常有效；容器里直连 `files-server:8080`
+的调用方拿到的仍是 `http://minio:9000/…`。这靠 `compose.env` 里的 `FILES_ONEBOX_S3_ORIGIN` /
+`FILES_ONEBOX_S3_PUBLIC_BASE` / `XGENT_ONEBOX_S3_UPSTREAM`，`init` / `upgrade` 自动补齐；拿到的仍是容器内地址见
+[排查表 §4](references/troubleshooting.md#4-打不开--路由不通)。
 
 ## 6. 初始化、升级与重置
 
@@ -646,6 +677,7 @@ shasum -a 256 "$S"
 才在文件末尾追加 `XGENT_IMAGE` / `XGENT_PROXY_IMAGE` / `APP_VERSION`；原有密钥、自定义行和 `add` 写入的键保留。
 Kafka 另按需补缺 `KAFKA_CLUSTER_ID` / `KAFKA_ADMIN_PASSWORD` / `KAFKA_PORT`：新 ID 与密码随机生成，
 新端口按 9092/19092/29092 挑选，已有的三键一个不改。密码写入不回显，`compose.env` 保持 600。
+一盒存储直连三项（§5「Files 给的预签名地址」）同样只补缺，已有值不改。
 `generated/` 和 `backup/` 原样保留。两个目标镜像本地都在时跳过拉取，支持本地构建或离线 `docker load`。
 沿用可变 `latest` 要先更新缓存：`"$S" pull` → `"$S" upgrade` → `"$S" up`；显式指定新的不可变 tag
 或已载入的本地新 tag，可直接 `upgrade --image <ref>`。单独 `pull` 不更新资产，不能代替 `upgrade`。
@@ -679,7 +711,7 @@ Kafka 数据也随升级保留。`KAFKA_CLUSTER_ID` 与 `kafka-data` 绑定，�
 
 `"$S" dc down` 只停容器、保留卷；下次 `up` 跳过已有门户的种子。只重建容器也保留原配置与卷。
 只有用户明确要求清空门户数据时，才手动运行 `"$S" dc run --rm portal-api bun run db:seed:onebox`，
-随后重跑 `register-app`、重载 Caddy；这会重建身份 UUID，关联 App 数据可能失去原租户/用户关联，浏览器也需要重新登录。
+随后重跑 `register-app`（路由由 gateway-publisher 重新发布）；这会重建身份 UUID，关联 App 数据可能失去原租户/用户关联，浏览器也需要重新登录。
 
 `down -v` 是主动删除当前 compose 命名卷的操作，pg、RustFS、Kafka、apps、caddy 数据会丢失。以下要求适用于共享一盒；隔离测试专属卷按文首清理规则处理。
 只有用户明确同意丢弃这些数据才按上表重置；有需保留的数据则先备份并明确恢复方式。退役 MinIO 卷和 `backup/` 不在新 compose 删除范围内，

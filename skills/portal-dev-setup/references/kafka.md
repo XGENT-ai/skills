@@ -35,10 +35,10 @@
 
 协议为 `SASL_PLAINTEXT`，认证为 `SCRAM-SHA-512`，不是管理员使用的 PLAIN。客户端必须支持 SCRAM-SHA-512，并在重连时继续使用收到的 broker 广告地址。地址不含 `http://`。
 
-以下是 Bun / `@platformatic/kafka` 的配置示例；初始化主题和生产消息使用的是 **App 用户**：
+App 安装 `@platformatic/kafka`（`bun add @platformatic/kafka`），将以下示例保存为 `kafka-check.ts`，在已注入五键的 App 容器中运行 `bun kafka-check.ts`。它用 **App 用户**直接向前缀内新主题发送消息，再读回一条；不预建主题：
 
 ```ts
-import { Admin, Producer, stringSerializers } from "@platformatic/kafka";
+import { Consumer, Producer, stringDeserializers, stringSerializers } from "@platformatic/kafka";
 
 function required(key: string): string {
   const value = process.env[key];
@@ -59,23 +59,48 @@ const connection = {
   },
 };
 const topic = `${prefix}events`;
-const admin = new Admin(connection);
-try {
-  // 首次部署显式创建；重跑只把“主题已存在”当成功，其它错误必须保留。
-  await admin.createTopics({ topics: [topic], partitions: 1, replicas: 1 });
-} finally {
-  await admin.close();
-}
-const producer = new Producer({ ...connection, serializers: stringSerializers });
+const producer = new Producer({ ...connection, autocreateTopics: true, serializers: stringSerializers });
 try {
   await producer.send({ messages: [{ topic, key: "order-42", value: JSON.stringify({ eventId: "unique-event-id" }) }] });
 } finally {
   await producer.close();
 }
-// 消费者 groupId 使用 `${prefix}readers`；业务处理成功后才提交 offset。
+const consumer = new Consumer({
+  ...connection, groupId: `${prefix}readers`, deserializers: stringDeserializers,
+});
+const stream = await consumer.consume({
+  topics: [topic], mode: "manual", autocommit: false,
+  offsets: [{ topic, partition: 0, offset: 0n }],
+});
+try {
+  for await (const message of stream) {
+    console.log(message.key, message.value);
+    await message.commit();
+    break;
+  }
+} finally {
+  await stream.close();
+  await consumer.close();
+}
 ```
 
-平台关闭自动建主题。App 必须在首次部署或迁移阶段显式创建主题，副本数为 1；不能靠第一次发送消息触发创建。保留期由平台决定，创建时不传 `retention.ms` 等保留配置，需要调整时联系平台管理员。
+`@platformatic/kafka` 客户端默认不请求自动建主题，示例显式设置 `autocreateTopics: true`。平台已打开自动建主题：App 可直接向自己前缀内的新主题发送消息，自动建出的主题为 1 分区、1 副本。需要其他分区数时，仍在首次部署或迁移阶段显式创建，副本数为 1。主题名拼错也会建出新主题，不会报错；发送前核对名称。保留期由平台统一设为 168 小时，创建时不传 `retention.ms` 等保留配置，需要调整时联系平台管理员。
+
+上面的检查从分区 0 的开头读一条消息，应该看到 `order-42` 和发送的 JSON。业务消费者通常沿用已提交的 offset，不照抄检查用的 `offset: 0n`，业务处理成功后才提交。
+
+需要其他分区数时，在该主题收到第一条消息之前，用相同的 App 连接显式创建；例如：
+
+```ts
+import { Admin } from "@platformatic/kafka";
+const admin = new Admin(connection);
+try {
+  await admin.createTopics({ topics: [`${prefix}partitioned-events`], partitions: 3, replicas: 1 });
+} finally {
+  await admin.close();
+}
+```
+
+重跑创建操作只把「主题已存在」当成功，其他错误保留并处理。
 
 | 资源（均为 App 前缀） | 授权操作 |
 | --- | --- |

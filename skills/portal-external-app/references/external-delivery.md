@@ -27,13 +27,13 @@
 首次联调用 `portal-dev-setup` 的 `onebox.sh init` → `up`；已有一盒换版本用
 `upgrade [--image <ref>]` → `up`；沿用 latest 先 `pull` 更新缓存，已加载的本地新镜像可离线升级。
 不使用 `init --force` 代替升级。升级保留配置、generated/、backup/、
-端口与卷；`up` 仍重种门户库，不重种 App 自己的库。自带对象存储为 RustFS，保留 `MINIO_*`
+端口与卷；`up` 仅在门户库为空时播种，已有门户数据和 App 自己的库保持。自带对象存储为 RustFS，保留 `MINIO_*`
 配置与 `minio:9000` 网络别名；控制台路径为 `/rustfs/console/`。存量对象由切换脚本复制、核对后才切换，
 切换后有新写入时不能直接回旧卷，细节见 [registration-and-onebox.md](registration-and-onebox.md)。
 
 ## 注册布线（细节见 registration-and-onebox.md）
 
-- **dev / 一盒**：`bun run register-app <manifest>`（幂等，生产拒跑）= upsert listing + 直写服务账号 + 写发起方 App Secret + 写 `/svc` 白名单 map。⚠️ `exchangeInitiatorSecret` 的哈希在**首个租户**安装时还没有任何实例可布——先安装 App，**再重跑一次** register-app，否则发起交换 401（之后装的租户会随安装自动补布，见 registration-and-onebox.md §2.2）。日志里 `wired into N …` 的 N 是「**改了**几个实例」，0 也可能是「本来就对」——判据是比哈希，见 registration-and-onebox.md §2.2。
+- **dev / 一盒**：`bun run register-app <manifest>`（幂等，生产拒跑）= upsert listing + 直写服务账号 + 写发起方 App Secret + 记录网关意图（网关发布器随后发布 `/svc/<key>`）。⚠️ `exchangeInitiatorSecret` 的哈希在**首个租户**安装时还没有任何实例可布——先安装 App，**再重跑一次** register-app，否则发起交换 401（之后装的租户会随安装自动补布，见 registration-and-onebox.md §2.2）。日志里 `wired into N …` 的 N 是「**改了**几个实例」，0 也可能是「本来就对」——判据是比哈希，见 registration-and-onebox.md §2.2。
 - ⚠️ **发布 ≠ 租户能看见**：租户市场对 `tenant_listing_grants` 是 fail-closed。**dev 的 `register-app` 会自动授予当时已存在的租户**（非 service 型，输出里有 `租户可用应用:` 一行）；**生产不自动**（提案批准 / 控制台导入都不授予——语义是平台管理员显式勾选）。症状是「控制台显示已上架、租户市场里却根本看不到」——去 平台 › 租户管理 › 租户 › 「可用应用」勾上保存（registration-and-onebox.md §2.1）。
 - **生产（标准路径）**：清单事实源在**对方仓的 `app.manifest.json`**，经
   **发布提案**到达：平台管理员在 控制台 › 应用市场 › 接入新应用 按 key 签发 `xrel_` 令牌
@@ -164,7 +164,8 @@ manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新�
 `<PREFIX>_KAFKA_BROKERS` / `_KAFKA_USERNAME` / `_KAFKA_PASSWORD` / `_KAFKA_SASL_MECHANISM` /
 `_KAFKA_TOPIC_PREFIX`（每项均带 `<PREFIX>`）。机制固定 `SCRAM-SHA-512`，用户名 `app_<key>`
 把连字符改为下划线；主题、消费组、事务 ID 的前缀 `app.<listingKey>.` **保留连字符**。
-App 显式建主题、副本数 1，不能更改保留期或增加分区；不申请管理员密码。平台是单节点
+平台已打开自动建主题，前缀内首次发送会建出 1 分区、1 副本的主题；需要其他分区数仍在首次部署显式创建。
+主题名拼错会建新主题，不报错。保留期统一为 168 小时，App 不能更改保留期或增加分区；不申请管理员密码。平台是单节点
 at-least-once 消息服务，不是业务记录系统，App 负责重复消费、重连与租户隔离。
 一盒新版 `add` 自动供给相同权限并沿用已有密码，但整份 `compose.env` 仍注入所有容器，
 不提供容器间密钥隔离。完整联调步骤见 [注册布线与一盒](registration-and-onebox.md#44-kafka-接入)。
@@ -174,6 +175,10 @@ at-least-once 消息服务，不是业务记录系统，App 负责重复消费�
 `<PREFIX>_VECTOR_DB_URI` / `_VECTOR_DB_TOKEN` / `_VECTOR_DB_NAME`；只写这三个 `requiredEnv` 不触发供给。
 App 每个请求带 `dbName`，不持有 root；向量数据须能从 App 自己的权威数据重建，租户隔离由 App 负责。
 这三个键不要写进 `descriptor.env` / envFile（会覆盖平台注入）。只服务与门户同机的 App 容器。
+一盒首次 `add` 会先确认 Kafka 就绪，向量库 WAL 使用 `vectordb` 账号与 `vectordb-` 前缀。arm64 一盒自动取当前资产
+指定的 `xgent-dev` 镜像，自动值不写入 `compose.env`，升级后跟随资产；`VECTOR_DB_IMAGE` 只供故障恢复手工覆盖，
+覆盖不能证明自动拉取可用。一盒整份 `compose.env` 注入容器，含 `VECTOR_DB_KAFKA_PASSWORD`，只限可信团队本地联调、
+不放真实数据；生产 PM2 不将该口令注入 App。
 联调见 [注册布线与一盒](registration-and-onebox.md#45-向量库接入)。
 
 ⚠️ 服务账号密钥**不再要求进 envFile**：门户保管并在换版时注入容器，明文只在批准那次一次性

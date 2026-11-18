@@ -21,7 +21,7 @@
 - 服务态与计量：`usageReporter`（true ⇒ SA 得 `client_credentials` + `usage.report`）、`serviceScopes`（服务态 scope；SERVICE_ONLY **永拒**）、`privilegedServiceScopes`（SERVICE_ONLY 的**申请**：`[{scope, reason}]`，reason 必填，最高治理档、审批逐条确认后授予）、`usageMetrics`（用量指标声明：key 前缀必须=listingKey、金额单位不开放；治理档，批准后 ingest 才认这些 key）
 - 部署/运维：`requiredEnvNotes`（`{ 键名: 说明 }`，给 `requiredEnv` 里需要解释的键写一句给审批人看的话，≤200 字；纯展示、自动档）、`requiredEnv`（部署所需 env 的**键名**清单，值永远由平台配；元素可写 `{ key, renamedFrom }` 表达改名，或加 `generate` 声明独立密钥规格，见 §3.1。键名、改名或生成规格一变提案转入「发布审核」，且**批准前门户会核对实际来源，缺键拒绝生效**（`REQUIRED_ENV_MISSING`，提案留 pending））、`deployDescriptor`（`image` 归自动档、`hostPort` 归平台不算变更，**其余一切属治理档**）、`deployRequirements`（后端要跑在**什么样的机器**上：`{region?, size?, gpu?, network?}`，只写**名字与档位**，网段/IP/URL 提交即拒；批准时按目标环境**当时**的资源池逐维匹配，不满足则拒绝生效、提案留待审，通过则把首次落点固定住；需要 `deployDescriptor`）、`requiredServices`（运行所需的**外部服务** `[{name, kind, note?}]`，身份是 `(kind, name)` 二元组；批准时比对本环境**已登记**的「已具备服务」，未登记或缺条目则拒绝生效 —— 登记表核对已有服务；支持自动供给的类型按选定档案建资源并注入约定键，不收 `envKey`）
 
-⚠️ **`deployDescriptor.hostPort`（宿主机发布口）不归 App 定**：它是部署环境相关的事实——同一份 manifest 会发到一盒与好几套生产门户，各自端口地貌不同，而 App 团队看不见目标机器上谁占了什么。规则三句话：**首次注册**当建议值采纳（撞了自动退让到平台端口池 20000–20999，**不会因此拒掉注册**）；**listing 已存在则一律忽略**（那个口已经写进 Caddy 的 `/svc` map、也是在跑的容器发布出来的口）；发布响应的 `warnings` 会说明实际是哪个口。App 只管 `port`（容器内监听口，约定 8080）。
+⚠️ **`deployDescriptor.hostPort`（宿主机发布口）不归 App 定**：它是部署环境相关的事实——同一份 manifest 会发到一盒与好几套生产门户，各自端口地貌不同，而 App 团队看不见目标机器上谁占了什么。规则三句话：**首次注册**当建议值采纳（撞了自动退让到平台端口池 20000–20999，**不会因此拒掉注册**）；**listing 已存在则一律忽略**（那个口是在跑的容器发布出来的口，网关按部署记录路由到它）；发布响应的 `warnings` 会说明实际是哪个口。App 只管 `port`（容器内监听口，约定 8080）。
 **例外**：`extraPorts[].host` **不参与退让**，撞了硬拒——那些是对外契约口（worker 节点连的就是那个数字），静默挪走等于把它们全断掉，且门户侧一条都测不到。
 - dev 专用明文：`serviceAccount{clientId,secret}`（`clientId` 约定 `<key>-server`，且**必须是自己的** —— 服务账号身份归平台，声明已归属另一 App 的 clientId 会进人工审、批准也会在生效时被写入闸拒绝）、`exchangeInitiatorSecret`（本应用作为交换发起方时的 App Secret）
 
@@ -64,7 +64,7 @@ MCP 客户端通过 App 自有 OAuth 授权服务器发现元数据时，使用�
 bun run register-app <你的>.manifest.json    # 幂等；NODE_ENV=production 拒跑
 ```
 
-四件事：① 按 listingKey upsert + 发布 listing（复用门户写时校验：scope 命名空间 / ACL 形状 / 依赖无环）；② DB 直写 `token.introspect` 服务账号（secret = manifest 明文；同 secret 不动、不同则轮换）；③ 把 `exchangeInitiatorSecret` 写进**已安装**实例的 App Secret——⚠️ 所以**先在门户安装 App、再重跑一次 register-app**，否则发起交换 401（判定方法见 §2.2，别看日志里那个数字）；④ 往 `caddy-svc-allow` 卷写 `<key>.map` 放行 `/svc/<key>`（免改 Caddyfile、免重启反代）。
+四件事：① 按 listingKey upsert + 发布 listing（复用门户写时校验：scope 命名空间 / ACL 形状 / 依赖无环）；② DB 直写 `token.introspect` 服务账号（secret = manifest 明文；同 secret 不动、不同则轮换）；③ 把 `exchangeInitiatorSecret` 写进**已安装**实例的 App Secret——⚠️ 所以**先在门户安装 App、再重跑一次 register-app**，否则发起交换 401（判定方法见 §2.2，别看日志里那个数字）；④ 记录网关意图，网关发布器随后发布 `/svc/<key>`（免改 Caddyfile、免重启反代）。
 
 ### 2.1 第五件事：授予租户（dev 自动 / 生产不自动）
 
@@ -202,7 +202,7 @@ shasum -a 256 "$S"
 初始化是 `init` → `up`；升级是 `upgrade` → `up`；主动删数据重置才是 `dc down -v` → `init --force` → `up`。
 升级保留 `compose.env`、`generated/`、`backup/`、端口、密钥和卷，只追加变更的镜像/版本行，
 不重生成配置。两个目标镜像都已缓存时支持离线升级；沿用 latest 先 `pull`，再 `upgrade` → `up`。
-`up` 仍重种门户库（租户/用户/清单/安装），不会重种 App 自己的数据库。
+`up` 仅在门户库为空时播种；已有的租户、用户、清单、安装保持，不会重种 App 自己的数据库。
 数据库启动前按现有 PG_VERSION 保留大版本和挂载布局；未知/冲突布局拒绝启动，不能用删卷来解决。
 门户升级不执行 PostgreSQL 大版本迁移，后者需要单独备份与维护窗口。
 
@@ -286,7 +286,7 @@ shasum -a 256 "$S"
 ⚠️ **第 3 步必须是 `db:seed:onebox`**：`db:seed` 会串起十几个 App 的种子链（qbank/lms/exam/task/…），
 而它们的 workspace 不在一盒镜像里 —— **必失败**。`db:seed:onebox` 只种 `XGENT_APP_CATALOG` 里的四个基础 App。
 
-⚠️ **第 4 步要跑在起反代之前**：注册会往 `caddy-svc-allow` 卷写 `<key>.map`，反代启动时 `import` 才读得到。
+⚠️ **`/svc/<key>` 由一盒的 `gateway-publisher` 发布**：注册后数秒内生成新一代路由，指向 `<key>-server:<deployDescriptor.port>`；清单不带 `deployDescriptor` 就不会出路由。不需要也不能手工 reload 反代。
 
 ⚠️ **依赖 `files` 的 App 别忘了 5b**：`files` 已在镜像里、`/svc/files` 已放行、市场安装会连带补装它，
 但**后端进程不起来**读文件就是 502/401。`FILES_SA_CLIENT_SECRET` 必须与 `db:seed:onebox` 种的 SA secret
@@ -315,8 +315,9 @@ shasum -a 256 "$S"
 容器连接 `kafka:9092`，宿主客户端改用 `127.0.0.1:<KAFKA_PORT>`，机制为 SCRAM-SHA-512、协议为
 SASL_PLAINTEXT。密码写入只显示 `***`；供给失败只告警，检查 Kafka 日志后重跑原命令。
 
-主题、消费组、事务 ID 都以 `app.order-worker.` 开头，保留 listingKey 的连字符。平台关闭自动建主题，
-App 必须显式创建、副本数 1；主题授权 CREATE / DELETE / DESCRIBE / DESCRIBE_CONFIGS / READ / WRITE，
+主题、消费组、事务 ID 都以 `app.order-worker.` 开头，保留 listingKey 的连字符。平台已打开自动建主题，
+前缀内首次发送会建出 1 分区、1 副本的主题；需要其他分区数时在首次部署显式创建。主题名拼错也会建出新主题，
+不会报错。保留期由平台统一设为 168 小时；主题授权 CREATE / DELETE / DESCRIBE / DESCRIBE_CONFIGS / READ / WRITE，
 消费组 READ / DESCRIBE / DELETE，事务 ID WRITE / DESCRIBE，全部 PREFIXED。没有 ALTER / ALTER_CONFIGS：
 不能改保留期或增加分区，保留策略由平台决定。前缀外主题、消费组与事务 ID 不可访问。
 
@@ -345,14 +346,43 @@ Kafka 当权威业务记录系统。权限按 App 隔离，App 自行实现租�
 `descriptor.env` / envFile，那里的同名值会覆盖平台注入。
 
 一盒里 `up` 不常驻向量库；`onebox.sh add doc-search --manifest ./app.manifest.json --image <镜像>` 按需建专用桶、
-启动 `vectordb` + `vectordb-proxy`、登记 `vectorStore:main` 档案、建库 / 角色 / 用户并写入三键。口令写入只显示
+确认 Kafka 就绪并建 `vectordb` 账号与 `vectordb-` 前缀 ACL、启动 `vectordb` + `vectordb-proxy`，
+通过经 WAL 建删临时集合的切换门后登记 `vectorStore:main` 档案、建库 / 角色 / 用户并写入三键。口令写入只显示
 `***`，重复 `add` 沿用原值；失败只告警，告警给出重试命令。容器用 `http://vectordb-proxy:19530`，宿主进程改用
-`http://127.0.0.1:<VECTOR_DB_PORT>`。Apple Silicon 上在 `compose.env` 末尾设 `VECTOR_DB_IMAGE=<本地 arm64 镜像>`。
+`http://127.0.0.1:<VECTOR_DB_PORT>`。arm64 / Apple Silicon 自动从当前资产的 `x-vectordb-arm64-image` 取
+`xgent-dev` 镜像，使用 `VECTOR_DB_REGISTRY` 或 puller 的 `REGISTRY`；自动值不写入 `compose.env`，升级后跟随资产。
+手工 `VECTOR_DB_IMAGE` 优先且保留，仅供故障恢复；手工覆盖不能证明自动拉取可用。`doctor` healthy 时显示「WAL 走 Kafka」。
+本地已有 v0.1.0 实例换 v0.2.0 前，确认可丢弃测试向量后停实例、删向量库卷、清专用桶内 `vector-db/` 前缀，
+再重跑 `add`；若 v0.2.0 实例丢卷，重启前还要用 Kafka 管理账号删除 16 个 `vectordb-rootcoord-dml_0..15` 主题。
 
 每个请求都带 `dbName`（REST 体）或 `db_name`（SDK），成功以 `code == 0` 判断。App 在本库内可建删集合与读写，
 别的库、建删库、改库属性、用户与角色管理均被拒（HTTP 403）。单实例、无平台备份：App 能从权威数据重建向量，
 自行做租户隔离与重试。App 网络上只有代理的 19530，实例的管理口与内部端口不可达。一盒同样把整份
-`compose.env` 注入容器，不承诺容器间密钥隔离，不放真实数据。完整说明见门户《平台向量库接入指引》。
+`compose.env` 注入容器，包含 `VECTOR_DB_KAFKA_PASSWORD`，不承诺容器间密钥隔离，仅限可信团队本地联调，
+不放真实数据；生产 PM2 不向 App 注入该口令。向量库连续停机不要超过 6 天，否则未落盘写入可能丢失且不报错。
+完整说明见门户《平台向量库接入指引》。
+
+在 App 容器中用注入三键跑一遍 2 维测试向量，三个请求都应返回 `code: 0`，搜索结果包含 `id: 1`：
+
+```ts
+const uri = process.env.DOC_SEARCH_VECTOR_DB_URI;
+const token = process.env.DOC_SEARCH_VECTOR_DB_TOKEN;
+const dbName = process.env.DOC_SEARCH_VECTOR_DB_NAME;
+if (!uri || !token || !dbName) throw new Error("缺少向量库三键，先重跑 add");
+async function vector(path: string, body: Record<string, unknown>) {
+  const response = await fetch(`${uri}/v2/vectordb/${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ dbName, ...body }),
+  });
+  const result = await response.json();
+  if (result.code !== 0) throw new Error(JSON.stringify(result));
+  return result.data;
+}
+await vector("collections/create", { collectionName: "demo_chunks", dimension: 2 });
+await vector("entities/insert", { collectionName: "demo_chunks", data: [{ id: 1, vector: [1, 0] }] });
+console.log(await vector("entities/search", { collectionName: "demo_chunks", data: [[1, 0]], limit: 1 }));
+```
 
 ## 5. 冒烟
 
@@ -383,7 +413,7 @@ curl -X POST http://localhost/svc/<key>/v1/...   # 缺/错 token → 401/403（�
 | **租户市场里看不到你的 App**（控制台却显示已上架） | **该租户没被授予**（§2.1）。三种成因：① 一盒镜像早于自动授予那次改动（输出里没有 `租户可用应用:` 行）；② 该租户是注册之后才建的；③ 走的是生产路径（本就不自动）。补法：平台 › 租户管理 › 租户 › 「可用应用」勾上保存。**不是发布状态问题** |
 | 安装报 `LISTING_NOT_GRANTED` | 同上（这是同一道闸的显式报错形态） |
 | `wired into 0 installed instance(s)` | **未必是没写成**：0 = 本次没有改动，含「本来就是对的」。按 §2.2 比哈希判定 |
-| `/svc/<key>` 404 | 白名单 `.map` 没写成，或反代先于 register-app 起（重启反代/重跑注册） |
+| `/svc/<key>` 404 | 网关还没发布这个 key：清单缺 `deployDescriptor` / listing 未发布 / `gateway-publisher` 没在跑（`dc logs gateway-publisher`） |
 | `/svc/<key>` 502 | 后端没起 / 没听 8080 / 网络别名 `<key>-server` 没命中 |
 | `/health` 能访问，但健康检查失败 | HTTP 非 2xx 或信封未满足 `ok:true + data.db:true`；平铺与合法信封都支持，详见 [health-contract.md](health-contract.md)。部署超时还需看启动日志与迁移，不能仅凭包装格式定因 |
 | 有效 TDT 被判 `INVALID_TOKEN` | 先检查自省 ok:true 和 data 对象，再校验 data；失败信封/缺 data 为 503，不能回退到顶层 |

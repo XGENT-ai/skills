@@ -27,15 +27,15 @@ acl/manifests.ts + LISTING_DEFS ─seed─► marketplace_listings ─install─
 
 | 接线 | 位置 | 漏掉的症状 |
 | --- | --- | --- |
-| `/svc/<key>` 白名单 | `deploy/caddy/Caddyfile` | 生产 404（网关白名单 map 收口，未注册=路由不可达） |
-| **Caddy 全局配置两条不可逆** | 两份 Caddyfile 的 `admin localhost:2019` 不许改回 `admin off`；`ProcessDriver.reloadRouting` 必须是 `systemctl reload`（不是 `restart`），且与 `deploy.sh` 的 sudoers 授权**逐字一致** | 关 admin ⇒ 三个 flavor 的热重载全部**静默**失效（只剩一行 warn）；改回 restart ⇒ 请求处理器拆掉自己正在应答的那条连接，调用方在数据已落库之后拿到 GOAWAY + 无响应体（2026-08-19 事故）。门是 `verify-caddy-dynamic` |
+| `/svc/<key>` 路由 | 不改 Caddyfile：网关发布器按部署运行证据，或 `DEPLOYABLE_APP_SERVICES` 推出的声明地址（`resolveServiceUpstream`：PM2 `127.0.0.1:<PM2 口>`，容器 `<key>-server:8080`）写入 `svc-allow/all.map` | 不在注册表 ⇒ 不出路由，生产 404；不得手写 map 或裸 `caddy reload` |
+| **Caddy admin 不可关** | 两份 Caddyfile 的 `admin localhost:2019` 不许改回 `admin off`；重载只经网关操作监督 helper（`deploy/caddy/gateway-operation.sh` 以 `caddy reload` 走 admin API），不加 `systemctl reload/restart` 路径 | 关 admin ⇒ 每一代 reload 失败，helper 记 `unconfirmed` 栅栏，后续发布全部挡住；restart 会拆掉正在应答的连接，调用方在数据已落库之后拿到 GOAWAY + 无响应体（2026-08-19 事故）。门是 `verify-caddy-dynamic` |
 | compose profile | `deploy/docker-compose.yml` 加 `app-<key>`（同 runtime 镜像 + `command: bun --filter @xgent/<key>-server`） | 容器起不来 |
 | 按需部署注册表 | `apps/api/src/modules/deploy/registry.ts` 的 `DEPLOYABLE_APP_SERVICES` | 生产卡「服务正在部署」门 |
 | **Dockerfile COPY 新 workspace** | 根 `Dockerfile` | 本地全绿、镜像构建才炸（真实事故） |
 | 前端构建 | `build:apps` 保持**串行**（并行 OOM） | CI/构建机 OOM |
 | dev:all | 根 `package.json` concurrently 挂 server+app | 本地起不齐 |
 
-容器/生产统一监听 8080（本地 dev 各用自己的 4xxx）；反代通用规则 `/svc/<key>/* → <key>-server:8080`。宿主运行时按 listing `serviceBaseUrl` 解析服务地址（无烘焙注册表），新增后端无需重建门户前端。
+仓内后端容器内监听 8080（本地 dev 各用自己的 4xxx）；`/svc/<key>` 上游由网关发布器按上表生成。宿主运行时按 listing `serviceBaseUrl` 解析服务地址（无烘焙注册表），新增后端无需重建门户前端。
 
 ## 3. API 与数据规范（评审必查）
 

@@ -275,7 +275,24 @@ _has_catalog() { case ",$CATALOG," in *",$1,"*) return 0;; *) return 1;; esac; }
 _is_portal_hosted() { [ "$1" = "user-center" ]; }
 # 目录里「清单型」的 key = 一盒镜像/目录里有 app-devkit/manifests/<key>.manifest.json 且不是门户内置 workspace
 _is_manifest_app() { [ -f "$HOME_DIR/app-devkit/manifests/$1.manifest.json" ]; }
-dc() { local a=(); while IFS= read -r -d '' x; do a+=("$x"); done < <(compose_args); docker compose "${a[@]}" "$@"; }
+dc() {
+  local a=() x registry arm_image
+  while IFS= read -r -d '' x; do a+=("$x"); done < <(compose_args)
+  if [ -z "${VECTOR_DB_IMAGE:-}" ] && [ -z "$(_eff VECTOR_DB_IMAGE)" ]; then
+    case "$(uname -m)" in
+      arm64|aarch64)
+        load_registry_config
+        registry="${VECTOR_DB_REGISTRY:-$(_eff VECTOR_DB_REGISTRY "${REGISTRY:-}")}"
+        arm_image="$(awk '$1=="x-vectordb-arm64-image:" {print $2; exit}' "$HOME_DIR/docker-compose.yml")"
+        if [ -n "$registry" ] && [ -n "$arm_image" ]; then
+          VECTOR_DB_IMAGE="$registry/$arm_image" docker compose "${a[@]}" "$@"
+          return $?
+        fi
+        ;;
+    esac
+  fi
+  docker compose "${a[@]}" "$@"
+}
 
 # --- init ---------------------------------------------------------------------
 port_free() { ! (exec 3<>"/dev/tcp/127.0.0.1/$1") >/dev/null 2>&1; }
@@ -358,6 +375,7 @@ cmd_upgrade() {
   _pin_postgres "$postgres_volume"
   _kafka_defaults
   _vectordb_defaults
+  _onebox_storage_defaults
   info "部署资产已升级；现有配置、generated/、backup/、端口与数据卷保留。"
   info "下一步：$0 up（已有门户数据跳过播种，保留租户、用户与安装记录）。"
 }
@@ -486,6 +504,7 @@ APP_IMAGE=
 EOF
   chmod 600 "$envf" || die "无法保护 compose.env 权限，初始化中止。"
   ENV_FILE="$envf" _vectordb_defaults
+  ENV_FILE="$envf" _onebox_storage_defaults
 
   # 5) 别让它进版本库：里面是密钥，且随时能从镜像重新生成
   local root; root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -594,8 +613,8 @@ cmd_smoke() {
   fi
   rm -f "$tmp"
   echo
-  echo "${c_dim}404 = /svc 放行 map 没写成，或反代在写 map 之前就起了（跑 register-app，再 dc exec reverse-proxy caddy reload）${c_off}"
-  echo "${c_dim}502 = 后端容器没起/崩了/没听 8080/网络别名 <key>-server 没命中（dc logs <key>-server 或 app-backend）${c_off}"
+  echo "${c_dim}404 = 网关还没发布这个 key（register-app 后数秒内生效；看 dc logs gateway-publisher），或清单未发布/没有后端${c_off}"
+  echo "${c_dim}502 = 后端容器没起/崩了/没听清单 deployDescriptor.port/网络别名 <key>-server 没命中（dc logs <key>-server 或 app-backend）${c_off}"
   echo "${c_dim}000 = 反代本身没起，或你探的端口不是 HTTP_PORT（dc ps / dc logs reverse-proxy）${c_off}"
   return 0
 }
@@ -694,23 +713,8 @@ _kafka_up() {
   dc logs --tail 50 kafka </dev/null || true
   return 0
 }
-_ensure_kafka() { # _ensure_kafka LISTING_KEY ENV_PREFIX
-  local key="$1" prefix="$2" username password admin deadline
-  [[ "$key" =~ ^[a-z0-9][a-z0-9-]*$ ]] || return 1
-  _kafka_assets_current || return 1
-  dc up -d kafka </dev/null >/dev/null 2>&1 || return 1
-  deadline=$((SECONDS+60))
-  until dc exec -T kafka nc -z 127.0.0.1 9092 </dev/null >/dev/null 2>&1; do
-    [ "$SECONDS" -lt "$deadline" ] || return 1
-    sleep 1
-  done
-  username="app_${key//-/_}"
-  password="$(_eff "${prefix}_KAFKA_PASSWORD")"
-  if [ -z "$password" ]; then
-    password="$(_kafka_admin_password)" || return 1
-    # Persist before contacting the broker: a partial ACL failure must reuse this password.
-    _env_append_secret "${prefix}_KAFKA_PASSWORD" "$password"
-  fi
+_kafka_principal() { # _kafka_principal USERNAME PASSWORD ACL_LINES
+  local username="$1" password="$2" rules="$3" admin
   admin="$(_eff KAFKA_ADMIN_PASSWORD)"
   [ -n "$admin" ] || return 1
   case "$admin" in *$'\n'*|*$'\r'*) return 1 ;; esac
@@ -733,10 +737,32 @@ _ensure_kafka() { # _ensure_kafka LISTING_KEY ENV_PREFIX
     printf "SCRAM-SHA-512=iterations=8192,password=%s\n" "$password" > "$dir/scram.properties"
     /opt/kafka/bin/kafka-configs.sh --bootstrap-server kafka:9092 --command-config "$dir/admin.properties" --alter --add-config-file "$dir/scram.properties" --entity-type users --entity-name "$1"
     acl=(--bootstrap-server kafka:9092 --command-config "$dir/admin.properties" --add --allow-principal "User:$1" --allow-host "*" --resource-pattern-type prefixed)
-    /opt/kafka/bin/kafka-acls.sh "${acl[@]}" --topic "$2" --operation Create --operation Delete --operation Describe --operation DescribeConfigs --operation Read --operation Write
-    /opt/kafka/bin/kafka-acls.sh "${acl[@]}" --group "$2" --operation Read --operation Describe --operation Delete
-    /opt/kafka/bin/kafka-acls.sh "${acl[@]}" --transactional-id "$2" --operation Write --operation Describe
-  ' bash "$username" "app.${key}." >/dev/null 2>&1; then return 1; fi
+    while IFS= read -r line; do
+      read -r -a rule <<< "$line"
+      /opt/kafka/bin/kafka-acls.sh "${acl[@]}" "${rule[@]}"
+    done <<< "$2"
+  ' bash "$username" "$rules" >/dev/null 2>&1; then return 1; fi
+}
+_ensure_kafka() { # _ensure_kafka LISTING_KEY ENV_PREFIX
+  local key="$1" prefix="$2" username password deadline
+  [[ "$key" =~ ^[a-z0-9][a-z0-9-]*$ ]] || return 1
+  _kafka_assets_current || return 1
+  dc up -d kafka </dev/null >/dev/null 2>&1 || return 1
+  deadline=$((SECONDS+60))
+  until dc exec -T kafka nc -z 127.0.0.1 9092 </dev/null >/dev/null 2>&1; do
+    [ "$SECONDS" -lt "$deadline" ] || return 1
+    sleep 1
+  done
+  username="app_${key//-/_}"
+  password="$(_eff "${prefix}_KAFKA_PASSWORD")"
+  if [ -z "$password" ]; then
+    password="$(_kafka_admin_password)" || return 1
+    # Persist before contacting the broker: a partial ACL failure must reuse this password.
+    _env_append_secret "${prefix}_KAFKA_PASSWORD" "$password"
+  fi
+  _kafka_principal "$username" "$password" "--topic app.${key}. --operation Create --operation Delete --operation Describe --operation DescribeConfigs --operation Read --operation Write
+--group app.${key}. --operation Read --operation Describe --operation Delete
+--transactional-id app.${key}. --operation Write --operation Describe" || return 1
   _env_set "${prefix}_KAFKA_BROKERS" kafka:9092
   _env_set "${prefix}_KAFKA_USERNAME" "$username"
   _env_set "${prefix}_KAFKA_SASL_MECHANISM" SCRAM-SHA-512
@@ -759,6 +785,10 @@ _vectordb_defaults() {
     value="$(openssl rand -hex 24)" && [ "${#value}" = 48 ] || die "无法生成向量库 root 口令，操作中止。"
     _env_append_secret VECTOR_DB_ROOT_PASSWORD "$value"
   fi
+  if ! grep -q '^VECTOR_DB_KAFKA_PASSWORD=' "$ENV_FILE"; then
+    value="$(_kafka_admin_password)" || die "无法生成向量库 Kafka 口令，操作中止。"
+    _env_append_secret VECTOR_DB_KAFKA_PASSWORD "$value"
+  fi
   grep -q '^VECTOR_DB_BUCKET=' "$ENV_FILE" || _env_set VECTOR_DB_BUCKET xgent-vectordb
   grep -q '^VECTOR_DB_MEM_LIMIT=' "$ENV_FILE" || _env_set VECTOR_DB_MEM_LIMIT 2g
   grep -q '^VECTOR_DB_ADMIN_URL=' "$ENV_FILE" || _env_set VECTOR_DB_ADMIN_URL http://vectordb-proxy:19530
@@ -768,6 +798,16 @@ _vectordb_defaults() {
     [ -z "${REGISTRY:-}" ] || _env_set VECTOR_DB_REGISTRY "$REGISTRY"
   fi
   chmod 600 "$ENV_FILE" || die "无法保护 compose.env 权限，操作中止。"
+}
+_onebox_storage_defaults() {
+  # Presigned URLs carry the in-network storage host. Files re-bases the ones it returns through
+  # the portal entry onto <portal>/.onebox-s3, which the proxy forwards with the signed Host.
+  # Absent keys only: a box whose storage uses another endpoint keeps its own values.
+  local origin; origin="$(_eff S3_ENDPOINT http://minio:9000)"; origin="${origin%/}"
+  grep -q '^FILES_ONEBOX_S3_ORIGIN=' "$ENV_FILE" || _env_set FILES_ONEBOX_S3_ORIGIN "$origin"
+  grep -q '^XGENT_ONEBOX_S3_UPSTREAM=' "$ENV_FILE" || _env_set XGENT_ONEBOX_S3_UPSTREAM "${origin#*://}"
+  grep -q '^FILES_ONEBOX_S3_PUBLIC_BASE=' "$ENV_FILE" \
+    || _env_set FILES_ONEBOX_S3_PUBLIC_BASE "$(_eff PORTAL_BASE_URL http://localhost)/.onebox-s3"
 }
 _vectordb_assets_current() {
   grep -qE '^  vectordb:' "$HOME_DIR/docker-compose.yml" \
@@ -802,6 +842,16 @@ _ensure_vectordb() { # _ensure_vectordb LISTING_KEY ENV_PREFIX
   [[ "$key" =~ ^[a-z0-9][a-z0-9-]*$ ]] || return 1
   _vectordb_assets_current || return 1
   _ensure_vectordb_bucket || return 1
+  _kafka_assets_current || return 1
+  # Recreates Kafka when the assets gained the private network; its data volume stays in place.
+  dc up -d kafka </dev/null >/dev/null 2>&1 || return 1
+  deadline=$((SECONDS+60))
+  until dc exec -T kafka nc -z 127.0.0.1 9092 </dev/null >/dev/null 2>&1; do
+    [ "$SECONDS" -lt "$deadline" ] || return 1
+    sleep 1
+  done
+  _kafka_principal vectordb "$(_eff VECTOR_DB_KAFKA_PASSWORD)" "--topic vectordb- --operation Create --operation Read --operation Write --operation Describe
+--group vectordb- --operation Describe" || return 1
   info "   起向量库（首次约 1 分钟）…"
   dc --profile vectordb up -d vectordb vectordb-proxy </dev/null >/dev/null 2>&1 || return 1
   deadline=$((SECONDS+180)); state=''
@@ -812,6 +862,22 @@ _ensure_vectordb() { # _ensure_vectordb LISTING_KEY ENV_PREFIX
     sleep 2
   done
   [ "$state" = healthy ] || return 1
+  # shellcheck disable=SC2016
+  if ! printf '%s\n' "$(_eff VECTOR_DB_ROOT_PASSWORD)" | dc --profile vectordb exec -T vectordb bash -ec '
+    IFS= read -r root
+    name=platform_wal_gate_$(date +%s)
+    for action in create drop; do
+      body="{\"collectionName\":\"$name\"}"
+      [ "$action" != create ] || body="{\"collectionName\":\"$name\",\"dimension\":2}"
+      out=$(curl -fsS --max-time 30 -X POST "http://127.0.0.1:19530/v2/vectordb/collections/$action" -H "Authorization: Bearer root:$root" -H "Content-Type: application/json" -d "$body")
+      [[ "$out" =~ \"code\":[[:space:]]*0([,}]) ]] || exit 1
+    done
+  '; then
+    echo '向量库经 WAL 的写入失败：检查 Kafka 账号、ACL 与 broker 日志'
+    dc --profile vectordb logs --tail 50 vectordb </dev/null || true
+    return 1
+  fi
+  echo '向量库经 WAL 的写入切换门通过'
   # Registers the vectorStore:main service and default profile; skipped when a profile exists.
   dc run --rm portal-api bun -e 'const m = await import("/app/apps/api/src/db/seed-vectordb-profile.ts"); for (const l of await m.seedVectorDbProfile()) console.log(l); process.exit(0)' </dev/null >/dev/null 2>&1 || return 1
   name="app_${key//-/_}"
@@ -872,36 +938,13 @@ _portal_services_up() {
   dc up -d "${services[@]}"
 }
 _svc_running() { [ -n "$(dc ps -q "$1" 2>/dev/null || true)" ]; }
-# v1 的放行表只在 Caddy load 时读取；v2 由唯一发布器生成、验证并应用整代配置。
-# 必须先询问镜像的受管 selector；模式损坏时不能按旧镜像降级，更不能重读兼容模板。
-_reload_proxy() {
-  _svc_running reverse-proxy || return 0
-  local selected out
-  if ! selected="$(dc exec -T reverse-proxy sh -c '
-    selector=/usr/local/libexec/xgent-gateway-config
-    if [ -e "$selector" ] || [ -L "$selector" ]; then
-      [ -f "$selector" ] && [ -x "$selector" ] || exit 1
-      exec "$selector"
-    fi
-    # 旧镜像只有完全没有受管状态时才允许兼容 reload。
-    for path in /etc/caddy/sites/gateway-v2.enabled /etc/caddy/sites/current /etc/caddy/gateway-operation.conf; do
-      if [ -e "$path" ] || [ -L "$path" ]; then exit 1; fi
-    done
-    printf "/etc/caddy/Caddyfile\n"
-  ' 2>/dev/null)"; then
-    die "无法确认反代模式；已停止 reload。请检查受管模式与 current 快照，再按网关维护文档恢复。"
-  fi
-  case "$selected" in
-    /etc/caddy/Caddyfile) ;;
-    /*/current/Caddyfile)
-      info "   反代为 v2，路由变更由唯一发布器应用；请查看发布状态确认结果"
-      return 0 ;;
-    *) die "反代模式返回无效；已停止 reload，不会回退到兼容模板。" ;;
-  esac
-  if out="$(dc exec -T reverse-proxy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile 2>&1)"; then
-    info "   反代已重读 /svc 放行表"
+# /svc、CSP 与站点路由由 gateway-publisher 从已提交的清单生成、验证并整代应用（与生产同一发布器）；
+# 注册之后不需要、也不能手工 reload 反代，这里只确认发布器在跑。
+_gateway_publish_note() {
+  if _svc_running gateway-publisher; then
+    info "   路由变更由网关发布器应用（数秒内生效；$0 dc logs gateway-publisher 看发布结果）"
   else
-    warn "反代重读失败，/svc 仍是改动前那份：$(printf '%s' "$out" | tail -2 | tr '\n' ' ')"
+    warn "gateway-publisher 没在跑 —— /svc 不会更新。$0 up，或 $0 dc up -d gateway-publisher"
   fi
 }
 _ok()   { printf '  %s✓%s %s\n' "$c_grn" "$c_off" "$*"; }
@@ -1097,7 +1140,7 @@ cmd_up() {
     ADD_QUIET=1 cmd_add "$mk" || warn "add ${mk} 失败 —— 看上面的报错；修完重跑 $0 up（幂等）"
   done
   info "⑤ 起门户三件套 + 基础服务" ; _portal_services_up
-  _reload_proxy
+  _gateway_publish_note
   _has_catalog observability && _portal_logs_up
   echo; info "跑一次体检："; cmd_doctor
 }
@@ -1362,7 +1405,7 @@ cmd_add() {
   dc run --rm --no-deps -v "$HOME_DIR:/devkit:ro" portal-api bun run register-app "/devkit/.add-$key.manifest.json" \
     || { rm -f "$HOME_DIR/.add-$key.manifest.json"; die "注册失败 —— 看上面的报错。"; }
   rm -f "$HOME_DIR/.add-$key.manifest.json"
-  _reload_proxy
+  _gateway_publish_note
 
   info "⑤ 建库 xgent-${key}"
   dc up -d postgres >/dev/null 2>&1 || true
@@ -1390,8 +1433,8 @@ cmd_add() {
     #    这是生成文件、随机器走、已被 .gitignore 挡住，绝对路径没有副作用。
     echo "    env_file: [\"${ENV_FILE}\"]"
     echo "    environment:"
-    # 一盒反代的通用规则只反代 <key>-server:8080；镜像不听 8080 的（如 observability 8081）
-    # 在 compose.env 里用 <PREFIX>_PORT 改成 8080（值归平台，与生产注入 PORT 同语义）。
+    # 网关按 <key>-server:<deployDescriptor.port> 出路由，PORT 缺省就是清单端口；
+    # <PREFIX>_PORT 只用于镜像另需同值时显式重申，改成别的值会让 /svc/<key> 502。
     echo "      PORT: \"\${${PREFIX}_PORT:-${M_PORT}}\""
     echo "      PORTAL_INTROSPECT_URL: http://portal-api:3000/api/tokens/introspect"
     echo "      ${PREFIX}_SA_CLIENT_ID: ${M_SA}"
@@ -1500,9 +1543,11 @@ cmd_doctor() {
   fi
 
   echo "Kafka"
+  local kafka_ready=0
   if ! _kafka_assets_current; then
     _bad "Kafka 部署资产或配置是旧版" "$0 upgrade --image <新版一盒镜像> && $0 up"
   elif dc exec -T kafka nc -z 127.0.0.1 9092 </dev/null >/dev/null 2>&1; then
+    kafka_ready=1
     _ok "Kafka INTERNAL 监听正常（SASL 认证由服务探测验证）"
   else
     _bad "Kafka 未就绪；门户与现有应用可继续运行" "$0 dc logs --tail 50 kafka；修复后重跑 $0 up。"
@@ -1515,8 +1560,10 @@ cmd_doctor() {
     _bad "向量库部署资产或配置是旧版" "$0 upgrade --image <新版一盒镜像>"
   elif [ -z "$vcid" ]; then
     _ok "未启动（首次 add 声明 vectorStore 的 App 时按需拉起）"
+  elif [ "$kafka_ready" != 1 ]; then
+    _bad "向量库已启动但 Kafka 未就绪；先修 Kafka" "$0 dc logs --tail 50 kafka；修复后重跑原 add。"
   elif vstate="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "$vcid" 2>/dev/null)" && [ "$vstate" = healthy ]; then
-    _ok "vectordb healthy；App 入口 vectordb-proxy:19530"
+    _ok "vectordb healthy；WAL 走 Kafka；App 入口 vectordb-proxy:19530"
   else
     _bad "向量库未就绪（${vstate:-未运行}）" "$0 dc --profile vectordb logs --tail 50 vectordb"
   fi
@@ -1535,16 +1582,21 @@ cmd_doctor() {
   if _svc_running reverse-proxy; then
     local bad_dirs=""
     local d
-    for d in /srv/www/apps /etc/caddy/svc-allow /etc/caddy/apps-csp; do
+    for d in /srv/www/apps; do
       local owner; owner="$(dc exec -T -u root reverse-proxy stat -c '%u' "$d" 2>/dev/null | tr -d '\r' || echo "")"
       [ "$owner" = "1000" ] || bad_dirs="$bad_dirs $d"
     done
-    if [ -z "$bad_dirs" ]; then _ok "三个共享卷都归 bun(1000)"
+    if [ -z "$bad_dirs" ]; then _ok "前端产物卷归 bun(1000)"
     else _bad "这些卷不归 portal-api：$bad_dirs" "$0 dc exec -u root reverse-proxy chown -R 1000:1000$bad_dirs"; fi
-    # 内联 key 却存在 map 文件 ⇒ duplicate input ⇒ 反代整个起不来
-    local dup; dup="$(dc exec -T reverse-proxy sh -c 'ls /etc/caddy/svc-allow/ 2>/dev/null' 2>/dev/null | tr -d '\r' | grep -E '^(knowledge|omni-parser|task-gateway|pagebuilder)\.map$' | tr '\n' ' ' || true)"
-    if [ -n "$dup" ]; then _bad "内联 key 又写了 map：$dup" "这会让 Caddy 拒绝整份配置（全站 502）。$0 dc exec -u root reverse-proxy sh -c 'cd /etc/caddy/svc-allow && rm -f $dup' && $0 dc restart reverse-proxy"
-    else _ok "没有与内联 key 撞车的 map 文件"; fi
+  else _note "reverse-proxy 没在跑，跳过（$0 up）"; fi
+
+  echo "②b 网关发布"
+  if _svc_running reverse-proxy; then
+    local current; current="$(dc exec -T reverse-proxy readlink /etc/caddy/sites/current 2>/dev/null | tr -d '\r' || true)"
+    if ! _svc_running gateway-publisher; then
+      _bad "gateway-publisher 没在跑（当前代次 ${current:-无}）" "$0 dc up -d gateway-publisher；起不来看 $0 dc logs gateway-publisher"
+    elif [[ "$current" =~ ^revisions/[1-9][0-9]*$ ]]; then _ok "发布器在跑，反代服务 ${current}"
+    else _bad "发布器在跑但还没发布第一代（current=${current:-无}）" "$0 dc logs --tail 50 gateway-publisher 看 [gateway-publish]；reload 未确认时按网关维护文档恢复"; fi
   else _note "reverse-proxy 没在跑，跳过（$0 up）"; fi
 
   echo "③ 架构匹配"
@@ -1596,8 +1648,8 @@ cmd_doctor() {
     code="$(curl -s -m 8 -o /dev/null -w '%{http_code}' "$BASE_URL/svc/$k/health" || true)"
     case "$code" in
       200) _ok "/svc/$k 200";;
-      404) _bad "/svc/$k 404" "放行尚未应用：检查发布状态及 $0 dc logs portal-api，勿手工 reload 兼容模板";;
-      502) _bad "/svc/$k 502" "后端不在/没听 8080/别名没命中：$0 dc logs ${k}-server";;
+      404) _bad "/svc/$k 404" "网关尚未发布这个 key：看 $0 dc logs gateway-publisher 与 $0 dc logs portal-api";;
+      502) _bad "/svc/$k 502" "后端不在/没听清单端口/别名没命中：$0 dc logs ${k}-server";;
       *)   _bad "/svc/$k HTTP ${code:-000}" "$0 dc ps";;
     esac
   done

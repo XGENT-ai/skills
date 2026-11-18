@@ -84,7 +84,7 @@
 | portal-api 启动即退，日志提到 `DEV_MOCK_OAUTH` | `NODE_ENV` 没被覆盖成 `development`。镜像烘的是 `production`，而 `DEV_MOCK_OAUTH=true` 在 production 下被拒绝 |
 | 一盒把你本机某个数据库写花了 | 你关掉了 `local-infra` 让一盒连本机的 PG。库名会撞（`xgent-portal` / `xgent-files` …），而 `db:seed:onebox` 是**会往里写**的。别这么做——一盒内部走的是 compose 网络里的 `postgres:5432`，与宿主端口无关，错开发布端口就够了 |
 | 你的 App 自己的库不存在 | 一盒的 postgres 首次初始化只建了它认识的那批 `xgent-*` 库（新镜像另按 `APP_KEY` 建**你自己**那一个）。别的 App 的库要自己建：`"$S" dc exec postgres psql -U postgres -c 'CREATE DATABASE "xgent-<key>"'` |
-| **反代整个起不来、全站 502**，`"$S" dc logs reverse-proxy` 里有 `duplicate input` / `adapting config` | 你给一个**已内联**的 key 写了 `/svc` 放行 map。`knowledge` / `omni-parser` / `task-gateway` / `pagebuilder` 直接写在容器版 Caddyfile 的 map 块里，本来就放行；同名键再来一遍 Caddy 直接拒绝加载**整份配置**——挂的不是那一条路由，是反代。删掉再起：<br>`"$S" dc exec -u root reverse-proxy sh -c 'rm -f /etc/caddy/svc-allow/{knowledge,omni-parser,task-gateway,pagebuilder}.map'` 然后 `"$S" dc restart reverse-proxy`。<br>注册链本身不会这么写（`registerFromManifest` 对内联 key 跳过并回 warning）——**是照着老文档手工补那一行**造成的 |
+| **反代起不来**，`"$S" dc logs reverse-proxy` 里有 `gateway-config: missing-current` / `unmanaged-current` / `gateway-bootstrap:` | 网关快照目录（`caddy-sites` 卷）的 `current` 指向了不存在或非受管的代次。不要手改或删 operation 卷；保留卷，`"$S" dc logs gateway-publisher` 看最后一次发布，再按门户网关维护文档恢复。全新卷缺 `current` 时入口会自动指向只读引导代 |
 
 ---
 
@@ -92,11 +92,12 @@
 
 | 症状 | 成因与修法 |
 | --- | --- |
-| `/svc/<key>/...` → **404** | `/svc` 放行 map 没写成，或**反代在写 map 之前就起了**（Caddy 启动时才读那个目录，不会热重载）。跑 `register-app`，然后 `"$S" dc exec reverse-proxy caddy reload`（`add` / `up` 注册完会自动重读；只有自己手工跑 `register-app` 时才要这一步） |
-| `register-app` 输出里有 `/svc 放行未写成 … EACCES: permission denied`，随后 `/svc/<key>` 404 | 命名卷属主不对，见 **[§7](#7-命名卷属主不对eacces-一族)**（那一节的修法一次修好全部三个卷）。注册本身是成功的，缺的只是那一行放行 |
-| `/svc/<key>/...` → **502** | 后端不在。① 容器没起/崩了：`"$S" dc logs app-backend`；② 没监听容器内 **8080**（反代的通用规则是 `/svc/<key>/* → <key>-server:8080`，多数镜像认 `PORT`，你的若要别的变量名就在 `compose.env` 里补）；③ `APP_KEY` 与 manifest 的 `listingKey` 不一致，网络别名 `<key>-server` 没命中 |
+| `/svc/<key>/...` → **404** | 网关还没发布这个 key。① 清单没有 `deployDescriptor`（一盒按 `<key>-server:<deployDescriptor.port>` 出路由，没有就不出）；② `gateway-publisher` 没在跑或发布失败：`"$S" dc logs gateway-publisher`，看 `[sites-routing]` 行；③ listing 未发布或已下架。注册后数秒内生效，不需要也不能手工 reload 反代 |
+| `/svc/<key>/...` → **502** | 后端不在。① 容器没起/崩了：`"$S" dc logs app-backend`；② 没监听 `deployDescriptor.port`（约定 8080，多数镜像认 `PORT`，你的若要别的变量名就在 `compose.env` 里补）；③ `APP_KEY` 与 manifest 的 `listingKey` 不一致，网络别名 `<key>-server` 没命中 |
 | 探测全是 **000** | 反代根本没起，或你探的端口不是 `HTTP_PORT`。`"$S" dc ps` / `"$S" dc logs reverse-proxy` |
-| 后端跑在**宿主**上，`/svc/<key>` 502 | 反代在容器网里解析不到宿主进程。用 SKILL.md §5 的 socat 转发容器顶住那个别名 |
+| 后端跑在**宿主**上，`/svc/<key>` 502 | 网关默认发到容器别名 `<key>-server`，宿主进程没有这个名字。按 SKILL.md §5 在 `compose.env` 末尾设 `XGENT_ONEBOX_SVC_UPSTREAMS` 后 `"$S" dc up -d gateway-publisher`；设了仍 502 先确认 dev server 在宿主上能 `curl` 通，再看是不是旧镜像不认这一项（同节的转发容器做法） |
+| 容器版起来了，`/svc/<key>` 却仍打到宿主 | `XGENT_ONEBOX_SVC_UPSTREAMS` 里还留着这个 key，它优先于 `<key>-server`。删掉那一对后 `"$S" dc up -d gateway-publisher` |
+| Files 给的上传/下载地址是 `http://minio:9000/…`（或 `rustfs:9000`），宿主进程或浏览器连不上 | ① 没经门户入口调 Files：只有经 `<门户地址>/svc/files` 返回的地址会改成 `<门户地址>/.onebox-s3/…`，直连 `files-server` 的容器拿内部地址是对的；② `compose.env` 缺 `FILES_ONEBOX_S3_*` / `XGENT_ONEBOX_S3_UPSTREAM`：`"$S" upgrade` 会补齐，再 `"$S" up`；③ 控制台存储池 endpoint 不是 `S3_ENDPOINT`：把 `FILES_ONEBOX_S3_ORIGIN`（带 `http://`）与 `XGENT_ONEBOX_S3_UPSTREAM`（`主机:端口`）改成池的地址，`"$S" dc up -d files-server reverse-proxy`；④ 旧镜像没有这项功能，按 SKILL.md §6 升级 |
 | iframe 404 / 空白 | `APP_FRONTEND_DIST` 必须是**绝对路径**且目录里有 `index.html`（相对路径会按 compose 文件所在目录解析，很迷惑）。另一半原因是前端构建时的 base 不是 `/apps/<key>/`——资源路径会全部指错 |
 | 浏览器整站打不开 | 先 `"$S" smoke` 看 `/health`。通了就是地址问题（改过端口就不是 `http://localhost`）；不通看 `"$S" dc logs reverse-proxy portal-api` |
 | `service` 型 App 在应用市场/应用中心**看不到** | **设计如此**：service 型对用户隐藏（无前端、不可打开），平台控制台的清单管理里仍可见可治理 |
@@ -134,35 +135,27 @@
 
 ## 7. 命名卷属主不对（EACCES 一族）
 
-一个根因，两个常见落点：`register-app` 写 `/svc` 放行 map（`/etc/caddy/svc-allow`）、发布前端产物
-（`/srv/www/apps`）。第三个 `/etc/caddy/apps-csp` 同理，只是更少被走到。
+落点：发布前端产物（`/srv/www/apps`）。
 
 **成因**：空的命名卷，属主由**第一个挂它的容器**决定。反代是 root，portal-api 是 `bun`(uid 1000)——
-旧镜像里这三个目录压根不存在，于是谁先起谁定调，卷落到 root 手里，portal-api 就写不进去了。
-`one-box` / `proxy` 的 **v1.2.0 起**已在 runtime 层预建这三个目录并 chown 给 `bun`（`latest` 已指向它）。
+旧镜像里这个目录压根不存在，于是谁先起谁定调，卷落到 root 手里，portal-api 就写不进去了。
+`one-box` / `proxy` 的 **v1.2.0 起**已在 runtime 层预建它并 chown 给 `bun`（`latest` 已指向它）。
 
 镜像升级不会自动改变已有卷的属主。先按 SKILL.md §6 更新镜像缓存，再用 `"$S" upgrade` 同步部署资产，再按下面的定点修法纠正
-这三个目录的属主；不需要删除 PostgreSQL 或对象存储卷。新版 `"$S" up` 会跳过已有门户的种子，保留身份与安装数据。
+它的属主；不需要删除 PostgreSQL 或对象存储卷。新版 `"$S" up` 会跳过已有门户的种子，保留身份与安装数据。
 
 只有用户明确选择丢弃所有当前联调数据时，才按 SKILL.md §6 的重置路径执行 `dc down -v` → `init --force` → `up`。
 重置会丢失 App 数据与对象；它不是升级的必经步骤。
 
 ### 定点修复属主
 
-反代是 root 且挂着同样这三个卷，所以补属主不必进 portal-api：
+反代是 root 且挂着同一个卷，所以补属主不必进 portal-api：
 
 ```bash
-"$S" dc exec -u root reverse-proxy \
-  chown -R 1000:1000 /srv/www/apps /etc/caddy/svc-allow /etc/caddy/apps-csp
+"$S" dc exec -u root reverse-proxy chown -R 1000:1000 /srv/www/apps
 ```
 
-三个一起补——只补当前报错的那个，剩下两个会在下一步再拦你一次。chown 完直接重试原操作，
-**不用重启 portal-api**。`/svc` 放行那条还要补一行 map 并 reload：
-
-```bash
-"$S" dc exec reverse-proxy sh -c \
-  'printf "<key> \"1\"\n" > /etc/caddy/svc-allow/<key>.map && caddy reload --config /etc/caddy/Caddyfile'
-```
+chown 完直接重试原操作，**不用重启 portal-api**。
 
 换到 v1.2.0+ 且是全新的卷之后还这样，把它反馈给门户团队。
 
