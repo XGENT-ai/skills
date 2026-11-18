@@ -24,7 +24,7 @@ INTENT:
 
 RULE @operation_selection:
   MUST: [default_compose, explicit_supported_operation_first,
-         explain_only_when_explanation_check_or_review_explicitly_requested]
+         explain_only_when_explicitly_requested]
   MUST_NOT: [automatic_dsl_for_ordinary_development,
              universal_defaults_from_reference_scenarios]
 
@@ -93,13 +93,15 @@ RULE @compose_inputs:
 RULE @compose_expression:
   WHEN: compose_selected
   PREFER: self_descriptive_literals
-  MUST: [natural_language_only_for_key_ambiguity_unresolved_by_context,
+  MUST: [natural_language_only_when_context_insufficient,
+         keyword_string_literals_max_eight_words,
          preserve_correctness_critical_timing_scope_and_acceptance_details,
          semantic_merge_of_standing_rules, preserve_must_must_not_should_prefer,
          each_list_item_applies, distinguish_material_instances_claims_and_sources_in_context,
          inferred_requirements_labeled_inferred_not_provided]
   SHOULD: intent_rules_output_for_simple_tasks
   MUST_NOT: [duplicate_requirements_across_blocks, cryptic_abbreviations,
+             sentence_transliteration_into_long_snake_case,
              layered_references_for_compression]
 
 RULE @compose_block_responsibilities:
@@ -149,7 +151,7 @@ WORKFLOW @explain:
        explain_transition_changes_and_temporal_preconditions_when_present,
        explain_workflow_order_dependencies_and_handoff_when_present,
        explain_workflow_branches_joins_and_failures_when_present,
-       explain_loop_trigger_rounds_stopping_and_budget_when_present,
+       explain_loop_trigger_rounds_stopping_budget,
        identify_material_ambiguities_missing_references_and_conflicts,
        check_cycles_unsatisfiable_joins_and_unknown_conditions,
        report_meaning_conflicts_and_issues]

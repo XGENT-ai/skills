@@ -1,9 +1,9 @@
 ---
 name: optimize-agents-md
-description: "用于精简、优化所在代码仓库 AGENTS.md；不用于普通编码、初始化或全局规则修改。用 Prompt DSL 压缩原则，补齐缺失的编码准则，保留项目事实与作用域。"
-when_to_use: "用户会说「AGENTS.md 瘦身」「整理仓库规则」「补齐编码原则」时；仅诊断请求保持只读。"
-argument-hint: "[repo 路径] [文件范围] [仅诊断]"
-compatibility: "需要已安装的 use-prompt-dsl；缺失时建议完整安装本仓 skills。"
+description: "Use to diagnose, slim down, or optimize a repository AGENTS.md; not for ordinary coding, initialization, or global rule changes. Compresses rules with the Prompt DSL, fills missing coding guidelines, preserves project facts, scope and authorization."
+when_to_use: "Use when the user asks to slim down AGENTS.md, tidy up repository rules, or fill in missing coding principles; diagnosis-only requests stay read-only."
+argument-hint: "[repo path] [file scope] [diagnose-only]"
+compatibility: "Requires the installed use-prompt-dsl skill; when missing, recommend a full install of this repo's skills."
 ---
 
 # Optimize AGENTS.md
@@ -80,12 +80,11 @@ RULE @authorized_optimization:
              request_existing_write_authorization_again]
 
 RULE @literal_readability:
-  MUST: |
-    优先提高信息密度：先去掉赘词、合并重复语义，尝试用更精练的
-    self-descriptive literal 完整表达原意。每个 literal 最多 8 个英文单词，
-    按下划线分词计数；压缩后仍超限或难懂时，才改用带引号的自然语言短句，
-    较长段落用 | 承载。不得靠生僻缩写、合并单词、删除条件或拆散完整约束
-    来规避上限。此约定适用于本 skill 及其生成的规则。
+  MUST: [keyword_string_literals_max_eight_words,
+         quoted_fallback_when_not_self_evident,
+         applies_to_this_skill_and_generated_rules,
+         follow_use_prompt_dsl_spec_for_literal_details,
+         "Do not game the cap: no cryptic abbreviations, merged words, dropped conditions, or split constraints."]
 
 RULE @principle_expression:
   MUST: [compact_odyssey_rule_fragments_embedded_directly_in_target,

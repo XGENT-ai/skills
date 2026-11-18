@@ -49,7 +49,7 @@ ODC 没有总括根节点，不引入外层包装。它可以作为完整规范�
 - 优先使用自描述 Literal；字符串或含歧义的值可加引号。只有上下文不足以消除关键歧义时才补自然语言，不追求符号覆盖率。
 - `@input / @context / @output / @request` 可作约定上下文对象，不要求预先建类型；其他引用应指向当前上下文实际提供的命名对象、规则、角色、工作流或步骤。`@step.output` 表示已命名步骤约定的产物；引用不会使尚未生成的产物自动出现。
 - 引用含义保持稳定。重名、拼写差异或缺失引用若可由上下文无歧义理解，可容错；会影响结果时指出。合并片段不默认“最后声明覆盖前文”。
-- 字面量（如 `unknown / markdown / minimal_change / save_current_state`）一律直接写作小写下划线形式，不加 `@`，无需 `LITERAL` 声明或预先注册。其意义由名称、字段和任务上下文共同确定；特定领域的封闭取值集合仍可用 `ENUM` 表达。
+- 字面量（如 `unknown / markdown / minimal_change / save_current_state`）一律直接写作小写下划线形式，不加 `@`，无需 `LITERAL` 声明或预先注册。其意义由名称、字段和任务上下文共同确定；特定领域的封闭取值集合仍可用 `ENUM` 表达。语义 Literal 用关键字串而非句子转写（按下划线分词至多 8 个英文单词，见「语义 Literal」）。
 - 一份提示只使用必要的块。`SOUL / ROLE`、`REQUIREMENT`、`WORKFLOW / STEP` 与可追踪引用是按需表达能力，不是任何任务的必填模板。片段组合由承载文档或外部上下文管理负责，无需额外包装。
 
 ## Intent、Output 与 Review
@@ -651,6 +651,23 @@ Literal 是面向 LLM 的**自描述语义短语**，并非需要定义、注册
 
 - **值字面量**：例如 `markdown / json`、`provided / checked / unknown`、`on_completion`、`test / inspect`。含义由相应字段决定。
 - **语义字面量**：例如 `minimal_change / preserve_existing / save_current_state / reopen_consistency / parallelize_independent_steps`。可直接用于 `RULE / REQUIREMENT / REVIEW / WORKFLOW / STEP` 中，压缩常见原则、动作和验收语义。
+
+### 关键字串，不是句子转写
+
+语义 Literal 压缩的是**概念核心**——动作、对象与区别性限定词——而不是把自然语言句子逐词转写成下划线串。冠词、系动词和纯语法性的介词、连词删去；改变含义的限定词（如 `only / without / per_source`）保留。常见 2–4 词，按下划线分词至多 8 个英文单词；领域标识符与既有 API 名称不受此限，保留原样。删除语法词往往直接得到标准语义 Literal：`preserve the existing behavior …` → `preserve_existing`，`do not silently fall back …` → `no_silent_fallback`。
+
+超过上限或压缩后不能自明时，改用带引号的自然语言短句，不要继续加长下划线串；更长段落用 `|` 承载。注释与引号短句默认用英文以省 token（中文约 1 token/字，同一细节英文常省一半以上），面向中文读者、可读性优先时才用中文。衡量标准是读者能否结合字段与上下文还原意图，不是词数本身；压缩仍不得改变义务、条件与例外。
+
+```formal
+# ❌ 句子转写：11 词，语法词全保留，换汤不换药
+validate_only_at_system_boundaries_including_user_input_external_apis_and_files
+
+# ✅ 关键字串：2 词
+boundary_validation
+
+# ✅ 细节影响执行时：英文引号短句替代长串（省 token；中文可读性优先时才用中文）
+MUST: "validate only at real system boundaries: user input, external APIs, files"
+```
 
 ### 常见工程语义的写法示例
 
