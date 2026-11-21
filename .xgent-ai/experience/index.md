@@ -124,3 +124,5 @@
 - 90398f71-e485-4511-9662-74fc2d8ca76f · [Phoenix UI 方案对比页与设计指引 P4 实施](90398f71-e485-4511-9662-74fc2d8ca76f.md)
 
 - 48f94fad-d7e7-411f-bb21-d05b90af84ee · [Feature Demo 页面与内容优化](48f94fad-d7e7-411f-bb21-d05b90af84ee.md)
+
+- [06e05c8b-6ec0-4cf6-8a6c-e57851a5dd9e · agent-browser 首次使用](06e05c8b-6ec0-4cf6-8a6c-e57851a5dd9e.md)

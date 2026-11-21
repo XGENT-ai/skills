@@ -173,6 +173,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | --- | --- |
 | [architect](skills/architect/SKILL.md) | 实现前先设计类型、签名与模块结构，并在开发过程中持续校准 |
 | [debugging](skills/debugging/SKILL.md) | 按四阶段流程调查根因、定位问题并验证修复 |
+| [agent-browser](skills/agent-browser/SKILL.md) | 检查与安装 CLI，连接已有浏览器，用快照定位控件，处理文件与剪贴板，诊断 React、Web Vitals 和浏览器耗时 |
 | [tdd](skills/tdd/SKILL.md) | 先用失败测试复现缺陷再改实现，适用于有明确廉价测试路径的 TDD 与回归测试 |
 | [create-e2e-verification-skill](skills/create-e2e-verification-skill/SKILL.md) | 为用户选定的旅程（未指定时提名代价高、测试碰不到的候选）创建、维护 ODC 写成的 e2e-*：先按提交核查已有覆盖，可用 phoenix-diagram 的 statechart 建模推出场景，从真实入口运行并证明能发现故障；可供 agi-mode 复用 |
 | [feature-demo](skills/feature-demo/SKILL.md) | 从开发计划或 git 范围找出新增的 Web 功能，在运行中的系统上回放固定脚本录成带字幕的视频，可配流程图或状态图，按统一模板生成以视频、用法与限制为主的报告，执行证据与重录方法留在本地维护记录，用户要求时发布为 SPMS 模板报告；检测到 Phoenix UI 时录制前用 `phoenix-ui capture` 开写拦截核对每个待录功能 |
