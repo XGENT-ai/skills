@@ -554,7 +554,7 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
 
   ```jsonc
   "deployRequirements": { "region": ["ap-shanghai"], "size": "m", "network": ["cube-prod"] },
-  "requiredServices": [{ "name": "chroma", "kind": "vectorStore", "envKey": "XC_VECTOR_URL" }]
+  "requiredServices": [{ "name": "main", "kind": "postgres", "envKey": "ZO_META_POSTGRES_DSN" }]
   ```
 
   三条约束：① **只写名字与档位** —— 网段 / IP / URL / 端口一律提交即拒（那是部署环境的事实，同一份
@@ -562,14 +562,13 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
   提交即拒）；③ **被拒时你只收到一句泛化的「当前环境不满足…，提案已转入待审核队列」** —— 逐维
   原因、池里有哪些地域、最大档位、机器名都只在平台控制台，要知道差在哪找目标环境的运维。
   首次通过时门户会把**落点固定**在命中的那台机器上，此后不再自动迁移。
-  `requiredServices[].envKey` 是「将来注入到哪个环境变量」的声明位，**当前只被携带，不注入**——
-  现在就要值仍然走 `requiredEnv`。
+  `envKey` 规则见上文：只对 postgres / redis 这类单键服务有效，批准时供给到该键。
 
 服务账号的标识与密钥（`<PREFIX>_SA_CLIENT_ID` / `<PREFIX>_SA_CLIENT_SECRET`）你不用管也不用要：
 批准注册时门户随机签发、**由平台保管并在换版时注入你的容器**，没有任何人需要把它抄进 envFile。
 明文仍会**一次性回显**给审批人一次（留给你本地联调），之后再也取不回来。它**永不静默轮换** ——
 要轮换找平台走控制台的「轮换密钥」，那次轮换会顺带排一次换版，线上容器自动拿到新密钥；
-你本地那份副本要自己同步换，否则自省 401 而现场看不出原因。
+你本地那份副本要自己同步换，否则门户自省回 200 + `SECRET_INVALID`、资源服务答 503，现场看不出原因。
 
 ## 首次发布（你的 App 还不在市场里）
 

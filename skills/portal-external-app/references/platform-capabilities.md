@@ -15,13 +15,14 @@
 | --- | --- | --- |
 | 当前用户是谁 | `userinfo.read` | `GET /api/v1/userinfo` |
 | 选人 / 读通讯录 | `directory.read`（邮箱是 PII，要**另加** `directory.email.read`） | `GET /api/v1/directory/users` |
-| **站内消息 / 通知** | `notification.send`（只发给自己）· `notification.send.others`（发给别的成员） | `POST /api/v1/notifications`；服务态用 `/api/v1/notifications/service` |
+| **站内消息 / 通知** | `notification.send`（用户态只发给自己，服务态可发成员或角色）· `notification.send.others`（用户态发给别的成员） | 成员通知优先 `POST /api/v1/notification-events`（SDK `notifyEvent`，事件在清单 `notificationEvents` 声明）；自由文本 `POST /api/v1/notifications`；服务态各加 `/service`。见 [通知](open-api-and-extensions.md) §4 |
 | 收件箱 | `inbox.read` | — |
 | **统一审计** | `audit.write` | `POST /api/v1/audit` |
-| **定时任务** | `scheduler.read` / `scheduler.write` | `/api/v1/scheduler/tasks` |
-| 结构化内容 / CMS | `content.read` / `content.write` | `/api/v1/content/{type}` |
-| **用量计量** | `usage.report`（只收 namespace 前缀 == 你 azp 的 metricKey） | `POST /api/v1/usage/report` |
+| **定时任务** | `scheduler.read` / `scheduler.write` | 用户态 `/api/v1/scheduler/tasks`；App 后端自用 `/api/v1/scheduler/service/tasks`（回调另需 `scheduler.callback`）。见 [计划任务](open-api-and-extensions.md) §5 |
+| 结构化内容 / CMS | `content.read` / `content.write` | `/api/v1/content/{type}`；类型由 App 后端经 `/api/v1/content-admin/schemas` 按租户注册。见 [内容服务](open-api-and-extensions.md) §6 |
+| **用量计量** | `usage.report`（只收 namespace 前缀 == 你 azp 的 metricKey） | `POST /api/v1/usage/report`，见 [用量上报](usage-reporting.md) |
 | 席位配额 | `seats.read`（SERVICE_ONLY，经 manifest `privilegedServiceScopes` 申请、审批授予，见下节） | `POST /api/v1/seats/quota` |
+| 套餐权益 / 执行前配额 | `entitlements.read` / `entitlements.consume`（SERVICE_ONLY，同上申请） | `GET /api/v1/entitlements`、`/api/v1/quota/*`，见 [权益](quota-and-seats.md) §9 |
 | 币种与汇率 | `currency.read` | `GET /api/v1/currency` |
 | 判权限（PID） | — | `POST /api/v1/acl/check` |
 | 用户级设置 | `settings.read` / `settings.write` | `/api/v1/settings/me` |
@@ -41,7 +42,7 @@
 
 | 服务 | listingKey | scope 命名空间 |
 | --- | --- | --- |
-| **文件存储**（用户空间 + 应用空间、直传、预览、缩略图） | `files` | `files.read` / `files.write` / `files.share` |
+| **文件存储**（用户空间 + 应用空间、直传、预览、缩略图；见 [Files API](files-api.md)） | `files` | `files.read` / `files.write` / `files.share` |
 | 多模态解析（OCR / 文档结构化） | `omni-parser` | `omni_parser.read` / `omni_parser.parse` |
 | 大模型网关（OpenAI 兼容 `/v1`） | `llm-gateway` | `llm_gateway.read` / `llm_gateway.write` |
 
@@ -107,8 +108,9 @@ bucket 与凭据优先于托管池；存储位置由 Files 解析，调用 App �
 - **role 由对方在 `app.manifest.json` 里声明**（不需要门户改代码）；**各套餐的数值进不了
   manifest**，只有平台管理员在控制台能写 —— 应用侧一条写路径都没有。
   这是有意的：数值是商务面，改它等于改可售卖档位。
-- 对接面只有一个：`POST /api/v1/seats/quota`（服务态令牌 + `seats.read`）。**`available === null`
-  ⇒ 该租户 unlimited，放行、不要收口** —— 把 null 当 0 是这个契约最容易踩的一处。
+- 席位的对接面是 `POST /api/v1/seats/quota`（服务态令牌 + `seats.read`）。**`available === null`
+  ⇒ 该租户 unlimited，放行、不要收口** —— 把 null 当 0 是这个契约最容易踩的一处。要平台在执行前
+  原子预留扣减、按日计次或按套餐开关功能，用权益 `entitlements`（见 [quota-and-seats.md](quota-and-seats.md) §9）。
 - ⚠️ `seats.read` 是 `SERVICE_ONLY_SCOPES`：对方 manifest 里出现 `serviceScopes: ["seats.read"]`
   **会被拒收**，评审时这是**当场打回的信号**，不是配置失误。正确路径是
   `privilegedServiceScopes: [{ "scope": "seats.read", "reason": "…" }]` —— 这是**申请**不是授予：

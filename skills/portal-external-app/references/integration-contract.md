@@ -23,8 +23,8 @@
    - **迁移 argv**：迁移文件**必须在镜像里**，二进制上给一个迁移入口（如 `--role migrate`），
      由 `deployDescriptor.migrateArgs` 在**换容器前**以一次性容器执行。
      要求：幂等 · `pg_advisory_lock` 包住 · 失败非零退出 · expand-contract 前向兼容。
-     ~~外部命令（`scripts/migrate.sh up` 式）~~ 已作废 —— 脚本留在对方 repo 里门户拿不到，
-     对方 CI 也连不到门户的库；「启动自迁」同样不再推荐（失败变崩溃循环 + 挤健康窗口）；
+     不用镜像外的迁移脚本（门户拿不到对方仓的脚本，对方 CI 也连不到门户的库），也不在启动时自迁
+     （迁移失败会变成崩溃循环，并挤占健康检查窗口）；
    - 是否需**每租户 bootstrap**：业务表 FK 自己的 `tenants` 表就需要——首次写入前 `INSERT INTO tenants (id, slug) VALUES ('<门户租户UUID>','<slug>') ON CONFLICT DO NOTHING`，`id` **必须等于门户租户 UUID**（自铸 uuid 会在首写触发外键冲突）；`tenant_id` 只是普通列则无需；
    - `/health` 判活口径（§4）。
 5. **对接契约文档**：按 contract-doc-template.md 的结构写（路由→scope→PID 表、env、运维命令、信任边界）。
@@ -40,7 +40,8 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 → 200 { "ok": true, "data": {
     "active", "kind": "user"|"service", "principal_id", "credential_type", "credential_id", "aud", "listingKey", "azp",
     "tenant_id", "user_id", "scopes": [], "role", "isPlatformAdmin", "bypass", "groups",
-    "permissions": [{ "pid", "scope", "relations"? }]|null, "aclStamp", "exp"? } }
+    "permissions": [{ "pid", "scope", "relations"? }]|null, "aclStamp", "exp"?,
+    "name", "avatar_url", "plan", "tenant_scope" } }
 ```
 
 1. **身份**：端点显式允许 user/service；用户态检查 `(claims.listingKey ?? claims.aud) === 你的 listingKey`，否则 401 `INVALID_TOKEN`。服务态 aud 是来源 SA clientId、azp 是来源 App，按端点用途校验，不能把来源当目标；
@@ -50,6 +51,8 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 
 如端点是**平台级跨租户**读/写，在上述四道闸外另加 `claims.isPlatformAdmin === true`。该值由 Portal 在每次自省时按 `user_id` 检查其是否为平台租户 active admin，与当前 `tenant_id` / `role` / `bypass` 独立；它是自省派生信息，**不在 TDT JWT claims 里**。不能用当前租户 admin、平台租户 ID 比较或前端头推导全局身份。
 
+展示与租户字段：`name` / `avatar_url` 仅当令牌 scopes 含 `userinfo.read` 时有值（昵称优先于姓名），否则及服务态恒为 `null`；`plan` 是租户套餐（`free` / `pro` / `ultra` / `unlimited`）；`tenant_scope` 在令牌所属租户是平台租户时为 `"platform"`，否则 `"tenant"`，平台级身份仍以 `isPlatformAdmin` 为准。
+
 硬形状（外部实现最常炸的四处）：
 
 - **信封与故障**：门户响应先检查 `ok === true` 且 `data` 为对象，再校验声明；`ok:false`、缺/null data、坏 JSON、非法声明、自省 HTTP 401/403/5xx 或超时均返回资源端 503。不能从失败信封回退到顶层；合法 `active:false` 或真实到期才是 401。若实现兼容裸声明，只能在根本不存在 ok 字段时走独立完整校验分支。
@@ -58,6 +61,24 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 - **全局身份字段**：`active:true` 始终带布尔 `isPlatformAdmin`，服务态恒为 `false`。虽然 Portal 在自省时实时计算，下游缓存会让身份变更最多延后 60s 生效；更敏感的操作应缩短缓存或直查。
 - **门户三变量 all-or-nothing**：自省地址 + SA clientId + SA secret **全缺** → 门户鉴权停用、受门路由 503；**缺一不全** → 启动 fail-fast 打印缺失变量。避免半配置静默放行。
 - **租户隔离**按 `claims.tenant_id`（永不信任请求体）；限流自建 `(aud, tenant)` 每分钟窗口（参考默认 600/min）。
+- **一致性夹具**：非 TS 实现用 `@xgent/shared` 发布物里的 `fixtures/auth-contract.json` 做解析测试：`bases` 是三类主体的合法声明，`cases` 逐项改字段并给出期望 `active` / `inactive` / `protocol_error`（后者即资源端 503），`cacheCases` 覆盖缓存键隔离。
+
+**批量判 PID**：自省已带 `permissions`，一般在本地判即可。需要门户按当前授予现判时，用同一把 SA 凭证调：
+
+```
+POST {API_BASE_URL}/api/v1/acl/check
+  Authorization: Basic base64(<saClientId>:<saSecret>)
+  body: { "token": "<Bearer 凭证>", "pids": ["<listingKey>:action:x", ...] }
+→ 200 { "ok": true, "data": { "active", "results": [{ "pid", "allowed", "scope", "relations"? }] } }
+```
+
+令牌无效时 `active:false`、`results` 为空；非成员主体（服务态等）每项一律 `allowed:false`。长期凭证没有 TDT 时改传 `{ tenant_id, user_id, listing_key, pids?, explicit_pids? }` 查该用户此刻的在职、角色、席位与授予（见 [原生客户端 §4.1](native-clients.md)）；其中 `explicit_pids` 返回 `explicitlyHeldPids`，只算显式授予、不认管理员 bypass，最多 1000 项。
+
+**错误码**（完整目录以 `@xgent/shared` 导出的 `ERROR_CODES` 为准）：
+
+- 调自省 / acl/check 时：缺 Basic 凭证 → HTTP 403 `FORBIDDEN`；SA 不存在、密钥错、SA 停用或缺 `token.introspect` 能力 → HTTP 200 + `SERVICE_ACCOUNT_NOT_FOUND` / `SECRET_INVALID` / `CAPABILITY_NOT_GRANTED`；门户鉴权依赖超时 → 503 `PORTAL_UNAVAILABLE`。这些都按上面的信封规则在资源端转成 503，不是 401。
+- 资源端（`@xgent/portal-server-sdk` 的约定）：坏令牌或 listingKey 不符 → 401 `INVALID_TOKEN`；缺 scope → 403 `INSUFFICIENT_SCOPE`；主体类型不允许或无 PID 授予 → 403 `FORBIDDEN`；门户不可用或协议错误 → 503 `PORTAL_UNAVAILABLE`。
+- 门户签用户票（`POST /api/tokens/mint`）时常见：`CONSENT_REQUIRED`（带 `appName`、`scopes`，引导用户授权）、`SEAT_REQUIRED`（席位制 App 未分配席位）、`APP_DISABLED`；令牌交换另见 [跨应用交换](app-exchange.md#排错决策树)，服务态签发见 [服务令牌](service-tokens.md)。
 
 **三种令牌来路 × 授权姿势**：
 
@@ -75,7 +96,7 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 `user_id:null`、`azp` = 某个 listingKey、`tenant_id` 钉死），你的闸**一个字都不用改**。区别只在谁建、
 建给谁：
 
-| | 平台代建（`SA_DEFS` / manifest `serviceScopes`） | 租户自助（租户管理员，控制台路径 `/admin/service-accounts`） |
+| | 平台代建（平台预置 / manifest `serviceScopes`） | 租户自助（租户管理员，控制台路径 `/admin/service-accounts`） |
 | --- | --- | --- |
 | 建的人 | 平台管理员 / 你的 manifest 声明 | **租户自己的管理员**，不经平台 |
 | 典型用途 | 你的服务端调门户（files/notification/audit/seats…） | 该租户的采集器、脚本、CI **调你** |

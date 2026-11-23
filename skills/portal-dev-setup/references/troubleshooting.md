@@ -34,7 +34,7 @@
 | 已提交但 RustFS 不健康 / 回退提示数据有变化 | `rustfs-data` 是权威，勿删。回退先隔离正式服务，变化时拒绝回旧卷，需复制新卷做人工核验；细节见 SKILL.md §6 |
 | `curl http://localhost/api/health` → 404 `路由不存在` | **探错路径了。** 门户健康端点是 `/health`，不带 `/api`；各服务是 `/svc/<key>/health` |
 | 改了 `compose.env` 却「没生效」 | 这份文件是**拼装**出来的（基础模板 + 一盒增量 + devkit 增量 + 本机覆盖块），同一个键出现三四次很常见。**docker compose 后定义者胜**，你多半改在了中间那处。`"$S" env` 会把「同键多个不同值」标出来，并显示实际生效的那个。改配置一律往**文件最末尾**加 |
-| 一盒里 `bun --filter @xgent/<某个>-server …` 报 `no packages matched the filter` | **刻意的。** 精简镜像只保留 `files` / `llm-gateway` / `git` / `org` 四个基础服务的代码，其余在构建时就删掉了（`ingest` 已移出基础集） |
+| 一盒里 `bun --filter @xgent/<某个>-server …` 报 `no packages matched the filter` | **刻意的。** 精简镜像只保留 `files` / `llm-gateway` / `git` / `org` 四个基础服务的代码，其余在构建时就删掉了 |
 | `bootstrap:prod` / 部署控制器一启动就退出并打印拒绝原因 | **刻意的。** 一盒是调试底座，不是门户，这两样启动即拒 |
 | 完整的 `db:seed` 失败 | 它会拉起十几个 App 的种子链，而那些代码不在镜像里。一盒只能用 `db:seed:onebox` |
 | 视频没有海报、网格缩略图变成图标 | 一盒不装 ffmpeg。`PREVIEW_MEDIA_CONVERTER_URL` 必须**留空**；填 `auto` 会让每次转换去 exec 一个不存在的二进制 |
@@ -76,7 +76,7 @@
 | Kafka `Permission denied`，使用了 `KAFKA_DATA_DIR` | 确认使用原来的绝对路径、目录属主为 `1000:1000`，再重试。默认命名卷不需要另找宿主目录；不要用换目录绕过权限问题 |
 | Kafka 外部 bootstrap 能连，但读取 metadata 后超时 | broker 返回的 EXTERNAL 广告地址对客户端不可达；生产运维需同时核对 `KAFKA_EXTERNAL_BIND`、非回环的 `KAFKA_EXTERNAL_HOST`、端口与安全组。一盒保持回环；宿主用 HOST，同 compose 网络用 `kafka:9092` |
 | 升级后缺 Kafka 三键 / 仍是开发默认 | `"$S" upgrade` 使用新版资产，只补缺 `KAFKA_CLUSTER_ID` / `KAFKA_ADMIN_PASSWORD` / `KAFKA_PORT`，已有值保留；不要手动填空赋值阻止生成。需修复已有空值时先核对卷和原配置，不要给已有卷随机新 ID |
-| Kafka 主题不存在且没有自动创建 | `auto.create.topics.enable=false` 是配置约定，不能靠发送消息隐式创建；App 身份与主题授权由后续供给流程处理，不使用管理账号接业务 |
+| Kafka 主题不存在且发送没有自动建出 | 平台已开启自动建主题，但有的客户端默认不请求（如 `@platformatic/kafka` 要设 `autocreateTopics: true`）；再核对主题名在 `app.<listingKey>.` 前缀内、连接用的是 `add` 写入的 App 用户。不用管理账号接业务，见 [kafka.md](kafka.md) |
 | 起了一盒，**别的** compose 栈的容器被停/被接管 | 两套栈同名。`COMPOSE_PROJECT_NAME` 相同 ⇒ compose 认为是同一项目，容器名冲突、命名卷共享。一盒项目名固定 `xgent-onebox`，同机只该有一套——已有在跑的一盒时别再 init 第二套，把你的 App 接进现有那套（SKILL.md 文首「一套就够」） |
 | 报缺 `APP_IMAGE` / `APP_KEY` | `docker-compose.app-dev.yml` 里的 `${APP_IMAGE:?}` 是**解析期**求值的，跟 profile 无关。`$S` 会按 `compose.env` 里这两行有没有值自动决定带不带那层——手敲 compose 时才会撞上 |
 | 报缺 `APP_FRONTEND_DIST` | 你给 `service` 型 App 叠了前端 override。service 无前端，不要那层 |
@@ -108,8 +108,8 @@
 
 | 症状 | 成因与修法 |
 | --- | --- |
-| 自省 **401** | 服务账号 Basic 不对：manifest 的 `serviceAccount.secret` 与你后端实际读的 `<PREFIX>_SA_CLIENT_SECRET` / `<PREFIX>_RESOURCE_KEY` 不相等。两边读的是同一份 `compose.env`，对齐了就一定一致 |
-| 门户自省为 `active:true` 的 TDT，被你的后端判 `INVALID_TOKEN` | 后端没解包自省信封：`claims = body.data ?? body`。这是外部 App 最常见的第一个坑 |
+| 带有效 TDT 的请求被你的后端回 **503**，自省响应是 HTTP 200 + `SECRET_INVALID` | 服务账号 Basic 不对：manifest 的 `serviceAccount.secret` 与你后端实际读的 `<PREFIX>_SA_CLIENT_SECRET` / `<PREFIX>_RESOURCE_KEY` 不相等。两边读的是同一份 `compose.env`，对齐了就一定一致。完全没带 Basic 时门户回 403 |
+| 门户自省为 `active:true` 的 TDT，被你的后端判 `INVALID_TOKEN` | 后端没解包自省信封：只在 `ok === true` 时取 `data` 校验；失败信封或缺 `data` 回 503，不回退到顶层。这是外部 App 最常见的第一个坑 |
 | `EXCHANGE_NOT_ALLOWED` | 来源 listing 没声明 `exchangeTargets` / 目标 App 没安装 / 没建授权 / 用户没同意，四选一 |
 | 交换在**发起方** 401 | 发起方 App Secret 还没写进去——它绑的是**已安装实例**。顺序：`register-app` → 在市场里装上你的 App → **再跑一次 `register-app`**（幂等） |
 | 跨应用取数据的下拉列表莫名为空 | 多半是用户级的同意记录缺行（布线晚于同意）。在门户里对该 App 重新走一次授权屏 |

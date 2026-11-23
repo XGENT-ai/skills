@@ -30,7 +30,7 @@ POST {PORTAL}/oauth/token
 → { access_token: <aud=B 的 TDT>, scope, expires_in }
 ```
 
-产物是**用户态** TDT（有 `user_id`），且带 `azp = A`（发起方，B 侧自省可见，用于出处归因）。A 的 `allowedGrants` 须含 `token_exchange`，否则 `GRANT_NOT_ALLOWED`。
+产物是**用户态** TDT（有 `user_id`），且带 `azp = A`（发起方，B 侧自省可见，用于出处归因）。A 在该租户的令牌策略须允许 `token_exchange`（应用配置里的 `allowedGrants`，缺省全开，清单不能声明），否则 `GRANT_NOT_ALLOWED`。
 
 宿主代理入口 `POST /api/tokens/exchange-service` 使用 `{ sourceAppKey, targetAppKey, scopes?: string[] }`，同样支持请求上界。两入口先归一去重、收窄，再检查交换同意；返回 scope、签名票和审计使用同一集合。宿主入口仍要求完整的来源授权、会话上下文、打开模式及来源席位。
 
@@ -55,7 +55,7 @@ POST {PORTAL}/oauth/token
 完整 4 步：
 
 1. A 的清单：`exchangeTargets` += `B`，`scopes` += 所需 `B 命名空间.*`；
-2. 随发布提案提交 A 的清单，批准后由平台完成交换授权布线；请平台管理员核对 A→B 授权关系、B 的 `allowExchange`、白名单与 A 的 `allowedGrants`。本地一盒通过 `register-app` 注册清单；不要在 App 仓库创建门户配置文件；
+2. 随发布提案提交 A 的清单，批准后由平台完成交换授权布线；请平台管理员核对 A→B 授权关系、B 的 `allowExchange` 与白名单；租户管理员不要在 A 的应用配置里关掉 `token_exchange`。本地一盒通过 `register-app` 注册清单；不要在 App 仓库创建门户配置文件；
 3. 用户 consent 靠共授覆盖；**布线晚于用户首次 consent** 的存量用户会缺 `exchange_consents` 行——见排错决策树；
 4. B 侧无需改代码——照常四道闸（scope 交集 + azp 归因）。
 
@@ -63,7 +63,7 @@ POST {PORTAL}/oauth/token
 
 发起方后端按上面的标准 token-exchange 请求换票，再用返回的 Bearer token 调目标 App。不要把 App Secret 放进前端。
 
-- 换到的令牌按 **(目标 appKey, user, 归一后的请求 scope 集合)** 缓存、到期前复用；省略请求与显式子集分别缓存，不能拿宽票替代窄请求。缓存 key 必须含目标 appKey（曾有"换票缓存串 App"的真实 bug，现象是「有时 403、有时又通」）。
+- 换到的令牌按 **(目标 appKey, user, 归一后的请求 scope 集合)** 缓存、到期前复用；省略请求与显式子集分别缓存，不能拿宽票替代窄请求。缓存 key 必须含目标 appKey，否则不同目标会串用令牌，表现为「有时 403、有时又通」。
 - 交换失败**优雅降级**为可区分状态（`not_installed` / `unreachable` / `needs_consent`）：别把「目标没装」渲染成传输错误、别把 consent 缺失静默吞成空列表。**交换结果本身就是可用性探测信号**。
 - 想要更多 scope，改**声明**（A 的 scopes/exchangeTargets + 用户再同意），不是在交换请求里多要。
 
@@ -76,7 +76,7 @@ POST {PORTAL}/oauth/token
 | `VALIDATION_FAILED` | 请求 scope 为空、形状不对、含未知项或授权交集为空 | 按本次职责提供非空已注册 scope；核对来源授权与目标声明，不用多要 scope 扩权 |
 | 跨应用下拉/列表静默为空 | 同上（发起方吞了 consent 错误） | 先查 consent 接口，再查 scope 交集 |
 | `SECRET_INVALID` / 「跨应用授权缺失或未开启」但布线在 | **App Secret 漂移**：A 侧运行密钥与平台保管的当前密钥不一致 | 请平台管理员核对/轮换密钥并重新注入；核对 A 的运行环境是否漏配 `*_APP_SECRET`，不要输出密钥 |
-| `GRANT_NOT_ALLOWED` | A 的 `allowedGrants` 未含 `token_exchange` | 改 A 清单/注册 |
+| `GRANT_NOT_ALLOWED` | 租户管理员在 A 的应用配置里关掉了 `token_exchange` 授权方式 | 请该租户管理员在 A 的应用配置里重新启用；改清单无效 |
 | 换到令牌但调 B 全 403 `INSUFFICIENT_SCOPE` | 交集为空：A 未声明 B 命名空间 scope，或 A 入站 TDT 本身没带 | 查 A 清单 scopes + 入站令牌 scopes |
 | 更宽 scope mint 触发 `CONSENT_REQUIRED` | 同意被子集 mint **收窄**过（mint 把本次 scope 记为同意范围） | 先重新走 consent 再宽 mint；日常 mint 别传裁剪 scopes |
 

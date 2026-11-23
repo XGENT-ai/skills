@@ -42,6 +42,8 @@ description: '用于开发、接入或排查 XGENT Portal App：后端鉴权、i
 | 日志与遥测写入、采集器、流名和查询排错 | [日志接入](references/logging.md)；采集配置与端点契约按其中链接读取 |
 | 外部镜像交付、迁移、requiredEnv / requiredServices、品牌图 | [交付与环境供给](references/external-delivery.md) |
 | 判断已有平台能力：文件、通知、审计、用量、Widget、配额 | [平台能力](references/platform-capabilities.md) |
+| 经文件服务上传、列出、下载、版本与存储文件（选接入路径、清单前置、presign/finalize、`sdk.files.*`、空间角色、应用存储、`/latest`、错误码与限流） | [references/files-api.md](references/files-api.md) |
+| 上报用量指标（counter 与 gauge、`usageMetrics` 声明与 dims 白名单、整批拒绝的上报合同、两种 reporter 模式、排错） | [references/usage-reporting.md](references/usage-reporting.md) |
 | 服务账号签票、租户策略、管理控制面与撤销 | [服务令牌](references/service-tokens.md) |
 | 实现/评审资源服务器（四道闸、health、env、认证面划界、配置面） | [references/integration-contract.md](references/integration-contract.md) |
 | 实现 `/health`、出仓迁移、发布镜像或健康检查失败（必读） | [references/health-contract.md](references/health-contract.md)：两种正确实现、实际判据、发布前检查命令 |
@@ -49,6 +51,7 @@ description: '用于开发、接入或排查 XGENT Portal App：后端鉴权、i
 | 匿名页、后端直出 HTML、公开站点/独立域名、旧链接或 listingKey 迁移 | [references/public-entrypoints.md](references/public-entrypoints.md)：现有 /apps、/svc、Sites 三种通路及各自责任 |
 | 将本 App 的图片/视频/PDF 发布为不过期、可吊销的固定内容 URL | [references/files-stable-links.md](references/files-stable-links.md)：特权 scope 申请、服务态签发、轮询、公开读取与生命周期 |
 | 服务账号写进应用空间的文件，要让作者本人在文件管理里看得到 | [references/files-member-docs.md](references/files-member-docs.md)：`onBehalfOf` 署名、成员只读可见、成员内容隐私开关 |
+| 门户成员的独立 Web 站点（有后端、持 App Secret 的机密客户端）登录、换码、刷新与撤销 | [references/web-oauth.md](references/web-oauth.md) |
 | 门户成员的原生客户端（iOS/Android/桌面）登录与刷新、设备凭证、停用后失效时效、服务端成员查询与事件 | [references/native-clients.md](references/native-clients.md) |
 | 顾客/学生等终端用户的完整能力、租户用户中心、托管注册登录、账号与隐私治理 | [references/end-users.md](references/end-users.md)：先区分成员与终端身份，再按任务读认证协议或生命周期接口 |
 | CLI、MCP、个人自动化使用门户用户访问密钥，或接入多服务用户密钥目录 | [references/cli-user-keys.md](references/cli-user-keys.md)：受审 `cliAccess` 声明、标准绑定与通用目录 |
@@ -59,6 +62,7 @@ description: '用于开发、接入或排查 XGENT Portal App：后端鉴权、i
 ## 共用约束与验收
 
 - 资源后端按 [集成契约](references/integration-contract.md) 自省及四道闸授权；Bun/TypeScript 使用 `@xgent/portal-server-sdk`。前端 ACL 只控制展示，平台管理员身份只认服务端自省。
+- **micro App 自带完整导航**：`navItems` 只是交给租户管理员挑选、提升到门户左侧导航的快捷方式候选，安装后默认全部关闭，很多租户不会开启。用户常从应用中心或启动器进入 App 首页，此时 `init.route` 为空。因此每个用户页面都要能从 App 自己的侧栏、顶栏或页内链接到达，不能用 navItems 代替菜单，否则页面会没有入口。详见 [微应用开发](references/micro-app.md#设计红线平台一致性)。
 - `@xgent/*` 从平台私有 npm 安装，不 vendor、不以 file/link/tar 顶替；安装步骤读 `xgent-app-release` 的 `references/private-npm.md`。缺凭证时获取开发者配置，不能改写 SDK 来绕过安装。
 - `/health` 按 [健康契约](references/health-contract.md) 验证平铺/信封与依赖故障。业务接口使用门户响应信封，数据不存在不返回路由 404。
 - 独立 App 本地联调复用 `portal-dev-setup` 的共享 onebox；仓内开发遵守 `bun run dev:all`。不要混连两套环境。

@@ -48,7 +48,7 @@
   治理变更进「发布审核」等平台批准。
 - **安装 scope 同步**：外部 listing 自动发布、重试、版本或品牌图同步保留现存安装 scopes，不自动增加新 scope；租户管理员须显式调用 `POST /api/admin/market/listings/:key/update` 取得当前获批 scopes（安装版本已相同也可调用）。新安装取得 listing scopes；门户内置定义同步仍 union。
 - **scope 三规则**：平台基础 scope ∪ 自己命名空间（含连字符→下划线变体）∪ 已声明 `exchangeTargets` 的目标命名空间；越界 `VALIDATION_FAILED`。
-- **secret 一致红线**：平台落库的服务账号 secret 与镜像 env 里的必须一致；漂移症状是自省 401 或「跨应用授权缺失」（实为 `SECRET_INVALID`），排查先 sha256 比对两侧。
+- **secret 一致红线**：平台落库的服务账号 secret 与镜像 env 里的必须一致；漂移时门户自省回 HTTP 200 + `SECRET_INVALID`，资源服务按契约回 503（界面上也可能表现为「跨应用授权缺失」），排查先 sha256 比对两侧。
 
 ## 数据库迁移：平台在部署时替你跑
 
@@ -91,15 +91,15 @@ job(deploy|redeploy)
 `descriptor.env` / `envFile` 是**平台管理员治理字段**，manifest 永远带不进值（提交即拒），
 `requiredEnv` 只交键名。**键名集合的变化属治理档**：写进 manifest 的 `requiredEnv` 一变
 （新增/改名/删除），提案就转入「发布审核」，管理员批准前先看到新键名 —— 这是把
-「知会门户」变成流程内动作的那道门。**CR-3 之后它还是一道真闸**：批准前门户拿这张清单比对
+「知会门户」变成流程内动作的那道门。**它还是一道真闸**：批准前门户拿这张清单比对
 `descriptor.env ∪ envFile` 的键集合（只看键在不在，不读值），缺了就拒绝生效
 （`REQUIRED_ENV_MISSING`，提案留 pending）；审批屏逐键标状态，非密钥可当场填。改名要写成
 `{ key, renamedFrom }` 一条，门户会把旧键在 `descriptor.env` 里的值搬过去。普通条目在
 `envFile` 中的旧名仍判缺；带 `generate` 的条目可沿用可读文件中的旧名，App 必须兼容消费，
 不改文件、不复制值、不生成新主键。旧键已由平台保管时拒绝改名。仍有一件它管不到：对方
 **不写进 `requiredEnv`** 的静默改名依旧无门可拦 —— 症状是服务
-换版后 `refusing to start`，而发布方那侧只看到成功。2026-08-19 知识库把 `XGENT_OPENAI_*`
-整族改成 `XGENT_EMBED_*` 就是这么崩了几小时的；只改其中一个 key 更坏 —— 服务起得来，
+换版后 `refusing to start`，而发布方那侧只看到成功。例如把 `XGENT_OPENAI_*`
+整族改成 `XGENT_EMBED_*` 却不改清单；只改其中一个 key 更坏 —— 服务起得来，
 但 base URL/model/**dims** 静默回落默认值。所以收交付物时仍要求：改必需 env 必须**同步改
 manifest 的 `requiredEnv`**（改名走 `renamedFrom`），并把「本版新增/改名的必需 env」列进 checklist。
 **业务参数别塞进 `requiredEnv`**：审批人只懂环境，不懂你的业务。能在代码里给缺省值就不进清单；
@@ -206,6 +206,6 @@ compose 网络** —— 一份在一盒里能跑的 descriptor，`env` 里写着
 
 ## 一盒联调与冒烟
 
-外部团队不用克隆本 repo：平台给两个门户镜像 + `deploy/` 目录，对方出 manifest + `compose.env` + 自己的镜像。步骤、冒烟命令与排查速查表见 [registration-and-onebox.md](registration-and-onebox.md) §4–§6。
+外部团队不用克隆本 repo：平台给两个门户镜像（compose 资产由 `onebox.sh init` 从镜像取出），对方出 manifest + `compose.env` + 自己的镜像。步骤、冒烟命令与排查速查表见 [registration-and-onebox.md](registration-and-onebox.md) §4–§6。
 
 本地调试的 PostgreSQL、Redis、RustFS（S3）、Kafka 必须复用共享 `xgent-onebox`，不另起独立实例，也不连接 portal 仓自己的独立开发环境。宿主热重载与容器的接线边界见该参考 §4、§4.2 与 §4.4。

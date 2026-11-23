@@ -110,7 +110,7 @@ sha256(<manifest 的 exchangeInitiatorSecret>)
 ```
 
 「先装再重跑」那一步只对**第一个租户**是必要的：`installListing` 现在会把发起方密钥的哈希
-随安装布进新实例（EXCHANGE-SECRET-HOLD：有平台保管值用保管值，dev 没有保管值就从既有实例的
+随安装布进新实例（有平台保管值用保管值，dev 没有保管值就从既有实例的
 active 行拷哈希）——但「谁都还没布过」的第一个实例仍然只有 `register-app`（与 seed 的
 provisioning 路径）能写。所以装完第一个租户后的那次重跑仍要跑，**之后每次重跑都显示 0、
 之后装的租户自动布上，那都是正常的**。
@@ -122,12 +122,12 @@ provisioning 路径）能写。所以装完第一个租户后的那次重跑仍�
 `publish --manifest` 提交，平台在「发布审核」批准 = `registerFromManifest` 建全
 （清单、服务账号与已装租户对齐，后端部署和网关交付随后独立核验）。App 团队无需修改门户源码；平台配置由管理员管理。**生产没有 manifest 明文密钥这条路**：
 SA 密钥与交换发起方密钥（`<PREFIX>_APP_SECRET`）都由平台在批准时生成、enc:v1 保管、
-换版时注入容器（EXCHANGE-SECRET-HOLD）；明文只回显给审批人一次（供本地联调），轮换走
+换版时注入容器；明文只回显给审批人一次（供本地联调），轮换走
 控制台（应用清单 ›「轮换交换密钥」/ 服务账号 ›「轮换密钥」），都顺带排换版。要交接一枚
 **既有**的交换密钥（比如和一盒联调对齐），把值写进门户进程的 `<PREFIX>_APP_SECRET` env
 再批准一次即可 —— apply 会把它接管为保管值，两侧从此同源，那行 env 之后可删。
 
-⚠️ **secret 一致红线**：平台落库的服务账号 secret 与你镜像 env 里的必须一致。漂移症状 = 自省 401，或「跨应用授权缺失/未开启」（实为 `SECRET_INVALID`）。排查：对你侧 secret 求 sha256 与门户 DB 存的哈希比对。
+⚠️ **secret 一致红线**：平台落库的服务账号 secret 与你镜像 env 里的必须一致。漂移时门户自省回 HTTP 200 + `{ok:false, code:"SECRET_INVALID"}`，资源服务按契约回 503（不是 401）；界面上也可能表现为「跨应用授权缺失/未开启」。排查：对你侧 secret 求 sha256 与门户 DB 存的哈希比对。
 
 ### 3.1 声明由平台生成的独立密钥
 
@@ -157,7 +157,7 @@ descriptor 旧名按同值改名。带 `generate` + `renamedFrom` 时，可读 e
 
 ## 4. 一盒联调流程
 
-分工：平台交**两个门户镜像** + `deploy/` 目录（含 `app-devkit/` 与 `onebox/`）。你交
+分工：平台交**两个门户镜像**，compose 资产由 `onebox.sh init` 从镜像里取出（`app-devkit/`、`onebox/` 等落在一盒目录）。你交
 ①manifest ②`compose.env`（本机接线：`APP_KEY`=listingKey、`APP_IMAGE`、micro 才需
 `APP_FRONTEND_DIST` **绝对路径**）③你的后端镜像（+ micro 的前端 dist）。
 **不 clone 门户、不改门户代码、不重建门户镜像。**
@@ -168,8 +168,8 @@ descriptor 旧名按同值改名。带 `generate` + `renamedFrom` 时，可读 e
 宿主地址与 App 用户见 §4.4。
 
 ```
-<registry>/<项目>/one-box:latest   # portal runtime → XGENT_IMAGE       (~310MB)
-<registry>/<项目>/proxy:latest     # caddy proxy    → XGENT_PROXY_IMAGE (~68MB)
+<registry>/<项目>/one-box:latest   # portal runtime → XGENT_IMAGE
+<registry>/<项目>/proxy:latest     # caddy proxy    → XGENT_PROXY_IMAGE
 ```
 
 ⚠️ 三条硬前提，缺一条第 0 步就过不去：① **仓库地址与拉取账号都要问平台团队** —— 仓库不开放
@@ -177,7 +177,7 @@ descriptor 旧名按同值改名。带 `generate` + `renamedFrom` 时，可读 e
 凭证别转发给团队外的人、别写进会提交的文件（`portal-dev-setup` skill 把这两样收在一份
 `.xgent-registry.env` 里，照它配即可）。② **这两个调试镜像有 `latest`**（跟着最新一版走，开新项目
 不用先问 tag）；代价是本地已有同名 `latest` 时 compose **不回仓库查**，沿用 latest 先 `onebox.sh pull` 更新缓存，再 `upgrade` → `up` 同步资产。
-要钉住某一版就写 `:v<版本>-<7位sha>`（当前 `v1.1.0-5c1660e`），那种 tag 不可变。③ **一盒只发 `arm64`**（它是给开发机用的调试底座，开发机全是
+要钉住某一版就写 `:v<版本>-<7位sha>`，那种 tag 不可变。③ **一盒只发 `arm64`**（它是给开发机用的调试底座，开发机全是
 Apple Silicon），生产门户走另一条链。无 registry 访问时则要离线 `docker save` tar，`docker load` 即可
 （那条路上镜像的本地 tag 可能叫 `ai-portal-one-box:local` / `xgent-ai-portal-proxy:local`）。
 
@@ -220,16 +220,18 @@ shasum -a 256 "$S"
 
 ### 4.1 一盒里有什么，以及刻意没有什么
 
-一盒是**调试底座，不是门户**：它按 `deploy/onebox/Dockerfile` 单独构建，只带四个**基础服务 App**——
+一盒是**调试底座，不是门户**：它按 `deploy/onebox/Dockerfile` 单独构建，只带四个**基础服务 App** 的后端——
 `files`（文件管理）· `llm-gateway`（大模型网关）· `git`（Git 服务）· `org`（组织架构）。
 `git` **依赖 `files`**，两者要么一起在 `XGENT_BASE_APPS` 里、要么一起不在。
+默认目录（`XGENT_APP_CATALOG`）另含 `observability`（日志与监控，外部镜像，`up` 按清单拉起）与
+`user-center`（终端身份，由 portal-api 托管、无独立进程；种子给演示租户套餐配 `portal.end_users` 额度 100）。
 
 下面三件「缺失」都是刻意的，**不是环境坏了**，收到这些报错别当配置问题查：
 
 - 其余内置 App（spms/sms/qbank/lms/…）的 workspace **已从镜像里删掉** ⇒
   `bun --filter @xgent/spms-server …` 直接报 `no packages matched the filter`；
 - 镜像烘死 `XGENT_ONEBOX=1` ⇒ `bootstrap:prod` 与 deploy-controller **启动即拒**并打印原因；
-- 没有 `ffmpeg` 与 `docker CLI`（合计省 552MB）⇒ `PREVIEW_MEDIA_CONVERTER_URL` 必须**留空**
+- 不装 `ffmpeg` ⇒ `PREVIEW_MEDIA_CONVERTER_URL` 必须**留空**
   （填 `auto` 会让每次转换去 exec 一个不存在的二进制），视频海报/网格缩略图退化成图标，
   图片/PDF/文本预览不受影响。
 
@@ -245,55 +247,55 @@ shasum -a 256 "$S"
 
 ⚠️ 两个必改/必不做：
 
-- **`COMPOSE_PROJECT_NAME=xgent-onebox`** —— 模板里写死的是 `xgent`，同机起两套栈时
+- **`COMPOSE_PROJECT_NAME=xgent-onebox`** —— `init` 已写在覆盖块里；基础模板里是 `xgent`，手工拼 env 时漏改，同机起两套栈时
   compose 会认为它们是同一个项目：容器名冲突、命名卷被共享，症状是「我起了一盒，结果把另一套的
   容器停了」。项目名固定 `xgent-onebox`、全机只跑一套一盒：已有在跑的一盒时别再起第二套，
   把你的 App 接进现有那套（见 portal-dev-setup 文首「一套就够」）。
 - **不要**关掉 `local-infra` 让一盒去连你本地那套 PG —— 库名会撞（`xgent-portal` / `xgent-files` …），
   而 `db:seed:onebox` 是会往里写的，等于拿一盒的种子污染你的本地开发库。
 
-### 4.3 端到端命令（从 repo 根跑；相对路径解析自第一个 `-f` 文件所在目录）
+### 4.3 端到端命令（`onebox.sh up` 按此顺序代跑；以下为手动等价步骤）
+
+路径相对 `init` 生成的一盒目录；compose 的相对路径解析自第一个 `-f` 文件所在目录。
 
 ```bash
 # 0) docker login <registry> && docker pull 上面两个 tag（或 docker load tar）+ 你的镜像
-# 1) env 三层：基础模板 + 一盒增量 + 本套件增量
-#      cp  deploy/compose.env.example                deploy/compose.env
-#      cat deploy/onebox/compose.env.onebox.example  >> deploy/compose.env   # ★ 一盒必需
-#      cat deploy/app-devkit/compose.env.app.example >> deploy/compose.env
+# 1) env 三层：基础模板 + 一盒增量 + 本套件增量（init 已拼好并追加本机覆盖块）
+#      cat compose.env.example onebox/compose.env.onebox.example \
+#          app-devkit/compose.env.app.example > compose.env       # ★ 一盒增量必需
 #      填 XGENT_IMAGE / XGENT_PROXY_IMAGE / APP_KEY / APP_IMAGE /(micro)APP_FRONTEND_DIST
 #      + 你后端读的 SA 密钥与 DSN（与 manifest 的 serviceAccount.secret 等值）+ 强随机门户密钥
-# 2) 仅全新环境起基础设施: --profile local-infra up -d postgres redis rustfs
+# 2) 仅全新环境起基础设施: --profile local-infra up -d postgres redis rustfs kafka
 #    存量一盒先按下面的升级路径处理；不要直接起 rustfs。
-# 3) 门户迁移 + 基线 seed:
+# 3) 门户与基础 App 各库迁移 → 基线 seed（仅空库；迁移必须早于种子，
+#    种子要替 deploy-controller 跑各 App 的逐租户基线）:
 #      run --rm portal-api bun run db:migrate
+#      run --rm portal-api bun run db:files:migrate   # 同理 db:llm-gateway / db:git / db:org
 #      run --rm portal-api bun run db:seed:onebox     # ★ 不是 db:seed
-# 4) 注册:        run --rm -v "$(pwd)/deploy/app-devkit/manifests:/devkit:ro" \
+# 4) 注册:        run --rm -v "<放 manifest 的目录的绝对路径>:/devkit:ro" \
 #                   portal-api bun run register-app /devkit/<你的>.manifest.json
 # 5) 起门户三件套 + 你的后端（网络别名 <key>-server:8080）:
 #      -f docker-compose.yml \
 #      -f onebox/docker-compose.onebox.yml            # ★ 一盒必须叠这一层
 #      -f app-devkit/docker-compose.app-dev.yml [micro 加 app-frontend.yml]
 #      --profile local-infra --profile app-external up -d reverse-proxy portal-api app-backend
-# 5b) 按需起基础 App 后端（同一个镜像，compose command 选跑哪个）+ 各自库迁移:
+# 5b) 按需起基础 App 后端（同一个镜像，compose command 选跑哪个）:
 #      --profile app-files --profile app-llm-gateway --profile app-git --profile app-org up -d
-#      run --rm portal-api bun run db:files:migrate   # 同理 db:llm-gateway / db:git / db:org
-#      ⚠️ 这批迁移要跑在 db:seed:onebox 之前 —— 种子会替 deploy-controller 跑各 App 的逐租户基线
 # 6) 你自己的库迁移：跑你镜像的迁移 argv（生产由门户经 migrateArgs 自动跑，这里手动跑同一条）
 #      run --rm --env-file <同一份> <你的镜像> --role migrate
 #    每租户 bootstrap（若你的表 FK 自己的 tenants）：门户目前没有钩子，本地手动建行
 ```
 
 ⚠️ **第 3 步必须是 `db:seed:onebox`**：`db:seed` 会串起十几个 App 的种子链（qbank/lms/exam/task/…），
-而它们的 workspace 不在一盒镜像里 —— **必失败**。`db:seed:onebox` 只种 `XGENT_APP_CATALOG` 里的四个基础 App。
+而它们的 workspace 不在一盒镜像里 —— **必失败**。`db:seed:onebox` 只种 `XGENT_APP_CATALOG` 里的 App（默认四个基础 App 加 `observability`、`user-center`）。
 
 ⚠️ **`/svc/<key>` 由一盒的 `gateway-publisher` 发布**：注册后数秒内生成新一代路由，指向 `<key>-server:<deployDescriptor.port>`；清单不带 `deployDescriptor` 就不会出路由。不需要也不能手工 reload 反代。
 
 ⚠️ **依赖 `files` 的 App 别忘了 5b**：`files` 已在镜像里、`/svc/files` 已放行、市场安装会连带补装它，
-但**后端进程不起来**读文件就是 502/401。`FILES_SA_CLIENT_SECRET` 必须与 `db:seed:onebox` 种的 SA secret
-等值，否则自省 401。
+但**后端进程不起来**读文件就是 502。`FILES_SA_CLIENT_SECRET` 必须与 `db:seed:onebox` 种的 SA secret
+等值，否则门户自省回 `SECRET_INVALID`，files 回 503。
 
-细节（含 App 自带的其他基础设施 sidecar、把后端跑在宿主上保留热重载的 socat 绕法）见交付包内
-`deploy/app-devkit/README.md`。
+叠加自己的 compose 层、后端跑在宿主上保留热重载（`XGENT_ONEBOX_SVC_UPSTREAMS`）见 `portal-dev-setup` §2.2 与 §5。
 
 ### 4.4 Kafka 接入
 
@@ -421,8 +423,8 @@ curl -X POST http://localhost/svc/<key>/v1/...   # 缺/错 token → 401/403（�
 | 发起交换 401 | `exchangeInitiatorSecret` 未写进已安装实例（先安装再重跑 register-app）或 secret 漂移 |
 | 受门路由 503 | 门户三变量（自省地址/SA id/secret）配置不全 |
 | `db:seed`/`bun --filter @xgent/<别的 App>` 报 `no packages matched the filter` | **刻意的**：一盒只带四个基础 App，其余 workspace 已删。seed 用 `db:seed:onebox`（§4.3） |
-| 读写文件 502 / 401 | `files` 后端没起（`--profile app-files` + `db:files:migrate`）；401 多半是 `FILES_SA_CLIENT_SECRET` 与种子里的 SA secret 不等值 |
-| `git` 连不上本机 Gitea/GitHub | 一盒是 `NODE_ENV=production`，SSRF 守卫默认拒环回与私网 —— 把目标 hostname 显式列进 `GIT_ALLOWED_HOSTS` |
+| 读写文件 502 / 503 | 502：`files` 后端没起（`--profile app-files` + `db:files:migrate`）；503 多半是 `FILES_SA_CLIENT_SECRET` 与种子里的 SA secret 不等值（自省回 `SECRET_INVALID`） |
+| `git` 连 Gitea/GitHub 报 `HOST_NOT_ALLOWED` | `GIT_ALLOWED_HOSTS` 非空时只放行名单内主机，把目标 hostname 补进去或留空；留空时只有 `NODE_ENV=production` 才拒环回与私网，一盒 `init` 写的是 `development`。连本机 Gitea 用 `host.docker.internal`，容器里的 `localhost` 是容器自己 |
 | 视频海报/网格缩略图不出 | 一盒没装 ffmpeg，`PREVIEW_MEDIA_CONVERTER_URL` 应留空（§4.1）；其余预览不受影响 |
 | 起了一盒把另一套栈的容器停了 | `COMPOSE_PROJECT_NAME` 没改（§4.2） |
 
@@ -430,4 +432,4 @@ curl -X POST http://localhost/svc/<key>/v1/...   # 缺/错 token → 401/403（�
 
 开发者应用概览提供上传与地址复制。接口 `POST /api/v1/developer/apps/:key/logo` 以开发者用户 TDT 和原始图片字节请求；服务端验证当前租户、显式开发者页面/品牌动作 PID、维护者关系、字节格式与 2 MiB 上限。成功 `{ok:true,data:{url}}`，同时写 listing 并同步存量安装；同字节 URL 幂等。平台存储未配置返回 `STORAGE_NOT_CONFIGURED`，不可回退为 data URI。
 
-将 URL 填入源 `app.manifest.json` 的 `logoUrl` 并递增版本。字段省略沿用，`null` 清空；只支持 `/api/assets/app-logo/<本 listingKey>/<64位小写sha256>.(svg|png|webp)`。展示字段按自动档发布，存量安装与新装一致，保留租户自定义名称。品牌显示在市场、应用中心、启动器、宿主版头与授权屏；左侧导航保持 `icon` 命名字形。跨部署清单目录会剔除这个单部署资产地址，目标门户须重新上传品牌图并回填 URL。需要包含门户提交 `1590f2e3` 的运行件（本期一盒 tag `wise-pdf-p1-1590f2e3-20261019`）。
+将 URL 填入源 `app.manifest.json` 的 `logoUrl` 并递增版本。字段省略沿用，`null` 清空；只支持 `/api/assets/app-logo/<本 listingKey>/<64位小写sha256>.(svg|png|webp)`。展示字段按自动档发布，存量安装与新装一致，保留租户自定义名称。品牌显示在市场、应用中心、启动器、宿主版头与授权屏；左侧导航保持 `icon` 命名字形。跨部署清单目录会剔除这个单部署资产地址，目标门户须重新上传品牌图并回填 URL。目标门户或一盒须为支持品牌图上传的版本。

@@ -12,7 +12,8 @@
 「本租户上限」，第一次调档就会与门户对不上，而且**没有任何东西会告诉你它们分叉了**。
 
 **配额 ≠ 用量**：配额答「还能不能再建一个」，用量答「这段时间用了多少」。后者走 `usageReporter`
-+ `usage.report`（指标注册表 = 内置 `USAGE_METRICS` ∪ manifest `usageMetrics` 声明，见 §5）。
++ `usage.report`（指标注册表 = 内置 `USAGE_METRICS` ∪ manifest `usageMetrics` 声明，见 §5 与
+[用量上报](usage-reporting.md)）。
 计费方向另有平台级 Credit 服务，同样不自建。
 
 ## 1. 先选模型：二选一
@@ -25,6 +26,9 @@
 | --- | --- | --- |
 | `seatBased: true` | 计「门户成员」用不用得了这个 App | **门户**。TDT 签发时就拦：无席位 ⇒ `SEAT_REQUIRED`，App 侧零代码 |
 | `seatRoles: ["teacher","student"]` | App **自管账号/资源**（学校管理 `lms-school` 的师生号那类） | **App 自己**。门户只发数，不拦对方的建号请求 |
+
+要平台在执行前原子预留、扣减并记账（并发不超卖、已用由平台维护），或要按套餐开关功能、按日计次，
+用另一套机制：**权益（`entitlements`）**，见 §9。
 
 ## 2. 四要素分属四个事实源
 
@@ -99,15 +103,14 @@ body { roles: ["service","node"] }
 metricKey 约定 `<listingKey>.<role>-seats.allocated`（`latestRoleAllocated` 读最近一天）。
 学校管理（`lms-school`）先例每个 role 报两条（`allocated` + `available`），两个 role 共 4 条。
 
-⚠️ **硬门**：`ingestUsage` 对**未注册**的 metricKey **拒收该条记录**，且指标的
-`appKey` 必须等于上报者的 azp。漏注册的症状是上报接口返 200 但记录进 `rejected`，
-控制台「已用」恒 0、`overQuota` 恒 false、加购决策没有依据（拒收理由现在会显式指出
-「未注册 —— 请在 usageMetrics 里声明」，不再是无提示的静默失真）。
+⚠️ **硬门：一条坏记录拒收整批。** metricKey **未注册**、指标不属于上报者 azp 的命名空间、
+日期/数值/维度非法……任一条不合格，上报接口就回 `ok: true` 但 `upserted: 0`，`rejected` 逐条列出
+`{ index, reason }`，同批合法的记录**也不写入**。上报方必须检查 `rejected`：漏注册的症状是
+控制台「已用」恒 0、`overQuota` 恒 false、加购决策没有依据，拒收理由会写明「未注册」。
 指标注册表 = 内置 `USAGE_METRICS` ∪ 各 listing 的 manifest `usageMetrics` 声明：
 **外部 App 在自己 manifest 的 `usageMetrics` 里声明 gauge 条目**
 （`[{ key, kind: "gauge", unit: "count", label: {"zh-CN",…} }]`，key 前缀必须=listingKey、
-金额单位 microAmount 不开放；治理档，批准后生效）——不再需要门户发版；
-平台内建指标由平台维护，外部 App 无需修改平台代码。
+金额单位 microAmount 不开放；治理档，批准后生效），无需门户发版。上报合同见 [用量上报](usage-reporting.md)。
 
 ## 6. 两层快照：谁读哪一层
 
@@ -139,45 +142,97 @@ role 返回兜底值。真实症状是**控制台配额矩阵与加购面不出�
 
 ## 8. 判定：这个数该不该进套餐表
 
-**先问一句「你说的是配额还是用量」** —— 两者经常被混为一谈。三个面的命名空间也各不相同：
+**先问一句「你说的是配额还是用量」** —— 两者经常被混为一谈。几个面的命名空间也各不相同：
 
 | 面 | 命名 | 例 |
 | --- | --- | --- |
 | scope | **下划线** | `task_gateway.submit` |
-| 用量指标 `USAGE_METRICS.key` | **连字符** | `task-gateway.tasks.submitted` |
-| 配额 | **不是字符串键** | `(task-gateway, pro, service) → 10` |
+| 用量指标 `USAGE_METRICS.key` | **连字符**（= listingKey 前缀） | `task-gateway.tasks.submitted` |
+| 权益 key | `<listingKey>.` 前缀 + 小写字母/数字/`._-` | `my-app.exports` |
+| 席位配额 | **不是字符串键** | `(task-gateway, pro, service) → 10` |
 
-配额的键空间是 `app_seat_quotas` 的唯一索引 `(listing_key, plan, role) → seats:int`。namespace 已经
-由 `listingKey` 占掉，你要提供的只是一个**短 role 名**。（所以「entitlements 的 key 怎么命名」是个
-不成立的问题 —— 平台没有 entitlements 这个东西。）
+席位配额的键空间是 `(listingKey, plan, role) → seats:int`，namespace 已由 listingKey 占掉，你要提供的只是一个**短 role 名**。
 
 **再问「是不是真要按套餐卖」。** 只是防滥用的安全上限就别进套餐表 —— 进了就等于承诺它是可售卖
 档位，以后想改口径要动所有租户的既有配额。
 
-**最后看它像不像一个「池子」。** `app_seat_quotas` 存的不是参数，是池子：它自带加购
-（`available = quota + addon`）、已占用（gauge）、超额（`overQuota = allocated > available`）三件配套。
-配套不成立的东西塞进去不会报错，只会让控制台显示一行永远「已用 0 / 未超额」、还挂着语义错的
-加购入口的假数据。
+**然后选机制：**
 
-⚠️ 别拿「唯一键里没有『每个父对象』这一维」当判据 —— 一个**对所有实例一律生效**的上限就是
-一个整数，`(app, plan, role) → 5` 存得下。只有「A 服务 3 个、B 服务 10 个」那种**真嵌套**配额才卡在
-键的形状上。平台**不**为此新建通用 entitlements 表：真功能要排期，代价是平台从此有两套配额模型。
+| 你要的 | 用 |
+| --- | --- |
+| 门户成员能不能用这个 App | `seatBased` |
+| 每租户能建几个账号/资源，App 自己在建号路径上判，要加购与已用水位 | `seatRoles` + gauge 上报（§4、§5） |
+| 平台在执行前原子预留与扣减（并发不超卖、已用由平台记账）；按日计次；按套餐开关功能 | 权益 `entitlements`（§9） |
+| 不随套餐变的上限 | App 侧产品常量 |
 
-## 9. 案例：task-gateway 的 `max_services` / `max_nodes_per_service`（2026-08-19）
+`seatRoles` 存的不是参数，是池子：它自带加购（`available = quota + addon`）、已占用（gauge）、超额
+（`overQuota = allocated > available`）三件配套。配套不成立的东西塞进去不会报错，只会让控制台显示一行
+永远「已用 0 / 未超额」、还挂着语义错的加购入口的假数据。
 
-对方提议拿它们当「entitlements 的 key」问门户怎么映射到套餐表。逐条判定：
+⚠️ 两套机制都按租户计，**没有「每个父对象」这一维**。「每个 service 最多 N 个 node」这类对所有实例一律
+生效的上限：不随套餐变就做 App 常量；要随套餐卖，优先改卖租户级总量（如 `node` 池，配套全部成立）；
+确实要卖密度，就把这个上限当一个 role 落，标签写清是「每个 X 的上限」而不是总量，并接受那行配套空转。
+「A 服务 3 个、B 服务 10 个」那种真嵌套配额平台不支持。
 
-- **`max_services`**（每租户最多几个 service）→ **能落**，就是一个 role。按 §2 的事实源表分工：
-  role 由对方 manifest 声明 · 数值平台在控制台配 · gauge 由对方 manifest `usageMetrics` 声明 ·
-  `seats.read` 由对方 manifest `privilegedServiceScopes` 申请（审批授予）· 门户侧只剩
-  `SEAT_ROLE_LABELS` 三语标签一件（可选，不加显示裸 role key）。
-- **`max_nodes_per_service`**（每个 service 最多几个 node，对所有 service 一律生效）→
-  **能落，但配套三件空转**（§8）。按「随不随套餐变」三分：
-  **(a)** 不随套餐变（纯防滥用）→ App 侧产品常量，别进表；
-  **(b)** 随套餐变、卖的是**总容量** → 租户级 `node` 池（`seatRoles: ["service","node"]`），三件配套
-  全部成立，门户看得见真实水位、加购这条商业路径也保住 —— **默认推荐这条**；
-  **(c)** 随套餐变、且确实要卖「节点密度」→ 把这个一律生效的上限当一个 role 落，标签必须说清是
-  「每个服务的上限」而不是总量（否则平台管理员会当成总量配错），接受那行的配套空转。
+## 9. 权益（entitlements）与执行前配额
+
+和 `seatRoles` 的区别：`seatRoles` 只发数，收口与占用都在 App；权益由平台记账 —— App 执行前向平台
+**预留**额度，平台在事务里判定并占用，结束后核销或释放，`used` / `reserved` 由平台维护，不需要另报 gauge。
+
+**声明**：manifest `entitlements`（治理档，进「发布审核」；批准后这些 key 出现在套餐与租户额度的配置面）：
+
+```jsonc
+"entitlements": [
+  { "key": "my-app.projects", "kind": "resource",   "unit": "count", "window": "none",    "name": "项目数", "nameI18n": { "en": "Projects" } },
+  { "key": "my-app.exports",  "kind": "consumable", "unit": "count", "window": "utc_day", "name": "每日导出次数" },
+  { "key": "my-app.advanced", "kind": "feature",    "unit": "count", "window": "none",    "name": "高级功能" }
+]
+```
+
+- 最多 32 条；`key` 必须以 `<listingKey>.` 开头，其余为小写字母/数字/`._-`（≤64）；`name` ≤200，`nameI18n` 只放 `en` / `zh-TW`，`sort` 为整数。
+- `kind`：`feature` 开关（无额度，不能预留）；`resource` 活跃占用数（无窗口，资源删掉时归还）；`consumable` 周期消耗。
+  `feature` / `resource` 的 `window` 只能是 `none`；`consumable` 用 `utc_day`（按 UTC 日重置）或 `grant`（按租户的购买来源计量，见下文）。
+- `unit`：`count`；或 `microAmount`（金额，1e-6 主单位），只能是 `consumable` + `utc_day`，且必须带 ISO 4217 `currency`。
+- **只增不减**：已注册 key 的 `kind / unit / window / currency` 不能改（改语义要换新 key，否则发布被拒）；删掉声明也不回收既有 key 与账本。`name / nameI18n / sort` 可改。
+
+**数值不在清单里**：平台管理员按套餐配置开关与上限（`0` = 明确禁止，`null` = 无限），并可对单租户覆盖或加购
+（仅专业版 / 尊享版可加购）；租户管理员可自设收紧。没配置的 key 是 `unconfigured`，**一律不放行**。
+
+**读**：服务态 `GET /api/v1/entitlements?keys=a,b`（`entitlements.read`，≤50 个，缺省返回全部）→
+`{ tenantId, plan, rows }`。每行含 `enabled`、`limit`（null = 无限）、`used`、`reserved`、`available`、
+`enforcementMode`（`unconfigured` / `disabled` / `enforced` / `unlimited` / `over_limit`）、`source`、`periodStart`。
+功能开关以 `enabled` 为准；`over_limit` 表示上限已调到占用之下，只禁新增、已有资源照常。
+**读到余额不等于能扣**：扣额只认下面的预留。
+
+**预留与结算**（服务态 `entitlements.consume`，只能操作本 App 自己的 key，别人的 key 回 403）：
+
+| 端点 | body | 作用 |
+| --- | --- | --- |
+| `POST /api/v1/quota/reserve` | `{ key, operationKey, units, expiresInSeconds, resourceRef?, begin? }` | 预留，回 `{ operation, duplicate }`；`begin: true` 预留后直接进入 executing |
+| `POST /api/v1/quota/operations/:id/begin` | — | `reserved → executing`，即将执行外部动作 |
+| `POST /api/v1/quota/operations/:id/commit` | `{ actualUnits? }` | 核销；`actualUnits` 为 0..预留量，缺省等于预留量，差额归还 |
+| `POST /api/v1/quota/operations/:id/release` | `{ reason? }` | 释放，占用全部归还 |
+| `POST /api/v1/quota/operations/:id/uncertain` | `{ reason }`（1–200 字） | `executing → uncertain`：外部动作可能已发生但结果未知，占用保留 |
+| `GET /api/v1/quota/operations?key=&operationKey=` | — | 按幂等键回读，无则 `data: null` |
+| `GET /api/v1/quota/operations/open?state=&limit=&cursor=&staleOnly=` | — | 未终结操作分页（`limit` ≤500），回 `{ items, nextCursor }` |
+
+- `operationKey`（1–128 位，字母/数字/`._:-`）是幂等键：同 key 同请求回原操作且 `duplicate: true`，内容不同 `QUOTA_OPERATION_CONFLICT`。幂等判据由平台按归一后的请求计算。
+- `expiresInSeconds` 必填，不得超过平台上限；未开始的预留到期自动 `expired` 并归还，过期后 begin / commit 回 `QUOTA_RESERVATION_EXPIRED`。**executing 不会自动过期**，超时只进入平台对账视图。
+- 额度不足 `ENTITLEMENT_QUOTA_EXCEEDED`（`details` 带 `limit / used / reserved / requested`）；未配置 `ENTITLEMENT_UNCONFIGURED`；已关闭 `ENTITLEMENT_DISABLED`。平台没开放远程配额时 reserve 也回 `ENTITLEMENT_UNCONFIGURED`。
+- `resource`：同一 `resourceRef` 同时只能有一个活跃占用（重复回 `QUOTA_OPERATION_CONFLICT`）；已核销的占用在资源删除后用 release 归还。`consumable` 核销后不能 release 冲回。
+- 计数权益可以不调 begin，直接从 reserved commit。不属于你或不存在的操作 ID 一律 `NOT_FOUND`。
+- 重启后先按 `operationKey` 回读，再用 `open` 列表对账，把卡在 executing / uncertain 的操作凭证据 commit 或 release。
+- 金额（`microAmount`）更严：reserve 必须带与定义一致的 `currency`（可带 `costBasisRef`），**必须先 begin 才能 commit**；commit 带 `currency`、`evidenceRef` 与实际费用 `actualUnits`，实际可超过预留但要给 `overrunReason`（该 key 的新执行随即冻结，等平台审查）；已开始的金额操作 release 须带 `reason` + `evidenceRef`，已结算的不能 release。
+
+**`window: "grant"` 的 key 走另一套接口**：`GET /api/v1/grant-entitlements` 与 `/api/v1/grant-quota/reserve`、
+`/grant-quota/operations/:id/{begin,commit,release}`、`/grant-quota/operations`、`/grant-quota/operations/open`（`limit` ≤200），形状同上，区别：
+
+- 只记条数，不收 `currency`；没有 `/uncertain`，改用 release 带 `uncertain: true`；按幂等键回读返回 `{ operation }`。
+- 额度来自租户的各个购买来源：读接口逐来源给出 `quantity / used / reserved / remaining / windowStart / windowEnd / nextResetAt`，`totalRemaining` 只供展示。界面要**逐来源展示**，否则用户分不清「永久有效的包」和「下个周期才恢复的额度」。
+- 没有可用来源 `ENTITLEMENT_UNCONFIGURED`；租户计费停用（`suspended: true`）时新预留回 `ENTITLEMENT_SUSPENDED`，读与在途结算照常。
+- 两套接口互不相认：非 grant key 调 `/grant-*`、或在 `GET /entitlements` 里点名 grant key，回 `ENTITLEMENT_PROTOCOL_UNSUPPORTED`；grant key 调 `/quota/reserve` 按未注册处理，回 `ENTITLEMENT_UNCONFIGURED`。
+
+`entitlements.read` 与 `entitlements.consume` 都是服务专用 scope，经 manifest `privilegedServiceScopes` 申请（同 `seats.read`）。
 
 ## 10. 落地清单
 
@@ -188,6 +243,13 @@ role 返回兜底值。真实症状是**控制台配额矩阵与加购面不出�
 3. manifest 加 `privilegedServiceScopes: [{ "scope": "seats.read", "reason": "…" }]`（申请，审批逐条确认后授予）
 4. （可选）门户 `SEAT_ROLE_LABELS` 加三语标签 —— 唯一仍要门户发版的一件；不加则控制台显示裸 role key
 5. 批准部署后，平台管理员在控制台按 `App × role × 套餐` 配一轮真实数值
+
+**外部 App（权益路）**
+
+1. manifest 加 `entitlements: [...]`（治理档）
+2. manifest `privilegedServiceScopes` 申请 `entitlements.read` / `entitlements.consume`
+3. 批准后，平台管理员按套餐配置开关与上限；没配之前一律 `unconfigured`、不放行
+4. 执行路径：reserve →（begin）→ 执行 → commit / release；失败重试沿用同一个 `operationKey`
 
 **平台管理员**：维护套餐/加购数值与可选本地化标签；App 团队不能用发布令牌修改这些配置。
 

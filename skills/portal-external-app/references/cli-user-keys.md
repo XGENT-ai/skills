@@ -6,7 +6,7 @@
 
 先确认目标门户已部署支持 `cliAccess` 的数据库迁移、API 和授权页。共享包中的类型存在，不表示某个门户环境已启用能力。旧门户批准一个未知字段，也不证明该字段已进入运行时目录。
 
-在 App 自己的唯一 manifest 中声明并 bump version，通过原有发布提案审批到达；不申请修改门户的 `CLI_SERVICES`、权限枚举或授权表单。
+在 App 自己的唯一 manifest 中声明并 bump version，通过原有发布提案审批到达；不申请修改门户代码里的服务登记、权限枚举或授权表单。
 
 ```json
 {
@@ -77,6 +77,25 @@ await userKeys.bindExisting(tdt,
 
 App 的项目、文件或资源白名单由 App 自己维护；复杂设置放在 App 自己的管理面。清单不包含可执行插件、任意请求模板或业务表单 schema。
 
+## App 直接委托签发
+
+不经门户授权页、由 App 自己的设置页给当前用户签一把只进本 App 的密钥时，用同一个 client（门户拒绝服务身份、用户密钥和交换票发起签发）：
+
+```ts
+const { binding, secret } = await userKeys.createAndBind(
+  tdt,
+  { userId: actor.userId, tenantId: actor.tenantId, appKey: actor.aud },
+  { name, scopes, expiresAt },
+  async key => saveBinding({ credentialId: key.id, ...businessPolicy }), // 回调内提交本地事务
+);
+```
+
+- 先检查自己的期限、能力和资源约束再调用；回调只拿到已核验的公开 metadata，明文 `secret` 只在返回值里出现一次，展示给用户后不落库、不进日志。
+- 绑定回调抛错时 SDK 自动撤销刚签的密钥，并抛 `PortalUserKeyBindingError { credentialId, revocationPending }`；`revocationPending: true` 表示撤销也没送达，保存或展示该 ID 以便稍后重试撤销。签发本身不自动重试，响应丢失时让用户撤销后重建。
+- `extend(tdt, id, expiresAt)` 原位续期，明文不变，只限密钥属主本人；跨多个 App 的密钥报 `MULTI_TARGET_KEY`，已吊销报 `TOKEN_REVOKED`。
+- `revoke(tdt, id)` 可重复调用。先在本地禁用绑定再调门户；门户撤销失败时即使本地已禁用也要重试。
+- `get(tdt, id)` / `getMany(tdt, ids)`（最多 100 个）读门户的可信 metadata，列表页用后者一次取齐。
+
 ## 使用与发现
 
 机器入口须显式接纳 `user_access_key`。每次请求先验证门户自省的当前主体资格，再按 `credential_id` 检查本 App 已提交的绑定、资源范围与业务规则；普通 REST 不因登记 CLI 能力而自动接纳长期密钥。
@@ -91,9 +110,23 @@ const target = candidates.find(item => item.appKey === configuredAppKey);
 
 每项包含安装代次相关的稳定 `id`、实际 `appKey`、`listingKey`、名称、协议、同源 `url` 与有效权限。没有匹配项或字段缺省时，客户端报告能力不可用；不能猜测服务地址。请求携带 bearer 时禁止跟随重定向。
 
+一把密钥可以同时进多个 App。资源端用自己的 SA 自省时，门户按调用方 SA 所属 App 选出对应目标，返回的 `aud`、`listingKey`、scope 与 ACL 都是本 App 那一份，所以原有 listingKey 校验不用改。本 App 的目标已被摘除，或多目标密钥里没有本 App 时，自省为 `active:false`；只有一个目标的密钥照常返回那个目标，由 listingKey 校验拒绝。
+
 `services.files/spms/llm/skills` 是旧客户端兼容视图；新增 App 不为它新增字段。`xgent-skills-v1` 表示既有 Skills 客户端协议，仅有一个有效提供方时可投影到 `services.skills`；多提供方使用通用目录。能力名与 listingKey 分别演进，不能把旧权限名无条件映射成新权限。
 
 撤回声明不会替用户自动撤销已激活的密钥，也不改变 App 直接委托签发的凭证合同。要停用已有密钥，使用门户撤销或 App 移除目标的既有流程；卸载、主体失格和 consent 撤回继续按当前授权事实生效。
+
+## CLI 登录与退出
+
+CLI 起一个本机回环监听，再在浏览器打开门户授权页：
+
+```
+{PORTAL}/cli/auth?redirect_uri=http://127.0.0.1:<port>/callback&state=<随机>&client=<客户端名>&name=<设备名>
+```
+
+- `redirect_uri` 只接受字面形式 `http://127.0.0.1:<port>/callback` 或 `http://localhost:<port>/callback`；`state` 为 16–128 位 `[A-Za-z0-9_-]`；`client` 可选，≤64 个可打印 ASCII；`name` 可选，≤100 字符；出现其他参数或参数重复时页面直接拒绝。默认密钥名为 `<client>@<name>`。
+- 用户在页面选择服务与权限并确认后，浏览器回跳 `<redirect_uri>?key=<明文>&state=<原值>`；用户拒绝时回跳 `?error=access_denied&state=<原值>`。CLI 必须核对 `state`。页面同时展示明文，回环不可达（远程 shell）时让用户手动复制。
+- 退出：`POST {PORTAL}/api/access-keys/self/targets/<appKey>/revoke`，`Authorization: Bearer <xuak_ 密钥>`，**不带 body**。摘除该 App 目标，最后一个目标摘除时整把密钥吊销；重复调用仍返回 200 `{ revoked: true }`。未知密钥 401，该 App 不是绑定目标报 `TARGET_NOT_ALLOWED`，每把密钥每分钟 60 次。
 
 ## 联调验收
 

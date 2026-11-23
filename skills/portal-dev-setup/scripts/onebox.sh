@@ -431,7 +431,7 @@ cmd_init() {
 
   # 门户的 /health 报的 version 取自 APP_VERSION 环境变量，compose 缺省填 "dev" ——
   # 于是一盒对使用者【完全不自报版本】。而「照文档做但行为不符」十有八九就是镜像比文档旧
-  # （CR-4：自动授予租户那段代码比某一版镜像新一天，症状是市场里没有卡片且零报错）。
+  # （镜像早于自动授予租户的版本时，症状是市场里没有卡片且零报错）。
   # 这里把 tag + 镜像 ID + 构建日期钉进 compose.env，`/health` 与 `status` 立刻能回答
   # 「我跑的是哪一版」。取不到就留空，不编。
   local ver; ver="$(_image_version "$image")"
@@ -604,7 +604,7 @@ cmd_smoke() {
 
   # dev 登录入口。登录页那枚「本地开发账号」按钮由 /auth/providers 的 dev 字段驱动 ——
   # 字段在而按钮不在，就是这版镜像的前端与 API 对不齐（换镜像，或直接走 /auth/dev/start）；
-  # 字段不在就是 DEV_MOCK_OAUTH 没生效。此前这一步只能靠读门户源码才知道（CR-4 #4）。
+  # 字段不在就是 DEV_MOCK_OAUTH 没生效。
   curl -s -m 8 -o "$tmp" "$BASE_URL/auth/providers" 2>/dev/null || true
   if grep -q '"dev"' "$tmp" 2>/dev/null; then
     printf '  %s✓%s %-22s %s\n' "$c_grn" "$c_off" "dev 登录" "登录页的「本地开发账号」按钮；按钮没出现就直接开 ${BASE_URL}/auth/dev/start"

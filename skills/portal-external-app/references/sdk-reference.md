@@ -56,8 +56,8 @@ interface InitPayload {
 
 ```ts
 import { createPortalClient } from "@xgent/portal-sdk";
-const sdk = createPortalClient();            // 必须运行在 Portal 的 iframe 内
-const init = await sdk.ready();
+const sdk = createPortalClient();            // iframe 内走宿主握手；顶层页面自动走 standalone
+const init = await sdk.ready();              // 失败抛 PortalOpenError（code / openUrl）
 
 // 身份与令牌
 const token = await sdk.getToken();          // 原始 TDT（一般不用，便捷方法已内置）
@@ -102,10 +102,11 @@ sdk.setBreadcrumbs([                         // 页面层级 → 宿主版头面
   { label: "需求池", route: "/requirements" },
   { label: "FR-12 登录页改造" },             // 末级不带 route（它就是当前页）
 ]);                                          // 首页推 []；整条 trail 全量覆盖
-sdk.setDirty(true);                          // 拦 Shell 离开、刷新/关闭、跨 pathname 的前进后退
-                                             // 同 App ?r= 不拦；取消保留原 iframe
-                                             // 需要含门户提交 1590f2e3 的运行件；仅升级 SDK 不启用旧宿主
+sdk.setDirty(true);                          // 关闭本标签、刷新、离开门户框架时确认；门户内切标签不确认
 sdk.requestFullscreen(true);
+
+// 敏感动作再次验证（见下文「requestStepUp」）
+const { state } = await sdk.requestStepUp(intentId);   // "confirmed" | "rejected"
 
 // 订阅宿主事件
 sdk.onTheme(t => ...); sdk.onLocale(l => ...);
@@ -141,7 +142,7 @@ sdk.onFullscreen(on => ...);
 可点的应用首页；App 再画一份 = 同屏两处说同一句话，而且租户改过 App 名之后两处会说得
 不一样（`apps.icon` / `apps.name` 租户可改，App 内的 i18n 词条改不了）。**tagline / 副标题**
 同理（应用中心已展示过）。**可以留**：角色、工作区、当前对象这类运行期事实；以及
-`main.tsx` 里 App 脱离门户打开时的 standalone 提示页（那一屏没有版头）。
+App 以 standalone 在顶层打开时自己的页头（那一屏没有门户版头）。
 
 ### `helpEntry`：在清单里声明帮助页入口
 
@@ -184,6 +185,17 @@ sdk.onFullscreen(on => ...);
 - **不承诺**：键盘高度数值；与键盘动画逐帧同步（按帧合并，可能滞后一两帧）；捏合缩放与聚焦放大状态下的让位；横屏加键盘时的最小可用高度（可能很矮，甚至为 0）；iPad 浮动 / 分离键盘（不缩小可视区，不触发）；外接 / 硬件键盘（iPad 快捷栏可能触发，不承诺）；键盘打开时拖动期间的短暂闪跳；全屏状态下内容高度型 App 的滚动；门户自身页面在 iOS 上的让位。
 - **standalone**（App 自己就是顶层页面）：门户不介入，App 自己设置 viewport meta（如 `interactive-widget=resizes-content`）并监听自己的 `visualViewport`。
 
+### 敏感动作再次验证：`requestStepUp`
+
+删除、转账这类要本人再确认一次的动作，由门户弹确认界面，口令与 TOTP 不经过 App：
+
+1. 清单声明 `sensitiveActions: [{ key, labelI18n: { "zh-CN": …, "en"?, "zh-TW"? }, pid, displayFields: ["字段名"] }]`（治理档），`scopes` 加 `stepup.manage`。
+2. 后端用用户 TDT 调 `POST <API_BASE_URL>/api/v1/step-up/intents`，body `{ actionKey, objectRef, operationKey, payloadDigest, digestVersion?, displayFields?: [{ label, value }] }`。门户此刻校验该动作声明的 `pid`；`payloadDigest` 是 App 按自己规则对请求体算的 64 位小写十六进制摘要；不在声明里的 `displayFields` 不展示。把返回的 `id` 交给前端。
+3. 前端 `await sdk.requestStepUp(id)`。`confirmed` 只表示确认流程结束，**业务还没发生**，不能据此提示成功；`rejected` 表示用户取消、意图过期或调用来自后台标签，什么都没发生，可重新发起。SDK 最多等 15 分钟。
+4. 后端带原 `operationKey` 与 `payloadDigest` 调 `POST /api/v1/step-up/intents/:id/consume`，成功后在自己的变更入口重核业务权限与对象状态，再执行变更。失败码：`STEP_UP_REQUIRED`（尚未确认）、`STEP_UP_EXPIRED`（过期、取消或安全因子已变）、`STEP_UP_ALREADY_CONSUMED`、`STEP_UP_CONFLICT`（摘要或绑定不符）。
+
+standalone 页面没有宿主弹层：`requestStepUp` 整页跳到门户确认页，promise 不会 resolve。回到 App 后由后端 `GET /api/v1/step-up/intents/:id` 读状态再继续。
+
 ## 4. Consent（授权与同意）
 
 - `micro` 应用挂载 iframe **之前**宿主先查 consent；未授权渲染"授权屏"列出申请的 scope，用户点授权后才挂载、才签发 TDT。
@@ -194,12 +206,12 @@ sdk.onFullscreen(on => ...);
 
 ## 5. callService vs 直连 CORS
 
-- 浏览器里 iframe 直接 `fetch` Open API / 独立后端受 CORS 限制；后端 CORS 白名单是环境变量维护的有限源列表。
+- 浏览器里 iframe 直接 `fetch` Open API / 独立后端受 CORS 限制。门户 API 的 CORS 名单是平台为内置 App 固定的列表，外部 App 的源不在其中、也无法申请加入。`sdk.userinfo` / `notify` / `content` / `scheduler` / `dashboard` 这类直连门户 API 的方法依赖前端以同源 `/apps/<key>/` 托管。
 - 首选 `sdk.callService`：宿主为该应用铸/复用 host-proxy TDT、代为 `fetch`、回传响应；你的后端只需信任 Portal web 源一个跨域来源。401/403 时宿主自动重铸令牌重试一次。
 - ⚠️ **目标不是你自己时走的是令牌交换，不是 mint**：`callService("<别的 App>", …)`（`sdk.files.*` 就是它的薄封装）由宿主换一张 `aud=<目标>` 的票，所以**清单里必须有 `exchangeTargets` + 目标命名空间 scope**，用户也要同意过。漏声明的症状是 iframe 里这类调用全挂——不是 CORS，查 [跨应用交换](app-exchange.md)。
 - `callService` 不替后端做授权——后端仍要自省校验 aud/scope（这不是前端的事，但别以为走了代理就"安全了"）。
 
-### 5.1 下载文件：只用 `openDownload`，别自己写 `<a href>.click()`（BUG-48）
+### 5.1 下载文件：只用 `openDownload`，别自己写 `<a href>.click()`
 
 预签名下载 URL 指向**对象存储源**，跟 App 前端不同源。`<a href=url>.click()` 于是不是"下载"，而是让 App 的 iframe **自己导航**过去——门户 CSP 的 `frame-src` 只放行 App 前端源，Chrome 会把**整个 App** 换成拦截页：「该内容被屏蔽了。请联系网站所有者以解决此问题。」控制台是 `Framing '…' violates … "frame-src …"`。
 
@@ -241,7 +253,7 @@ try {
 - **它不判业务**：你的 `{ok:false}` 信封原样 reject（code / message / details，带 HTTP status）；`{ok:true,data:null}` 是 `EMPTY_RESPONSE`；其他 JSON 是 `UNEXPECTED_RESPONSE` —— **JSON 文件不能经它领取**，二进制接口要返回非 JSON 的 content-type。
 - **其余失败码**：超限 `TOO_LARGE`；跳转、断流、网络失败 `TRANSPORT_FAILED`；长度不符 `TRUNCATED`；非 2xx 且不是信封 `HTTP_ERROR`；路径含 `..` 等为 `INVALID_PATH`；SDK 本地码 `NOT_READY` / `HOST_UNSUPPORTED` / `TIMEOUT` / `ABORTED`。取票失败（如 `EXCHANGE_NOT_ALLOWED`）原样到达，后端收不到请求。
 - ⚠️ **只在 401 时换票重试一次**（`callService` 是 401/403 都重试）：403 可能出现在你已消耗一次性证明之后，重发等于重放。所以后端的 401 只能出现在消耗证明之前。另外，复用的 keep-alive 连接若在你写出任何响应字节前被关闭，Chrome 会自己把同一请求重发一次（任何方法），宿主拦不住 —— **一次性证明的消费方必须拒绝第二次出示**。
-- `timeoutMs` 是从发起到读完的**总期限**，缺省 120 s，慢网下不够下完 32 MiB，按大小放宽。`signal` 可取消；iframe 重载、换代或离开 App 都会让调用得到 `ABORTED`，可用 `setDirty(true)` 让宿主在离开前确认。
+- `timeoutMs` 是从发起到读完的**总期限**，缺省 120 s，慢网下不够下完 32 MiB，按大小放宽。`signal` 可取消；iframe 重载、切换租户、关闭标签或标签被自动卸载都会让调用得到 `ABORTED`。下载期间 `setDirty(true)`：标签不会被自动卸载，关闭或离开门户前宿主会确认。
 - 响应头只给 `contentType`，不回传 `Content-Disposition`：文件名从你自己的 JSON 里取。存盘用同源 `blob:` 加 `<a download>`（sandbox 已带 `allow-downloads`）。
 
 ## 6. 最小可用例子
@@ -249,12 +261,15 @@ try {
 ```ts
 import { createPortalClient } from "@xgent/portal-sdk";
 async function main() {
-  if (window.parent === window) {
-    document.body.textContent = "请在 XGENT Portal 内打开本应用（需要宿主握手）。";
+  const sdk = createPortalClient();            // 不在 iframe 内时自动走 standalone
+  try {
+    await sdk.ready();
+  } catch {
+    // 未登录、未同意、未声明 standalone 等：给一个显式入口，不自动跳转
+    const button = Object.assign(document.createElement("button"), { textContent: "进入门户", onclick: () => sdk.openGate() });
+    document.body.replaceChildren(button);
     return;
   }
-  const sdk = createPortalClient();
-  const init = await sdk.ready();
   const user = await sdk.userinfo().catch(() => null);
   document.body.innerHTML = `当前用户：${user?.name ?? "—"}`;
   sdk.onTheme(t => document.documentElement.dataset.theme = t);

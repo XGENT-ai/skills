@@ -87,6 +87,14 @@ RULE @portal_ui_acceptance:
   MUST_NOT: [standalone_or_dev_server_as_only_acceptance,
              typecheck_lint_test_build_or_diff_replaces_browser,
              claim_ui_verified_without_browser_evidence]
+
+RULE @portal_ui_select:
+  WHEN: frontend_uses_native_select
+  MUST: ["App 封装自己的 Select 组件，视图复用它。",
+         "select 加 appearance-none 关闭原生箭头，自绘 chevron 图标（pointer-events-none，绝对定位于右侧垂直居中）；pr-* 按图标宽度加右内缩留位。",
+         "固定宽度写在组件转发 className 的目标上：转发给 select 时放外层容器，转发给包裹层时写在包裹层。",
+         "在真实浏览器确认箭头存在、位置正确。"]
+  MUST_NOT: [bare_select_in_views, rely_on_native_select_arrow]
 ```
 
 ### API：HTTP 状态只反映传输/路由层

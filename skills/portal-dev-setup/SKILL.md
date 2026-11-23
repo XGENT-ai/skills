@@ -230,6 +230,8 @@ for k in files llm-gateway git org; do "$S" dc run --rm portal-api bun run db:$k
 
 一盒里带四个基础服务：`files`（文件管理）· `llm-gateway`（大模型网关）· `git`（Git 服务）·
 `org`（组织架构：部门/岗位/任职/汇报线），外加一个**平台基础服务应用** `observability`（日志与监控）。
+默认目录还含 `user-center`（终端身份 owner，由 portal-api 托管、无独立进程），种子给演示租户的套餐配
+`portal.end_users` 额度 100，顾客/学生这类终端身份的联调直接可用。
 你的 App 要用前四个的数据，就在 manifest 里声明 `exchangeTargets` 走令牌交换；
 组织架构另有一条**服务态**只读面（`org.read`，不走用户态交换、也不需要 consent）：
 `/svc/org/api/v1/query/superiors`（批量查直属上级，上限 200）与 `/svc/org/api/v1/query/capabilities`
@@ -333,7 +335,7 @@ release-cli 在一盒里是**通的**（`/api/market/release/*` 就在 portal-ap
 
 ⚠️ **`deployDescriptor.image` 在一盒里换不了版。** 生产上「提交新 image tag」就是换后端的完整
 路径（自动档、立即生效 → 排部署任务 → deploy-controller 拉镜像换容器）；一盒里这条链**断在
-第三步**：`ensureDeploymentQueued` 在 `isOneBox()` 直接返回不排 job（CR-4 #8），deploy-controller
+第三步**：`ensureDeploymentQueued` 在 `isOneBox()` 直接返回不排 job，deploy-controller
 本身也在 `onebox-extras` profile 后面、启动即 `refuseOnOneBox`。tag 会如实落进 listing、控制台也
 看得到，但**没有任何进程去拉它**——一盒里跑的容器永远是 compose 起的那个。换后端版本请改
 `compose.env` 的 `APP_IMAGE` 再 `up -d`。
@@ -342,8 +344,8 @@ release-cli 在一盒里是**通的**（`/api/market/release/*` 就在 portal-ap
 
 > 密钥那条有干净解法，不必去审批屏抄：portal-api 也读 `compose.env`，把
 > `<PREFIX>_SA_CLIENT_SECRET`（和声明了 `exchangeTargets` 时的 `<PREFIX>_APP_SECRET`）
-> 写在里面，apply 就用你钉的这个值接管并保管，而不是随机签发（EXCHANGE-SECRET-HOLD：
-> 接管后值落在平台侧、换版时注入容器，compose.env 里那行之后可删）。`<PREFIX>` = listingKey 大写、连字符换下划线
+> 写在里面，apply 就用你钉的这个值接管并保管，而不是随机签发（接管后值落在平台侧、
+> 换版时注入容器，compose.env 里那行之后可删）。`<PREFIX>` = listingKey 大写、连字符换下划线
 > （`omni-parser` → `OMNI_PARSER`）。`_APP_SECRET` 两侧不一致的症状是跨应用交换在 `/oauth/token` 401。
 
 ### 2.1 再拉一个别的 App 进来（依赖多模态解析、知识库这类）
@@ -388,7 +390,7 @@ App 都要改一次 skill，等于把问题换了个地方。manifest 里已经�
 ⚠️ 第二把只有**跨应用交换的发起方**需要。漏了它的症状很难查：交换在**发起方**上 401，
 看起来像被调方的问题。另外发起方密钥的哈希只随 register 布进**当时已装**的行 —— 所以第一个
 租户的顺序是「`add` → 浏览器里勾选安装 → 再跑一次 `add`」（幂等）；之后装的租户会随安装
-自动补布（EXCHANGE-SECRET-HOLD 的安装路径布线）。
+自动补布。
 
 App 自己的独立密钥用 `requiredEnv` 的 `generate` 声明，仍不在清单里带值：
 
@@ -536,9 +538,10 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
   iframe 加载 `/apps/<key>/` → `sdk.ready()` 握手 → `sdk.callService()` 通 → 首次跨应用读数据再弹一次交换授权页。
 - **service**：无 UI，走 curl —— `/health` 判活 · 缺/错 token 应 401/403（四道闸）· 正确 TDT 应 200 信封。
 
-> 你的后端要实现的运行时契约（验 TDT + 四道闸、解包自省信封 `claims = body.data ?? body`、
-> 按 `claims.tenant_id` 隔离、`/health`、容器内统一监听 **8080**）不在本 skill 范围内——
-> 一盒不替你实现。完整说明在 init 之后的 `portal-onebox/app-devkit/README.md`。
+> 你的后端要实现的运行时契约（验 TDT + 四道闸、解包自省信封：只在 `ok === true` 时取 `data`，
+> 失败信封或缺 `data` 一律回 503、不回退到顶层；按 `claims.tenant_id` 隔离、`/health`、容器内统一监听
+> **8080**）不在本 skill 范围内——一盒不替你实现。完整说明见 `portal-external-app` skill 的
+> `references/integration-contract.md`。
 
 ## 4. 出问题了
 
@@ -554,7 +557,7 @@ amd64 镜像要 `linux/amd64`）· 网络别名 `<key>-server`（反代靠它找
 > **「照文档做，行为却不符」先看版本。** `status` / `smoke` 里 `/health` 那行会回一个 `version`：
 > `init` 把镜像的 tag + ID + 构建日期写进了 `compose.env` 的 `APP_VERSION`。报 `dev` 说明这份 compose.env
 > 是老 `init` 铺的（或你自己改过）。一盒镜像比文档旧一天，就足以让「注册后自动授予租户」这类行为整个不存在，
-> 而现场没有任何报错 —— 真实案例（CR-4）。按 §6 更新缓存并运行 `upgrade` → `up`，同步新镜像与资产再判。
+> 而现场没有任何报错。按 §6 更新缓存并运行 `upgrade` → `up`，同步新镜像与资产再判。
 那张表按「你看到什么」编排。最容易白白浪费半天的两条先放这儿：
 
 > **看到 `unhealthy` 先读那条探针，再决定要不要查。**

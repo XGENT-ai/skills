@@ -9,7 +9,8 @@
 
 原生客户端是**你这个 App 的另一种前端**：它拿到的是和 iframe 前端同一种用户态 TDT，打你
 后端的 `/svc/<key>/…`，后端照常走四道闸（[integration-contract.md](integration-contract.md) §3）。
-区别只在**令牌怎么到手**：iframe 由宿主注入，原生客户端自己走 OAuth。
+区别只在**令牌怎么到手**：iframe 由宿主注入，原生客户端自己走 OAuth。有后端的独立 Web 站点
+（持有 App Secret 的机密客户端）读 [Web OAuth](web-oauth.md)。
 
 ## 0. 速答
 
@@ -147,9 +148,9 @@ DELETE <portal-origin>/api/me/devices/:id   # 退出登录时调
 | 你的后端 | 最坏延迟 |
 | --- | --- |
 | 用 `@xgent/portal-server-sdk` 且传了 `cache` 适配器（默认配置） | 30 s（正缓存默认值） |
-| 用 SDK 但不传 `cache` | 0（不做正缓存，每请求直查） |
+| 用 SDK 但不传 `cache` | 约 0（不做正缓存；同一令牌的并发请求仍共享一次在途自省，可能拿到停用前刚发出的那次结果） |
 | 调大 `positiveCacheMs` | 上限 55 s（SDK 强制截断；加门户 5 s 配置缓存，总预算 60 s） |
-| `strictIntrospection: true` | 0（每请求直查，敏感写操作用这个） |
+| `strictIntrospection: true` | 0（每个请求独立自省，不缓存也不合并在途请求，敏感写操作用这个） |
 | 其他语言自实现 | 按 [integration-contract.md](integration-contract.md) §3 「到期与缓存」实现即同上 |
 
 **保证成立的前提**（任何一条不满足，60 s 都不成立）：
