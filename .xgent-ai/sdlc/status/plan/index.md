@@ -27,6 +27,7 @@
 | db4510c9-7ece-40a0-9908-7600a14db4a5 | [Phoenix UI 预览素材与交付图片处理 P3 gaps](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P3-gaps.md) | [状态](db4510c9-7ece-40a0-9908-7600a14db4a5.md) | 活动 |
 | 90398f71-e485-4511-9662-74fc2d8ca76f | [Phoenix UI 方案对比页与动效、反馈、细节指引 P4](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4.md) | [状态](90398f71-e485-4511-9662-74fc2d8ca76f.md) | 活动 |
 | e2fd7621-6529-41cf-8bce-db18e451cadf | [ELINTP-VISUALS P2](../../../../docs/plan/ELINTP-VISUALS-P2.md) | [状态](e2fd7621-6529-41cf-8bce-db18e451cadf.md) | 活动 |
+| e56ba69b-12e0-44dd-ba6d-4a6e64bff146 | [Phoenix UI P4 文档补遗与 M5 定义复原](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4-gaps.md) | [状态](e56ba69b-12e0-44dd-ba6d-4a6e64bff146.md) | 活动 |
 | fe520dbf-8382-43e6-b26f-765b0735dc14 | [ELINTP-VISUALS P3](../../../../docs/plan/ELINTP-VISUALS-P3.md) | [状态](fe520dbf-8382-43e6-b26f-765b0735dc14.md) | 活动 |
 | 0a7a3bc3-20cf-4b45-8120-cdacfd82e7cf | [ELINTP-VISUALS P3 gaps](../../../../docs/plan/ELINTP-VISUALS-P3-gaps.md) | [状态](0a7a3bc3-20cf-4b45-8120-cdacfd82e7cf.md) | 活动 |
 | f26efbb2-765d-4594-b43e-44175917300f | [ELINTP-VISUALS P4](../../../../docs/plan/ELINTP-VISUALS-P4.md) | [状态](f26efbb2-765d-4594-b43e-44175917300f.md) | 活动 |

@@ -58,8 +58,8 @@ When the selected proposal still needs implementation, read [finish.md](finish.m
 
 ## No answer
 
-- **`--wait` exits 4:** ask once more through the structured question tool, naming the same proposals. With still no answer: when the round has a baseline, keep the current state and mark the delivery `choice pending` (`待选` in a Chinese session); when it has none, continue with the proposal you recommend and mark the delivery `not chosen by the user` (`未经用户选择`). Then run `{{scripts_path}}/phoenix-ui compare --stop --key <key>`.
-- **`--start` exits 2:** this session has no browser. Go straight to the structured question tool, under the same fallback rule.
+- **`--wait` exits 4:** ask once more through the structured question tool, naming the same proposals. Where the host has no structured question tool, put that same question in the reply and end the round. With still no answer: when the round has a baseline, keep the current state and mark the delivery `choice pending` (`待选` in a Chinese session); when it has none, continue with the proposal you recommend and mark the delivery `not chosen by the user` (`未经用户选择`). Then run `{{scripts_path}}/phoenix-ui compare --stop --key <key>`.
+- **`--start` exits 2:** this session has no browser. Go straight to the structured question tool, under the same fallback rule: where the host has no structured question tool, put that same question in the reply and end the round.
 - **`--wait` exits 2:** restart with the same payload through `--start`, reopen the URL for the user, and wait again.
 
 No answer is never a choice. Do not present the recommended proposal as selected, and do not implement a proposal the user has not picked while a baseline exists.

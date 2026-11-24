@@ -81,6 +81,18 @@
 - **先实测**：优先复用现有脚本，在矩阵条件下验证溢出、可达性、关键文字、状态与交互断言，保存实际结果。成功断言通常不截图，异常或视觉判断需要时补图；断言不能替代层级、字体观感等视觉判断，也不能由少量样本推断整张矩阵通过。
 - **前置阻塞**：先核对环境、账号、数据与状态入口。已有 seed/mock/拦截方法可在允许范围内尝试；同一阻塞条件未变时记录一次原因及解除条件，停止受阻项，继续独立项，不反复启动整轮验收。
 
+```formal
+RULE @remaining_space_coverage:
+  WHEN: shared_layout_wrapper_or_viewport_height_rules_change
+  MUST: |
+    受影响单元至少覆盖「短内容且容器存在剩余空间」与「长内容撑满容器」两种条件，
+    在本轮采集计划与 capture.md 分别登记到达方法、实测剩余空间和对应证据。
+    在目标支持的视口范围内，短内容可用较少数据或较高视口到达；
+    长内容不得替代短内容结论。任一条件无法到达时记缺证及解除条件。
+  MUST_NOT: [infer_remaining_space_from_viewport_size_alone,
+             substitute_long_content_evidence_for_short_content_result]
+```
+
 ### 跨轮及 apply 证据复用
 
 复用前核对原始材料可读、来源版本与目标指纹、采集条件及从该版本至今的影响范围。目标指纹变化时重新建立基线，不继承旧分数。共享组件、token、字体、素材、布局、依赖、数据或运行环境变化可能影响未直接修改的页面，必须纳入复查；无法判断的单元不沿用结论。代码 diff 只辅助判断失效范围，不能直接证明修复效果。
@@ -126,7 +138,7 @@
 
 - 命名模板按上面的命名合同生成后传入：首采为 `<单元>-{state}-{width}-{scheme}.png`；同单元另有同宽但高度或 DPR 不同的视口时加确定性后缀，如 `<单元>-{state}-{width}-{scheme}-h{height}-dpr{dpr}.png`；同轮补采追加 `-a2`、`-a3` 等 attempt 后缀，原图与报告里的原条目保留、不覆盖。
 - `capture.md` 的地址、视口宽高、DPR、主题、拍摄时间与所用工具（`phoenix-ui capture <该图条目的 tool.version>`，附该条目 `binarySha256` 前 12 位；旧报告无逐张 `tool` 时回落顶层 `tool`）从报告抄录。报告标为无效的图（`<名>.invalid.png`）按「没采到」处理：重拍或记缺证，不交评审。
-- 报告里的控制台错误、失败请求、横向溢出与 `findings` 只进机器检查，不进评审材料。
+- 报告里的控制台错误、失败请求、横向溢出与 `findings` 只供主 agent 的机器检查与可选 critique 辅助审查，不进独立评审材料。
 - 主 agent 仍逐张开图核对出处与画面；命令的自检不替代这一步。
 - 到达目标状态所需的交互或前置超出命令能力（应用在 iframe 内、目标在 Shadow DOM 内等）时，该单元改用现有其他采集方式，并满足上面的真实性与出处要求，`capture.md` 记实际所用工具；只有现有方式也取不到真实状态才记缺证。
 - 未检测到时按现有方式采集，本节不适用，`capture.md` 与报告也不提它。
@@ -140,11 +152,47 @@
 - 走查材料不交给独立评审。每条问题先分为可复现的产品问题、工具或数据问题、待复现的推测：可复现的卡住、走错由主 agent 按 [judge.md](judge.md) 的严重度定义定级，以来源「盲测走查」列入差距，指向走查截图与状态文件；犹豫列为建议；后两类不列差距，写进「采集与覆盖」。
 - 走查者无法操作页面时，报告写「未完成 UX 走查」及原因；未检测到走查子代理或单元没有主要操作流程时不派，报告与原来一致。计分与判定规则不变。
 
+## Phoenix critique 辅助审查（可选）
+
+检测到可用的 Phoenix critique 时自动适用，无需用户额外点名。检测条件是：Phoenix UI 技能目录与 `reference/critique.md` 可读，且其 `scripts/phoenix-ui detect --help` 退出 0；其他情况均按未检测到处理，不安装或修复工具，不创建 `.phoenix-ui/critique` 状态，报告不写这一项。
+
+检测到后，自动对本轮待评单元执行以下辅助流程；执行失败时在报告写「未完成 Phoenix critique 辅助审查」及原因，继续已有采集和独立评审：
+
+- 读取该 Phoenix 版本的完整 `reference/critique.md`，采用其中 Assessment A/B 的隔离顺序与审查范围，不采用其设计评分作为验收分。
+- **Assessment A**：用未接触本轮检测发现的全新上下文读取目标包、必要产品上下文、相关实现和真实页面，先独立完成设计审查；不给它 `capture findings`、detect 结果、历史 `judge.md`、门槛或主 agent 的看法。
+- **Assessment B**：复用本轮同版本、同状态下有效的真实采集、`capture findings` 或 detect 结果；缺少必要检测时按 critique 合同补做，不重复已有有效扫描。A 完成前不向 A 或辅助合成上下文透露 B 的发现。
+- 环境支持时使用未预先接触 B 的辅助合成上下文，在 A、B 完成后合成。不具备全新上下文时，主 agent 可整理辅助观察，但报告首行必须保留 `⚠️ DEGRADED: single-context (auxiliary isolation unavailable after capture)`，不声称 A/B 独立。
+- 浏览器证据使用真实页面和本轮采集，不为辅助审查额外注入 overlay 或启动 critique live-server。
+- 将 A、B 原文与合成报告按顺序保存到 `<前缀>.ui-captures/r<n>/critique-<单元>.md`，记录实际模型、隔离标识、复用的证据与降级情况。不同单元复用同一目标报告时分别登记来源，不复制截图。
+- 不执行 critique-storage 持久化、改进方向提问、Recommended Actions 或修复；这只是 critique 方法辅助审查，不宣称运行了完整的 `$phoenix-ui critique` 命令。
+
+主 agent 对合成报告中的每条候选问题分类：
+
+- 确定性检测仍有当前运行时证据的，以来源「机器检查」登记；
+- 语义或视觉问题经当前截图或实测复现的，以来源「主 agent 核实」登记；
+- 无法复现或无当前证据的不开差距，列入报告的未核实项。
+
+critique 的 Design Health Score、启发式分数、优点、趋势和推荐命令不进入 `review-ui` 分数、门槛、停滞或验收判定。辅助原文、检测发现与合成结论均不交给独立评审，也不写入 `judge.md`。
+
 ## 机器检查
 
 确定性检查前置以筛选异常和减少截图，结果与感知判断分开，不把检查的通过结论交给视觉评审，以免先入为主。由主 agent 写进报告，按影响定严重度后列入差距清单，来源标「机器检查」；之后由主 agent 复查未关闭及受影响的差距；未受影响的已通过检查可复用，注明来源。
 
 所有检查都在运行中的页面上执行：在页面里测量元素尺寸、读取计算样式、注入扫描脚本、用真实按键操作。从代码或样式表推断出的问题（例如「这个容器写死了宽度，窄屏可能溢出」）不算检查结果，只能提示去哪里补拍或实测。按工具可用性和目标包要求选做：
+
+```formal
+RULE @unexpected_flex_auto_margin:
+  WHEN: page_or_region_has_unexpected_large_blank_space
+  MUST: |
+    实测空白相邻元素及其祖先的位置、尺寸、计算 margin/padding；
+    检查 Flex 容器块轴是否存在剩余空间，以及子项是否因
+    margin:auto / margin-block:auto 获得非零块向 margin。
+    目标未要求垂直居中且实测空白与目标不符时，将其列为来源「机器检查」的差距，
+    记录容器与子项、块轴剩余空间、非零 margin、预期顶部间距和对应截图。
+  MUST_NOT: [infer_defect_from_stylesheet_alone,
+             flag_auto_margin_without_nonzero_runtime_effect,
+             flag_intentional_centering]
+```
 
 - 采集期间的控制台错误与失败请求，以及它们是否影响可见行为；
 - 每个视口下的横向溢出，以及被截断或遮挡的内容；
@@ -153,3 +201,36 @@
 - 计划或 PRD 有性能目标时，测量对应指标。
 
 工具不可用就写「未检查」，不能当作通过。
+
+### 主 agent 例行 UI 检查
+
+以下项目需要语义或视觉判断，不能伪装成确定性扫描。
+主 agent 按适用性在本轮报告「机器检查」节记录每个待评单元的「已检查」「不适用」或「未检查」及原因；
+确认的问题附当前真实截图或页面实测结果，以来源「主 agent 核实」列入差距。
+独立评审的材料隔离与评分规则不变。
+
+```formal
+RULE @user_facing_copy:
+  WHEN: reviewing_any_rendered_unit
+  MUST: |
+    逐屏读取当前状态下的可见文案，检查是否混入与当前用户和任务无关的
+    实现或调试信息、内部标识、面向开发者的说明，以及解释设计或实现、
+    自我介绍、重复界面已表达信息而没有用户决策价值的生成式套话。
+    对确认的问题记录原文、位置、用户影响和对应截图；优先删除，
+    确有用户价值的信息改写为与当前任务有关的行动、后果或恢复方式。
+  MUST_NOT: [flag_necessary_format_eligibility_consequence_or_recovery_help,
+             flag_domain_appropriate_or_developer_product_terminology,
+             infer_visible_copy_from_source_alone]
+
+RULE @native_select_presentation:
+  WHEN: rendered_unit_contains_native_select
+  MUST: |
+    在真实浏览器检查默认、聚焦、已选和展开状态；原生弹出层无法截图时，
+    记录实际操作结果与未取得的视觉证据，不冒充看过。
+    通过关闭态整体或局部截图核对下拉箭头与右边框有清晰间距，
+    选中文字不与箭头或边框重叠，且控件外观已纳入产品控件样式而非裸用默认外观。
+    计算样式只用于辅助定位；实测贴边、重叠或默认外观偏差列为差距并附证据。
+  MUST_NOT: [flag_select_tag_or_native_popup_alone,
+             infer_arrow_geometry_from_stylesheet_alone,
+             require_custom_select_reimplementation]
+```

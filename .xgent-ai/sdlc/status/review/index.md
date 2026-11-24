@@ -49,6 +49,7 @@
 | 6e5feeaf-521d-46c5-8209-dcba013a0b70 | [Phoenix UI 中文排版检测与口径 P2 开发计划完整评审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P2.review.md) | [状态](6e5feeaf-521d-46c5-8209-dcba013a0b70.md) | 活动 |
 | 69e27b35-e431-46f8-8cf2-9c8c1a2bf87f | [Phoenix UI 借鉴 hallmark R4代码修复效果复审](../../../../docs/plan/phoenix-ui-hallmark.code-review.r4.md) | [状态](69e27b35-e431-46f8-8cf2-9c8c1a2bf87f.md) | 活动 |
 | 72bbedc0-7192-47a1-bbd3-dea11c9f11c3 | [Phoenix Diagram P2 开发计划评审](../../../../docs/plan/PHOENIX-DIAGRAM-P2.review.md) | [状态](72bbedc0-7192-47a1-bbd3-dea11c9f11c3.md) | 活动 |
+| 738a20f6-56c2-48df-a738-2a9166a2f8af | [Phoenix UI P4 文档补遗与 M5 定义复原 开发计划评审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4-gaps.review.md) | [状态](738a20f6-56c2-48df-a738-2a9166a2f8af.md) | 活动 |
 | 76677f40-ab45-4e02-bcf7-a253f68bd3c2 | [ELINTP-VISUALS P4 gaps R2代码修复效果复审](../../../../docs/plan/ELINTP-VISUALS-P4-gaps.code-review.r2.md) | [状态](76677f40-ab45-4e02-bcf7-a253f68bd3c2.md) | 活动 |
 | 79c4f547-0cf5-40a1-8d08-4952084ee1ea | [ELINTP-VISUALS P4 开发计划评审](../../../../docs/plan/ELINTP-VISUALS-P4.review.md) | [状态](79c4f547-0cf5-40a1-8d08-4952084ee1ea.md) | 活动 |
 | 7a2dd30e-91e2-4ef9-8f56-047bc3d67b46 | [Codex guard 未提交变更代码评审](../../../../docs/plan/codex-context-goal-guard.code-review.md) | [状态](7a2dd30e-91e2-4ef9-8f56-047bc3d67b46.md) | 活动 |
@@ -97,6 +98,7 @@
 | e074373f-2fd7-4aa2-aac2-af4190cf8653 | [ELINTP-VISUALS P3 gaps 开发计划评审](../../../../docs/plan/ELINTP-VISUALS-P3-gaps.review.md) | [状态](e074373f-2fd7-4aa2-aac2-af4190cf8653.md) | 活动 |
 | e0a7add0-8884-44a9-bea3-3c79fedbe613 | [ELINTP-VISUALS P3 gaps R1 UI 验收评审](../../../../docs/plan/ELINTP-VISUALS-P3-gaps.ui-review.md) | [状态](e0a7add0-8884-44a9-bea3-3c79fedbe613.md) | 活动 |
 | e23da5bb-21ce-4ecc-8131-967f147c073e | [ELINTP-VISUALS P3 gaps R1代码评审](../../../../docs/plan/ELINTP-VISUALS-P3-gaps.code-review.md) | [状态](e23da5bb-21ce-4ecc-8131-967f147c073e.md) | 活动 |
+| e4cedea5-f753-4378-9a1f-01c32f599bdc | [Phoenix UI 方案对比页与设计指引 P4 PRD交付覆盖核查](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4.prd-dev-gaps.md) | [状态](e4cedea5-f753-4378-9a1f-01c32f599bdc.md) | 活动 |
 | e6218328-2fac-48a6-8674-a26013c87320 | [ELINTP-VISUALS P2 PRD交付覆盖修复效果复审](../../../../docs/plan/ELINTP-VISUALS-P2.prd-dev-gaps.2026-11-12.md) | [状态](e6218328-2fac-48a6-8674-a26013c87320.md) | 活动 |
 | eb880cb9-3d5a-4d35-997b-f17d5fc2d5d2 | [Phoenix UI R1代码评审](../../../../docs/plan/phoenix-ui.code-review.md) | [状态](eb880cb9-3d5a-4d35-997b-f17d5fc2d5d2.md) | 活动 |
 | f1179d88-3bd4-4256-bbe4-0802c53e0f23 | [ELINTP-VISUALS P1 R2 UI 验收评审](../../../../docs/plan/ELINTP-VISUALS-P1.ui-review.r2.md) | [状态](f1179d88-3bd4-4256-bbe4-0802c53e0f23.md) | 活动 |
