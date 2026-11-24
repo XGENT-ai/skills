@@ -360,7 +360,7 @@ goal 是 coding agent 的持续执行机制，不是本仓 skill。显式启动�
 /apply-code-review docs/plan/<代号>.code-review.md docs/plan/<代号>.md
 ```
 
-`review-code` 默认不改代码、不改进度、不提交。只给计划时，默认审计划登记的提交与当前未提交改动；已有报告时复审修复效果。初审没有计划或其他明确目标且工作树干净时才询问，不擅自拿最近一次 commit（[skills/review-code/SKILL.md](../skills/review-code/SKILL.md) 第 1 节）。结论用 `patch is correct` / `patch is incorrect` / `inconclusive`（[skills/review-code/references/report-contract.md](../skills/review-code/references/report-contract.md)）。
+`review-code` 默认不改代码、不改进度、不提交。只给计划时，默认审计划登记的提交与当前未提交改动，并核对整份计划的全部里程碑、退出条件与最终提交；已有报告时复审修复效果。初审没有计划或其他明确目标且工作树干净时才询问，不擅自拿最近一次 commit（[skills/review-code/SKILL.md](../skills/review-code/SKILL.md) 第 1 节）。结论用 `patch is correct` / `patch is incorrect` / `inconclusive`（[skills/review-code/references/report-contract.md](../skills/review-code/references/report-contract.md)）。
 
 报告路径：有计划时，计划同目录的 `<计划名>.code-review.md`（[skills/review-code/references/report-contract.md](../skills/review-code/references/report-contract.md)）。
 
@@ -374,7 +374,7 @@ goal 是 coding agent 的持续执行机制，不是本仓 skill。显式启动�
 
 agent 按根因选择最小修法，通过真实入口或有用的窄检查确认修复，合并运行受影响回归，复用仍有效证据。计划有提交约定或已有授权时完成修复提交并登记 SHA；否则留在工作树供复审。输出代码改动、逐项处置、实际证据、计划记录及仍未解决项，保留原评审结论，不用自己的自检代替独立验收。
 
-修复后再次 `review-code <计划路径>`，独立核实旧问题及受影响回归，循环至「通过验收」。以报告的验收判定为出口，不能只看 `patch is correct` 或空 findings：当前合同还要求没有 P0–P2 问题、旧问题已关闭或有依据不再适用，且改变的用户主路径有当前版本的真实入口证据。评审尝试后仍受阻的证据缺口才是「需补证」，不是通过；报告逐项写明执行者，agent 可执行的交 `apply-code-review` 补证后复审，只有无法自行取得的权限、资料或决定才请求人补齐。
+修复后再次 `review-code <计划路径>`，独立核实旧问题及受影响回归，循环至「通过验收」。以报告的验收判定为出口，不能只看 `patch is correct` 或空 findings：当前合同还要求没有 P0–P2 问题、旧问题已关闭或有依据不再适用，改变的用户主路径有当前版本的真实入口证据；整份计划模式还须确认全部里程碑、退出条件与最终提交已完成。计划未完成或评审尝试后仍受阻的证据缺口才是「需补证」，不是通过；报告逐项写明执行者，计划未完项回计划后续实施，agent 可执行的补证交 `apply-code-review` 后复审，只有无法自行取得的权限、资料或决定才请求人补齐。
 
 用户明确豁免时单独记「用户豁免通过」，保留问题及影响，不能记成修复。每轮评审只覆盖声明的范围，局部修复通过不能掩盖其他未核实问题。通过也不自动授权合并或发布。
 

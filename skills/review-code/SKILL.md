@@ -1,7 +1,7 @@
 ---
 name: review-code
 argument-hint: "[开发计划] [未提交/commit/A..B/基准分支] [上轮报告] [复审/完整评审] [问题ID/文件范围] [报告路径] [仅聊天]"
-description: 用于评审代码 diff、提交、分支差异或开发计划登记的提交及修复复审；不用于单独评审计划、全仓普查或直接修复。核对旧问题与新增回归，落盘报告并判定是否需修改。
+description: 用于评审代码 diff、提交、分支差异或开发计划登记的提交及修复复审；不用于单独评审计划、全仓普查或直接修复。核对旧问题、新增回归与计划完成闭环，落盘报告并判定是否需修改。
 disable-model-invocation: true
 ---
 
@@ -17,7 +17,8 @@ disable-model-invocation: true
 INTENT:
   GOAL: assess_actionable_defects_and_promised_behavior_of_code_changes
   SCOPE: [requested_diff, relevant_cross_file_impact, requirement_compliance,
-          unneeded_defenses_tests_and_comments, verification_evidence, repair_effect_recheck]
+          whole_plan_completion_in_plan_mode, unneeded_defenses_tests_and_comments,
+          verification_evidence, repair_effect_recheck]
   SUCCESS: [evidence_grounded_conclusions, explicit_coverage_and_limits,
             complete_report_delivered]
   NON_GOALS: [plan_only_review, whole_repository_audit, unrequested_repairs]
@@ -44,6 +45,7 @@ WORKFLOW @review_code:
   DO: [read_applicable_instructions_and_summarize_intent,
        resolve_and_freeze_review_scope_and_report_path,
        establish_coverage_checklist,
+       check_whole_plan_completion_in_plan_mode,
        recheck_previous_issues_when_applicable,
        read_diff_and_trace_required_behavior,
        validate_and_countercheck_candidate_findings,
@@ -161,10 +163,22 @@ RULE @plan_compliance:
          verify_actual_consequences_of_omissions_deviations_and_scope_expansion,
          treat_plan_as_contract_material_to_verify,
          require_only_current_scope_commitments,
+         "用户明确限定里程碑或其他局部范围时只评所选范围，说明未核对整份计划，不宣称整份计划完成",
          list_unclear_scope_as_pending_and_continue_independent_code_review]
   MUST_NOT: [author_completion_claim_as_code_evidence,
              report_future_milestone_work_as_current_defect,
              modify_plan_or_turn_code_review_into_plan_architecture_review]
+
+RULE @plan_completion_gate:
+  WHEN: "开发计划确定审查对象，且用户未限定里程碑、commit/range 或文件子集"
+  MUST: ["读取计划当前范围的全部里程碑、退出条件、实施进度、完成记录及其链接证据，不只核对登记提交涉及的里程碑",
+         "逐项核对所有必需交付与计划规定的验证门槛；有进度表时完成记录覆盖全部里程碑且 n/N 与状态一致，有提交列或最终提交约定时每个已完成行有可解析且当前分支可达的 SHA，无待提交",
+         "核对相关证据是否覆盖计划版本与当前目标；能在评审边界内补齐的缺口仍按 @evidence_ownership 本轮补证",
+         "在计划符合性中明确整份计划是否全部完成，列出未完成、阻塞、待提交、未核实项及对应里程碑；确认全部完成才能给整份计划通过验收",
+         "未全部完成或经本轮取证仍无法确认时，当前 diff 仍照常评审；没有其他须改项则判需补证，这些剩余工作归计划后续实施，不派 apply-code-review 空跑"]
+  MUST_NOT: ["以进度 n/N、已完成自述、代码存在、空 findings、测试通过或本次评审报告替代计划要求的实现与验收证据",
+             "把后续里程碑当当前代码缺陷，或因计划未完成跳过当前 diff 的正确性与安全审查",
+             "把本次代码评审、可选 UI 验收或 PRD 差异核查倒填成计划自身未规定的完成前置"]
 
 RULE @without_plan:
   WHEN: no_development_plan_provided
@@ -323,7 +337,7 @@ OUTPUT:
   verdict_source: references/report-contract.md
 
 REVIEW:
-  CHECK: [@new_finding_admission, @fr_before_nfr, @change_burden, @evidence_ownership, @recheck_coverage, @snapshot_consistency,
+  CHECK: [@new_finding_admission, @fr_before_nfr, @change_burden, @evidence_ownership, @plan_completion_gate, @recheck_coverage, @snapshot_consistency,
           @complete_report, @report_persistence]
   ALSO: [coverage_disclosure, evidence_traceability, actual_report_links]
   EXPOSE: on_issue
@@ -347,8 +361,10 @@ RULE @passed_next:
   WHEN: "验收判定为「通过验收」或「用户豁免通过」"
   MUST: |
     变更涉及界面且没有覆盖当前版本的 UI 验收通过时，可选 review-ui <计划路径>；
-    计划来自 PRD 时，可选 review-prd-dev-gaps <计划路径>；
-    都不适用时说明本计划代码验收完成。仍有 P3 时，可选
+    计划来自 PRD 且 @plan_completion_gate 已确认整份计划完成时，可选
+    review-prd-dev-gaps <计划路径>；
+    都不适用时说明本次代码验收完成；仅 @plan_completion_gate 覆盖且确认
+    整份计划全部完成时，才说明本计划代码验收完成。仍有 P3 时，可选
     apply-code-review <本报告路径>，处理后照常复审。
 
 RULE @prd_origin:
@@ -364,7 +380,9 @@ RULE @needs_evidence_next:
     apply-code-review <本报告路径>，由它执行补证并处理补证暴露的缺陷，完成后
     review-code <计划路径或原范围> 复审；不因没有确认缺陷而说无需 apply，
     不把这些缺口交给用户。归用户的缺口写明需要提供或决定什么；
-    归计划后续实施的指明里程碑与计划记录的继续动作。
+    归计划后续实施的指明里程碑与计划记录的继续动作。整份计划未完成时，
+    列出未完成里程碑、退出条件或最终提交要求；这些事项不交给 apply-code-review，
+    只有同轮另有归它的缺陷或补证项时才建议 apply-code-review。
 
 RULE @explicit_waiver:
   WHEN: user_explicitly_waives_remaining_issues_for_current_period_at_invocation_or_after_review
