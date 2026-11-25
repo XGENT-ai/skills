@@ -110,7 +110,7 @@ Full texts below are preserved offline; SPDX declarations alone are not substitu
 - phf_macros@0.13.1: declared MIT; THIRD-PARTY-LICENSES/0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38.txt
 - phf_shared@0.12.1: declared MIT; THIRD-PARTY-LICENSES/0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38.txt
 - phf_shared@0.13.1: declared MIT; THIRD-PARTY-LICENSES/0ab4d106b6faac07fb6a051815fd1b4d862d730895e2d7d7358c2f13565e7a38.txt
-- phoenix-diagram@0.2.0: declared MIT; THIRD-PARTY-LICENSES/0552c898248eadfc130df0c0e8f6f82776fcb3f1dd5a5af2fa991b5baff9367a.txt
+- phoenix-diagram@0.2.1: declared MIT; THIRD-PARTY-LICENSES/0552c898248eadfc130df0c0e8f6f82776fcb3f1dd5a5af2fa991b5baff9367a.txt
 - potential_utf@0.1.6: declared Unicode-3.0; THIRD-PARTY-LICENSES/f367c1b8e1aa262435251e442901da4607b4650e0e63a026f5044473ecfb90f2.txt
 - ppv-lite86@0.2.21: declared MIT OR Apache-2.0; THIRD-PARTY-LICENSES/0218327e7a480793ffdd4eb792379a9709e5c135c7ba267f709d6f6d4d70af0a.txt, THIRD-PARTY-LICENSES/4cada0bd02ea3692eee6f16400d86c6508bbd3bafb2b65fed0419f36d4f83e8f.txt
 - precomputed-hash@0.1.1: declared MIT; THIRD-PARTY-LICENSES/7ca6700600dfa9c9497bf5556365067daa802c871ea78239f129309c7a2048f7.txt

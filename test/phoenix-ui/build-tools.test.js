@@ -43,10 +43,12 @@ async function archive(entries = []) {
   return { bytes, asset: { name: 'fixture.tar.gz', url: 'https://example.invalid/fixture.tar.gz', size: bytes.length, sha256: sha256(bytes), archiveRoot: 'fixture-tool', executable: 'bin/tool' } };
 }
 
-test('five native tool pins match the unchanged tool lock and verified official action commits', async () => {
+test('four native tool pins match the unchanged tool lock and verified official action commits', async () => {
   const { assets, validatePins, nativePlatform, preparationCommands } = await prepare;
   validatePins();
-  assert.equal(Object.keys(assets.platforms).length, 5);
+  assert.deepEqual(Object.keys(assets.platforms).sort(), ['darwin-arm64', 'linux-arm64', 'linux-x64', 'windows-x64']);
+  assert.throws(() => nativePlatform('darwin', 'x64'), /No native Phoenix build/);
+  assert.throws(() => preparationCommands('darwin-x64'), /Unsupported native preparation platform/);
   assert.equal(nativePlatform('win32', 'x64'), 'windows-x64');
   assert.throws(() => nativePlatform('win32', 'arm64'), /separately verified x64 fallback/);
   for (const platform of Object.keys(assets.platforms)) {
@@ -74,30 +76,6 @@ test('Linux ARM Chromium is verified against its frozen executable identity', as
     expectedVersion: '148.0.7727.15', actualVersion: 'Chromium 147.0.7727.15', sha256: '0'.repeat(64) })) {
     assert.throws(() => verifyPreparedBrowser({ ...browser, [field]: value }), /Prepared Chromium/);
   }
-});
-
-test('Intel macOS bootstraps the exact mbx source before attempting its unavailable release asset', async () => {
-  const { assets, preparationCommands } = await prepare;
-  const commands = preparationCommands('darwin-x64');
-  const bootstrap = commands.findIndex(([, args]) => args.includes('--git'));
-  assert(bootstrap >= 0, 'mbx 1.28.0 has no Intel macOS release asset');
-  assert(commands[0][1].includes('rust@1.99.1'));
-  assert(!commands[0][1].includes('mr-boxington@1.28.0'));
-  const args = commands[bootstrap][1];
-  assert.deepEqual(args.slice(0, 9), ['exec', '--no-deps', '--', 'rustup', 'run', '1.99.1', 'cargo', 'install', '--locked']);
-  assert.equal(args[args.indexOf('--git') + 1], 'https://github.com/jdx/mr-boxington');
-  assert.equal(args[args.indexOf('--rev') + 1], '44f50c329a83dedd012e1e49cf9f265f79226a83');
-  assert.equal(args.at(-1), 'mbx');
-  assert.equal(assets.nativeBootstrap['darwin-x64'].version, '1.28.0');
-  const link = commands.findIndex(([, args]) => args[0] === 'link');
-  assert(link > bootstrap);
-  assert.equal(commands[link][1][1], 'mr-boxington@1.28.0');
-  assert(!commands[link][1].includes('--force'));
-  assert(commands.findIndex(([, args]) => args.length === 1 && args[0] === 'install') > link);
-  for (const platform of ['darwin-arm64', 'linux-x64', 'linux-arm64', 'windows-x64']) {
-    assert(!preparationCommands(platform).some(([, args]) => args.includes('--git')));
-  }
-  assert(!preparationCommands('darwin-x64', true).some(([, args]) => args.includes('--git')));
 });
 
 test('mise environment retains its nested PATH record while removing Cargo proxies and transient shim state', async () => {
@@ -186,6 +164,27 @@ test('preflights reject a script running on another Node before spawning any too
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', source], { cwd: root, encoding: 'utf8', env: { PATH: '' } });
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /Node 19\.3\.0 is running this script; expected \d+\.\d+\.\d+/, script);
+  }
+});
+
+test('UI build preflight refuses Intel macOS hosts and Rust overrides before invoking tools', async () => {
+  const { versions } = await buildTools;
+  for (const [arch, overrides] of [
+    ['x64', {}], ['arm64', { PHOENIX_UI_BUILD_TARGET: 'x86_64-apple-darwin' }],
+    ['arm64', { CARGO_BUILD_TARGET: 'x86_64-apple-darwin' }],
+  ]) {
+    const source = `
+      Object.defineProperty(process.versions, 'node', { value: ${JSON.stringify(versions.node)} });
+      Object.defineProperty(process, 'platform', { value: 'darwin' });
+      Object.defineProperty(process, 'arch', { value: ${JSON.stringify(arch)} });
+      const { preflight } = await import('./scripts/phoenix-build-tools.mjs');
+      preflight();
+    `;
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', source], {
+      cwd: root, env: { PATH: '', ...overrides }, encoding: 'utf8',
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /no longer supports Intel macOS/);
   }
 });
 
@@ -334,7 +333,7 @@ async function runtimeFixture(t) {
   const asset = `phoenix-ui-${target}${target.startsWith('windows') ? '.exe' : ''}`;
   const bundle = Buffer.from('{"schema":1,"providers":{}}\n');
   const engine = { asset, sha256: sha256(bytes), size: bytes.length };
-  const manifest = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.1', npmPackageVersion: '0.7.0-rc.0',
+  const manifest = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.2', npmPackageVersion: '0.7.0-rc.0',
     sourceCommit: 'a'.repeat(40), bundleSchema: 1, bundleSha256: sha256(bundle), reviewSchema: 1, engines: { [target]: engine } };
   const version = Buffer.from(JSON.stringify(manifest, null, 2) + '\n');
   fs.writeFileSync(path.join(release, asset), bytes);
@@ -386,10 +385,10 @@ test('detector smoke validates the actual CLI Finding field and rejects unrelate
   }
 });
 
-test('CI has exactly four macOS/Linux native runners, explicit prepare, locked offline gates, a Node consumer and read-only pinned actions', async () => {
+test('CI has exactly three macOS/Linux native runners, explicit prepare, locked offline gates, a Node consumer and read-only pinned actions', async () => {
   const { assets } = await prepare, workflow = fs.readFileSync(path.join(root, '.github/workflows/phoenix.yml'), 'utf8');
   const native = workflow.slice(workflow.indexOf('  ui-native:'), workflow.indexOf('  ui-node18-consumer:'));
-  const platforms = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
+  const platforms = ['darwin-arm64', 'linux-x64', 'linux-arm64'];
   assert.deepEqual([...native.matchAll(/- platform: (\S+)/g)].map(match => match[1]), platforms);
   for (const platform of platforms) {
     const entry = assets.platforms[platform];

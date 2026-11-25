@@ -564,15 +564,15 @@ Phoenix UI 的方向生成（concept-seed 抽签与决策页）、设计稿驱�
 
 > **分期与终验**：本需求跨 P1 / P3 / P4 交付，**终验期 = P4**。P1、P3 完成后请停在交付段（已提交 / 可测试），**不要转「已上线」**——「已上线」是整条需求的验收，不是某一期的完工。
 
-- **约束**：新命令只随 `@xgent-ai/skills` 的 engine 分发；支持 macOS 与 Linux 四个平台，无需 Rust，Node 底线 ≥18，不新增 Python 运行依赖；engine 缺失或版本不符时沿用现有行为（返回固定包版本的补装命令，不在运行中下载）。来源：[docs/phoenix-ui.md](phoenix-ui.md)、[SKILL.md](../skills/phoenix-ui/SKILL.md) 第 15、25 行。
+- **约束**：新命令只随 `@xgent-ai/skills` 的 engine 分发；支持 macOS ARM64、Linux x64 与 Linux ARM64，无需 Rust，Node 底线 ≥18，不新增 Python 运行依赖；engine 缺失或版本不符时沿用现有行为（返回固定包版本的补装命令，不在运行中下载）。来源：[docs/phoenix-ui.md](phoenix-ui.md)、[SKILL.md](../skills/phoenix-ui/SKILL.md) 第 15、25 行。
 - **依赖**：Phoenix 现有发布流程。
 
 | AC ID | 验收原文 | 期次 |
 | --- | --- | --- |
-| AC-1 | 用户经 `npx @xgent-ai/skills install` 安装或升级后，在 macOS（arm64/x64）与 Linux（x64/arm64）上无需 Rust 编译器即可运行取证命令；engine 缺失或版本不符时返回固定包版本的补装命令，运行中不自动下载。 | P1 |
+| AC-1 | 用户经 `npx @xgent-ai/skills install` 安装或升级后，在 macOS（arm64）与 Linux（x64/arm64）上无需 Rust 编译器即可运行取证命令；engine 缺失或版本不符时返回固定包版本的补装命令，运行中不自动下载。 | P1 |
 | AC-2 | 本机找不到 Chrome、Chromium 或 Edge 时，取证命令明确报浏览器不可用；不依赖浏览器的 Phoenix 命令照常可用；Node 底线保持 ≥18，安装与运行不要求 Python。 | P1 |
-| AC-3 | 同一安装条件下，素材检索、取用与图片处理命令在四个平台可用，行为同 AC-1。取用视频以本机浏览器能解码该视频为前提（§4）；不满足时该视频取用失败并说明原因，其余素材不受影响。 | P3 |
-| AC-4 | 同一安装条件下，对比页命令在四个平台可用，行为同 AC-1；Windows 等其他平台仍在安装预检阶段停止，与升级前一致。 | P4 |
+| AC-3 | 同一安装条件下，素材检索、取用与图片处理命令在上述三个目标上可用，行为同 AC-1。取用视频以本机浏览器能解码该视频为前提（§4）；不满足时该视频取用失败并说明原因，其余素材不受影响。 | P3 |
+| AC-4 | 同一安装条件下，对比页命令在上述三个目标上可用，行为同 AC-1；macOS Intel、Windows 等其他平台在安装预检阶段停止。 | P4 |
 
 - **UAT 场景**：UAT-2；对应 S2 / WORK-N2/AC-1–AC-4。
 
@@ -623,7 +623,7 @@ Phoenix UI 的方向生成（concept-seed 抽签与决策页）、设计稿驱�
   - review-ui 不向独立评审提供机器检查结果，工具缺失不阻塞验收（[review-ui](../skills/review-ui/SKILL.md) `@independent_judge`、`@tool_independence`）→ WORK-F16、WORK-F17。
   - UI 验收工作流改动须保持 review-ui 与 apply-ui-review 及其引用合同一致（AGENTS.md「Working in This Repository」）→ WORK-F17/AC-4。
   - 参考整合门（AGENTS.md §7）与接口复述同步 → WORK-N4、§5.3。
-- **平台硬约束**：macOS/Linux 四个平台；npm 分发；Node ≥18（docs/phoenix-ui.md 支持矩阵）。门户的多租户、三语 i18n 等约束不适用于本仓工具。
+- **平台硬约束**：macOS ARM64、Linux x64 与 Linux ARM64；npm 分发；Node ≥18（docs/phoenix-ui.md 支持矩阵）。门户的多租户、三语 i18n 等约束不适用于本仓工具。
 - **前置依赖**：
 
 | 提供方 | 所需能力 | 成立条件与依据 | 影响需求 | 未就绪时的产品状态 |

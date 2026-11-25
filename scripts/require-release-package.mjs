@@ -5,7 +5,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const targets = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64'];
+export const releaseTargets = ['darwin-arm64', 'linux-arm64', 'linux-x64'];
+export const releaseManifestPaths = {
+  'phoenix-ui': ['dist/phoenix-ui/VERSION.json', 'skills/phoenix-ui/scripts/ENGINE.json'],
+  'phoenix-diagram': ['dist/phoenix-diagram/VERSION.json', 'dist/phoenix-diagram/bundle/ENGINE.json', 'skills/phoenix-diagram/ENGINE.json'],
+};
 const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 
 function included(pkg, file) {
@@ -23,10 +27,16 @@ export function assertReleaseBranch(branch) {
 }
 export function assertPublishablePackage(root) {
   const pkg = readJson(path.join(root, 'package.json'));
-  for (const tool of ['phoenix-ui', 'phoenix-diagram']) {
-    const manifest = readJson(path.join(root, `dist/${tool}/VERSION.json`));
-    if (manifest.distribution !== 'release' || manifest.npmPackageVersion !== pkg.version || !targets.every(target => publicHttps(manifest.engines?.[target]?.url))) {
-      throw new Error(`dist/${tool}/VERSION.json is not a release manifest of ${pkg.version} with four public HTTPS engine URLs`);
+  for (const [tool, [versionFile, ...copies]] of Object.entries(releaseManifestPaths)) {
+    const bytes = fs.readFileSync(path.join(root, versionFile));
+    const manifest = JSON.parse(bytes);
+    if (manifest.distribution !== 'release' || manifest.npmPackageVersion !== pkg.version
+        || Object.keys(manifest.engines || {}).length !== releaseTargets.length
+        || !releaseTargets.every(target => publicHttps(manifest.engines?.[target]?.url))) {
+      throw new Error(`${versionFile} must be a release manifest of ${pkg.version} with public HTTPS engine URLs for exactly ${releaseTargets.join(', ')}`);
+    }
+    for (const copy of copies) {
+      if (!included(pkg, copy) || !fs.readFileSync(path.join(root, copy)).equals(bytes)) throw new Error(`${copy} must ship the same release manifest as ${versionFile}`);
     }
     // What bin/<tool>.js loads: its skill bootstrap, the manifest and the bundle.
     for (const file of [pkg.bin?.[tool], `skills/${tool}/scripts/phoenix-bootstrap.cjs`, `dist/${tool}/VERSION.json`, `dist/${tool}/bundle/manifest.json`]) {

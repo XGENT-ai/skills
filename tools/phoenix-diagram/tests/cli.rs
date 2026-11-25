@@ -94,7 +94,7 @@ fn cli_help_and_engine_probe_work_without_writing_project_files() {
     assert!(probe.status.success());
     assert_eq!(
         String::from_utf8(probe.stdout).unwrap(),
-        "phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2\n"
+        "phoenix-diagram-engine 0.2.1 receipt=1 viewer=phoenix-v2\n"
     );
     let help = run(&[flag("--help")]);
     assert!(help.status.success());
@@ -118,7 +118,7 @@ fn cli_help_and_engine_probe_work_without_writing_project_files() {
     ] {
         assert!(!text.contains(removed), "{removed}");
     }
-    assert!(text.starts_with("phoenix-diagram 0.2.0\n"));
+    assert!(text.starts_with("phoenix-diagram 0.2.1\n"));
     assert!(text.contains(
         "Types: architecture, workflow, sequence, dataflow, lifecycle, erd, class, tree, timeline, waterfall, statechart, chart, annotation."
     ));

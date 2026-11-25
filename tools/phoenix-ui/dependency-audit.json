@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-11-25T07:24:25.017Z",
+  "checkedAt": "2026-11-25T09:52:27.233Z",
   "status": "passed",
   "scope": "Locked Rust (all features/targets/build/dev), Node/Bun build dependencies and bundled fonts/JS; final package/platform acceptance is separate",
   "tools": {
@@ -18,7 +18,7 @@
     "preparedAt": "2026-11-13T02:03:20.721Z"
   },
   "inputs": {
-    "cargoLockSha256": "449ba6ce9443b3b40a0551a1dce209cd07ce217d5784bc9eaeb8ceb0f7154098",
+    "cargoLockSha256": "f4dd471cd0eb4f26685140c41bdcbe3c8b9f2a0baf60b15b16aca30788db08f2",
     "bunLockSha256": "c77e9373b5193a6ee154c9c44238a042dc449e583356cb172e94ecf006875230",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
     "checkerSha256": "67d690df826d4745cc4804ffe8b348936de5b26f51ad3662a34a14bf995811ec",

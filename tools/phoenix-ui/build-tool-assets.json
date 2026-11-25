@@ -7,17 +7,6 @@
     "note": "Binaryen archive bytes were independently verified; wasm-bindgen pins come from the immutable official release digest. Explicit prepare verifies every downloaded byte before extracting."
   },
   "miseVersion": "2026.9.12",
-  "nativeBootstrap": {
-    "darwin-x64": {
-      "tool": "mr-boxington",
-      "package": "mbx",
-      "version": "1.28.0",
-      "url": "https://github.com/jdx/mr-boxington",
-      "revision": "44f50c329a83dedd012e1e49cf9f265f79226a83",
-      "source": "https://github.com/jdx/mr-boxington/tree/44f50c329a83dedd012e1e49cf9f265f79226a83",
-      "reason": "The official v1.28.0 release has no x86_64-apple-darwin asset; build the same version natively during explicit preparation."
-    }
-  },
   "linuxArmBrowser": {
     "package": "playwright",
     "packageVersion": "1.59.1",
@@ -32,10 +21,6 @@
     "darwin-arm64": {
       "runner": "macos-15",
       "rustTarget": "aarch64-apple-darwin"
-    },
-    "darwin-x64": {
-      "runner": "macos-15-intel",
-      "rustTarget": "x86_64-apple-darwin"
     },
     "linux-x64": {
       "runner": "ubuntu-24.04",
@@ -64,17 +49,6 @@
           "checksumUrl": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-aarch64-apple-darwin.tar.gz.sha256sum",
           "pinEvidence": "official-immutable-release-digest",
           "archiveRoot": "wasm-bindgen-0.2.127-aarch64-apple-darwin",
-          "executable": "wasm-bindgen"
-        },
-        "darwin-x64": {
-          "name": "wasm-bindgen-0.2.127-x86_64-apple-darwin.tar.gz",
-          "url": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-x86_64-apple-darwin.tar.gz",
-          "size": 8155407,
-          "sha256": "81049c79f4e283e1725e6582a0528af1301a70ad23add1df1c4d042ec825263d",
-          "assetId": 505858457,
-          "checksumUrl": "https://github.com/wasm-bindgen/wasm-bindgen/releases/download/0.2.127/wasm-bindgen-0.2.127-x86_64-apple-darwin.tar.gz.sha256sum",
-          "pinEvidence": "official-immutable-release-digest",
-          "archiveRoot": "wasm-bindgen-0.2.127-x86_64-apple-darwin",
           "executable": "wasm-bindgen"
         },
         "linux-x64": {
@@ -123,17 +97,6 @@
           "sha256": "f2d962ff294b38ea3cfbbae8f6c728089d9375a57bac9a1880eb86779d6d3a84",
           "assetId": 153907622,
           "checksumUrl": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-arm64-macos.tar.gz.sha256",
-          "pinEvidence": "official-checksum-and-complete-archive-bytes",
-          "archiveRoot": "binaryen-version_117",
-          "executable": "bin/wasm-opt"
-        },
-        "darwin-x64": {
-          "name": "binaryen-version_117-x86_64-macos.tar.gz",
-          "url": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-x86_64-macos.tar.gz",
-          "size": 8061008,
-          "sha256": "c0be7b448888f2c851a853ca19299b09d42cac8c3090c716d14cc8ec3c0ac849",
-          "assetId": 153907621,
-          "checksumUrl": "https://github.com/WebAssembly/binaryen/releases/download/version_117/binaryen-version_117-x86_64-macos.tar.gz.sha256",
           "pinEvidence": "official-checksum-and-complete-archive-bytes",
           "archiveRoot": "binaryen-version_117",
           "executable": "bin/wasm-opt"

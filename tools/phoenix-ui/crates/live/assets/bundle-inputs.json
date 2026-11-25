@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "inputSha256": "de220be3547e41ac903ff1213a05601f270524f8e916217e5a2bfa36e43d0245",
+  "inputSha256": "1d12c91326cbdf968cd18352cafbfe6a957b985f8ed906fad3bd05a1e5c6e48c",
   "inputs": {
     ".cargo/config.toml": {
       "sha256": "716b49c90c25aeeebc4b0359b111a62927d166a1d7f02c4fe83b89d55fb74887",
       "size": 49
     },
     "Cargo.lock": {
-      "sha256": "449ba6ce9443b3b40a0551a1dce209cd07ce217d5784bc9eaeb8ceb0f7154098",
+      "sha256": "f4dd471cd0eb4f26685140c41bdcbe3c8b9f2a0baf60b15b16aca30788db08f2",
       "size": 47678
     },
     "Cargo.toml": {
-      "sha256": "8db58736e3abc8fee384c7176c36a1e37cc23ee2b6a951b0aa829b8adc72b4c6",
+      "sha256": "a443b67fc6afef123bdfb86dc259d0502b0e1b0ca6654289f38565b3d3147eac",
       "size": 1190
     },
     "browser-bundle/00-header.js": {
@@ -271,8 +271,8 @@
       "size": 123
     },
     "repository/scripts/phoenix-build-tools.mjs": {
-      "sha256": "55796e4d2de67246f961008793bc9e05f1cf2f3d0e13a96db17a56d1cc95d708",
-      "size": 8816
+      "sha256": "6c46895d76c80bf92146145ac1aef03254a143c11ad8fbf2572707259ba20c89",
+      "size": 9190
     }
   },
   "options": {
@@ -303,7 +303,7 @@
   },
   "outputs": {
     "crates/live/assets/detect-antipatterns-browser.js": {
-      "sha256": "d56c47b779fb2311242a72314baaf30646ce21f837a1c27fd2dcbcc2f7cbd396",
+      "sha256": "f742c53dccb6b1c2769db6309ebc346a177977bdea907d7abca5cf5a8568f399",
       "size": 2010993
     }
   }

@@ -64,12 +64,11 @@ pub(super) fn digest(bytes: &[u8]) -> FileDigest {
 fn platform() -> InstallResult<&'static str> {
     match (std::env::consts::OS, std::env::consts::ARCH) {
         ("macos", "aarch64") => Ok("darwin-arm64"),
-        ("macos", "x86_64") => Ok("darwin-x64"),
         ("linux", "aarch64") => Ok("linux-arm64"),
         ("linux", "x86_64") => Ok("linux-x64"),
         _ => Err(invalid(
             "install/unsupported-platform",
-            "This native installer supports the four declared Unix targets",
+            "This native installer supports darwin-arm64, linux-x64, and linux-arm64",
         )),
     }
 }

@@ -1,26 +1,16 @@
 #!/usr/bin/env node
 // Only explicit maintenance preparation installs tools or fetches dependencies.
-// Browser preparation and the native Intel mbx bootstrap adapt the minimal
-// Apache-2.0 patterns in prepare-phoenix-ui.mjs; no UI tool preflight is loaded.
+// Browser preparation adapts Apache-2.0 patterns in prepare-phoenix-ui.mjs.
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { root, workspace, loadVersions, miseEnvironment, preflight, verifySources, browserPin, discoverBrowser } from './check-phoenix-diagram-source.mjs';
+import { root, workspace, rejectIntelMac, loadVersions, miseEnvironment, preflight, verifySources, browserPin, discoverBrowser } from './check-phoenix-diagram-source.mjs';
 
-export function preparationCommands(versions, lockfileExists, { updateLock = false, platform, boxingtonAvailable = true } = {}) {
-  const bootstrap = platform === 'darwin-x64' && !boxingtonAvailable
-    ? JSON.parse(fs.readFileSync(path.join(root, 'tools/phoenix-ui/build-tool-assets.json'))).nativeBootstrap['darwin-x64'] : null;
-  if (bootstrap && (bootstrap.tool !== 'mr-boxington' || bootstrap.package !== 'mbx' || bootstrap.version !== versions.mrBoxington
-      || bootstrap.url !== 'https://github.com/jdx/mr-boxington' || !/^[a-f0-9]{40}$/.test(bootstrap.revision))) throw new Error('Invalid pinned Intel Diagram mbx bootstrap');
-  const bootstrapRoot = path.join(root, 'local/phoenix-diagram/build-tools/darwin-x64', `mr-boxington-${versions.mrBoxington}`);
+export function preparationCommands(versions, lockfileExists, { updateLock = false, platform } = {}) {
+  rejectIntelMac(platform);
   return [
-    ...(bootstrap ? [
-      ['mise', ['install', `rust@${versions.rust}`, `node@${versions.node}`]],
-      ['mise', ['exec', '--no-deps', '--', 'rustup', 'run', versions.rust, 'cargo', 'install', '--locked', '--git', bootstrap.url, '--rev', bootstrap.revision, '--root', bootstrapRoot, bootstrap.package]],
-      ['mise', ['link', `mr-boxington@${versions.mrBoxington}`, bootstrapRoot]],
-    ] : []),
     ['mise', ['install', `rust@${versions.rust}`, `node@${versions.node}`, `mr-boxington@${versions.mrBoxington}`]],
     ['mise', ['exec', '--no-deps', '--', 'rustup', 'component', 'add', '--toolchain', versions.rust, 'rustfmt', 'clippy']],
     ...(!lockfileExists || updateLock ? [['mise', ['exec', '--no-deps', '--', 'mbx', 'generate-lockfile']]] : []),
@@ -29,6 +19,7 @@ export function preparationCommands(versions, lockfileExists, { updateLock = fal
 }
 
 export function browserPreparationCommands(platform, { directory = path.join(root, 'local/phoenix-diagram/build-tools') } = {}) {
+  rejectIntelMac(platform);
   if (platform !== 'linux-arm64') return [];
   const pin = browserPin(), prefix = path.join(directory, `playwright-${pin.packageVersion}`);
   const npm = path.resolve(path.dirname(process.execPath), '../lib/node_modules/npm/bin/npm-cli.js');
@@ -52,7 +43,7 @@ export function verifyPreparedBrowser(browser, platform) {
 }
 
 export function prepareBrowser({ platform = `${process.platform}-${process.arch}`, env = miseEnvironment(), directory = path.join(root, 'local/phoenix-diagram/build-tools'), evidenceRoot = path.join(root, 'local/phoenix-diagram/ci-prepare', platform) } = {}) {
-  if (!['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'].includes(platform)) throw new Error('Unsupported native Diagram browser preparation platform');
+  if (!['darwin-arm64', 'linux-x64', 'linux-arm64'].includes(platform)) throw new Error('Unsupported native Diagram browser preparation platform');
   fs.mkdirSync(evidenceRoot, { recursive: true });
   const id = randomBytes(12).toString('hex'), receiptPath = path.join(evidenceRoot, `browser-${id}.json`), environmentFile = path.join(evidenceRoot, `browser-${id}.env.json`);
   const record = { schemaVersion: 1, tool: 'phoenix-diagram', kind: 'browser-preparation', platform, status: 'preparing', startedAt: new Date().toISOString(), commands: [], browserAcceptance: 'not-run' };
@@ -99,17 +90,15 @@ export function prepareBrowser({ platform = `${process.platform}-${process.arch}
 }
 
 export function prepare({ updateLock = false } = {}) {
-  const sources = verifySources(), versions = loadVersions();
   const platform = `${process.platform === 'win32' ? 'windows' : process.platform}-${process.arch}`;
+  rejectIntelMac(platform);
+  const sources = verifySources(), versions = loadVersions();
   const evidenceRoot = path.join(root, 'local/phoenix-diagram/ci-prepare');
   const record = { schemaVersion: 1, startedAt: new Date().toISOString(), platform, status: 'preparing', updateLock, tools: versions, sources, commands: [] };
   fs.mkdirSync(evidenceRoot, { recursive: true });
   const env = miseEnvironment({ CARGO_NET_OFFLINE: 'false' });
   try {
-    const selected = platform === 'darwin-x64' ? spawnSync('mise', ['ls', '--current', '--json'], { cwd: workspace, env, encoding: 'utf8' }) : null;
-    if (selected?.error || selected && selected.status !== 0) throw selected.error || new Error(selected.stderr || 'Cannot inspect installed Intel mbx');
-    const boxingtonAvailable = !selected || Boolean(JSON.parse(selected.stdout)['mr-boxington']?.some(tool => tool.version === versions.mrBoxington && tool.installed));
-    for (const [program, args] of preparationCommands(versions, fs.existsSync(path.join(workspace, 'Cargo.lock')), { updateLock, platform, boxingtonAvailable })) {
+    for (const [program, args] of preparationCommands(versions, fs.existsSync(path.join(workspace, 'Cargo.lock')), { updateLock, platform })) {
       const command = { program, args }; record.commands.push(command);
       const result = spawnSync(program, args, { cwd: workspace, env, stdio: 'inherit' });
       command.exitCode = result.status;

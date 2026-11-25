@@ -4,7 +4,7 @@ description: "用于架构、工作流、时序、数据流、状态、状态机
 license: MIT
 metadata:
   internal: true
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Phoenix Diagram
@@ -97,7 +97,7 @@ PD="<当前加载的skill目录>/scripts/phoenix-diagram"
 
 ## 环境与停止
 
-普通 launcher 和安装脚本需要 Node.js 18+；图解核心为 Rust，消费环境不需要 Rust、Cargo 或检出源码。普通命令只验证已存在的引擎，不下载、不更新、不安装，不主动打开用户浏览器页面或启动 preview 服务。`finalize` 的隔离浏览器验收属于默认交付路径。
+原生引擎仅支持 `darwin-arm64`、`linux-x64` 和 `linux-arm64`，不支持 Intel Mac（`darwin-x64`）。普通 launcher 和安装脚本需要 Node.js 18+；图解核心为 Rust，消费环境不需要 Rust、Cargo 或检出源码。普通命令只验证已存在的引擎，不下载、不更新、不安装，不主动打开用户浏览器页面或启动 preview 服务。`finalize` 的隔离浏览器验收属于默认交付路径。
 
 工具或图像能力不可用时如实保留 `unavailable` / `not-run` / `required-pending` 和未完成门，交付可用 candidate 或已有文件。无 shell 时不能手写 SVG 冒充 Rust 校验通过。
 

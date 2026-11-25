@@ -27,7 +27,7 @@ if (copiedNode || require.main === module) {
   // Node resolves its script argument before executing NODE_OPTIONS preloads.
   if (copiedNode && argv[0]) argv[0] = path.basename(argv[0]);
   if (argv[0] === 'engine-probe') {
-    console.log('phoenix-ui-engine 0.1.1'); process.exit(0);
+    console.log('phoenix-ui-engine 0.1.2'); process.exit(0);
   }
   if (process.env.PHOENIX_UI_FIXTURE_TRACE) fs.appendFileSync(process.env.PHOENIX_UI_FIXTURE_TRACE, 'executed\\n');
   console.log(JSON.stringify({argv, provider:process.env.PHOENIX_UI_PROVIDER_ID}));
@@ -42,7 +42,7 @@ if (copiedNode || require.main === module) {
   const target = platformTarget();
   const asset = `phoenix-ui-${target}${target.startsWith('windows-') ? '.exe' : ''}`;
   const manifest = {
-    schemaVersion: 1, distribution: 'development', toolVersion: '0.1.1', npmPackageVersion: '0.7.0-rc.0',
+    schemaVersion: 1, distribution: 'development', toolVersion: '0.1.2', npmPackageVersion: '0.7.0-rc.0',
     sourceCommit: 'a'.repeat(40), bundleSchema: 1, bundleSha256: 'b'.repeat(64), reviewSchema: 1,
     engines: { [target]: { asset, sha256: sha256(bytes), size: bytes.length } }, ...changes,
   };
@@ -98,7 +98,7 @@ test('offline explicit install verifies and runs the pinned executable with spac
 
 test('different engine builds coexist without replacing a pinned project or the legacy cache', async t => {
   const f = fixture(t);
-  const legacy = path.join(f.cache, 'bin/0.1.1', f.target, f.target.startsWith('windows') ? 'phoenix-ui.exe' : 'phoenix-ui');
+  const legacy = path.join(f.cache, 'bin/0.1.2', f.target, f.target.startsWith('windows') ? 'phoenix-ui.exe' : 'phoenix-ui');
   fs.mkdirSync(path.dirname(legacy), { recursive: true });
   fs.writeFileSync(legacy, 'existing pinned engine\n');
   const first = await installEngine(manifestAt(path.join(f.release, 'VERSION.json')), f.target, f.project, f.release, f.env);
@@ -238,7 +238,7 @@ test('a hook with a missing project directory still fails open and deduplicates 
   assert.equal(second.stdout, '');
   const records = fs.readdirSync(path.join(f.cache, 'unavailable')).map(name =>
     JSON.parse(fs.readFileSync(path.join(f.cache, 'unavailable', name))));
-  assert.equal(records[0].version, '0.1.1');
+  assert.equal(records[0].version, '0.1.2');
 });
 
 test('malformed event types remain nonblocking when the cached engine is absent', async t => {
@@ -343,9 +343,9 @@ test('HTTPS engine downloads use the established proxy tunnel', async t => {
   assert.deepEqual(fs.readFileSync(JSON.parse(result.stdout).binary), f.bytes);
 });
 
-test('release manifests accept the four macOS/Linux assets and still require every one', t => {
+test('release manifests accept the three supported macOS/Linux assets and still require every one', t => {
   const f = fixture(t);
-  const targets = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
+  const targets = ['darwin-arm64', 'linux-x64', 'linux-arm64'];
   const engines = Object.fromEntries(targets.map(target => [target, {
     asset: `phoenix-ui-${target}`, sha256: sha256(f.bytes), size: f.bytes.length,
     url: `https://download.example.test/${target}`,
@@ -354,6 +354,11 @@ test('release manifests accept the four macOS/Linux assets and still require eve
   const manifest = { ...f.manifest, distribution: 'release', engines };
   fs.writeFileSync(file, JSON.stringify(manifest));
   assert.deepEqual(manifestAt(file).data.engines, engines);
+  for (const distribution of ['release', 'development']) {
+    const target = 'darwin-x64';
+    fs.writeFileSync(file, JSON.stringify({ ...manifest, distribution, engines: { ...engines, [target]: engines['linux-x64'] } }));
+    assert.throws(() => manifestAt(file), /Invalid engine target manifest/);
+  }
   for (const target of targets) {
     const incomplete = { ...engines };
     delete incomplete[target];
@@ -362,10 +367,17 @@ test('release manifests accept the four macOS/Linux assets and still require eve
   }
 });
 
-test('platform fallback, proxy precedence and no_proxy keep the declared consumer contract', () => {
-  assert.equal(platformTarget('win32', 'arm64'), 'windows-x64');
-  assert.equal(platformTarget('linux', 'arm64'), 'linux-arm64');
-  assert.throws(() => platformTarget('freebsd', 'x64'), /Unsupported/);
+test('platform selection rejects Intel macOS without changing the Windows fallback', () => {
+  for (const target of ['darwin-arm64', 'linux-x64', 'linux-arm64']) {
+    assert.equal(platformTarget(...target.split('-')), target);
+  }
+  for (const arch of ['x64', 'arm64']) assert.equal(platformTarget('win32', arch), 'windows-x64');
+  for (const [os, arch] of [['darwin', 'x64'], ['linux', 'ia32'], ['freebsd', 'x64']]) {
+    assert.throws(() => platformTarget(os, arch), /Unsupported/);
+  }
+});
+
+test('proxy precedence and no_proxy keep the declared consumer contract', () => {
   const target = new URL('https://download.example.test/a');
   assert.equal(proxyFor(target, { HTTP_PROXY: 'http://127.0.0.1:3128' }).href, 'http://127.0.0.1:3128/');
   assert.equal(proxyFor(target, { HTTP_PROXY: 'http://127.0.0.1:3128', HTTPS_PROXY: 'http://127.0.0.1:3129' }).port, '3129');

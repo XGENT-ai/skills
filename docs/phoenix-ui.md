@@ -45,12 +45,12 @@ Phoenix UI 文件直接按当前包覆盖，包括 skills.sh 或手动复制修�
 
 | 平台 | engine 资产 |
 | --- | --- |
-| macOS Apple Silicon / Intel | `darwin-arm64` / `darwin-x64` |
+| macOS Apple Silicon | `darwin-arm64` |
 | Linux x64 / ARM64 | `linux-x64` / `linux-arm64` |
 
-本期支持 macOS 和 Linux。Windows 的发布资产、hook 会话及 ARM64 兼容验收延期。
+从 `@xgent-ai/skills@0.7.14` 起不再提供 macOS Intel 引擎；Apple Silicon 上请使用原生 ARM64 Node.js。Windows 暂不支持。
 
-其他平台在预检阶段以退出码 4 停止，不写项目；可加 `--no-phoenix-ui` 安装其余部分。用户不需要 Rust 编译器。
+其他平台在 Phoenix 预检阶段以退出码 4 停止，不写项目；只安装包内其他部分可同时传入 `--no-phoenix-ui --no-phoenix-diagram`。用户不需要 Rust 编译器。
 
 | 目录 | 工具 | Phoenix UI 安装内容 |
 | --- | --- | --- |
@@ -292,7 +292,7 @@ mise exec --no-deps -- npm --prefix ../.. run test:phoenix
 
 prepare 显式联网准备锁定依赖、工具、浏览器和公告快照；随后 audit/build/runtime 使用已准备缓存与离线合同，`CARGO_NET_OFFLINE` 不单独证明全部网络已禁止。`--development` 仅是本机开发制品。`check-phoenix-deps.mjs --distribution-dir <目录>` 另核对分发许可，真实 browser/provider 会话仍分别取证。完整维护入口见 [prepare](../scripts/prepare-phoenix-ui.mjs)、[build](../scripts/build-phoenix-ui.mjs)、[audit](../scripts/check-phoenix-deps.mjs)、[runtime tests](../scripts/test-phoenix-ui.mjs)。
 
-统一的 [Phoenix CI](../.github/workflows/phoenix.yml) 在同一次运行中检查 UI 和 Diagram，并给出共同结果。UI 与 Diagram 在 macOS/Linux 四个平台同架构冷构建/运行，不恢复编译缓存，UI 另有 Node18 consumer。每个平台上传 `phoenix-ui-<平台>` 与 `phoenix-diagram-<平台>` 制品，发布只取这八份引擎制品；整次 run 成功即视为全部 job 通过。CI 不持 R2/npm 凭据。
+统一的 [Phoenix CI](../.github/workflows/phoenix.yml) 在同一次运行中检查 UI 和 Diagram，并给出共同结果。UI 与 Diagram 在上述三个目标上分别原生冷构建并运行测试，不恢复编译缓存，UI 另有 Node18 consumer。每个目标上传 `phoenix-ui-<平台>` 与 `phoenix-diagram-<平台>` 制品，发布只取这六份引擎制品；整次 run 成功即视为全部 job 通过。CI 不持 R2/npm 凭据。
 
 发布只用一条命令，在 **main 分支上干净、已推送且 Phoenix CI 成功**的 HEAD 上执行，不创建独立发布分支，也不从 detached HEAD 发布。版本号先在 `package.json` 改好。改过 `skills/phoenix-ui/src` 或 provider/hook 生成器时，在 `tools/phoenix-ui` 下运行 `mise exec --no-deps -- bun scripts/render.mjs`；改过 `skills/phoenix-diagram` 时运行 `node scripts/build-phoenix-diagram.mjs --sync-bundle`，并提交生成的 skill 与 bundle。两者都不需要 prepare 或原生构建；`VERSION.json` 与 `ENGINE.json` 不提交，开发构建只在本地写出，发布时由脚本写入：
 
@@ -304,8 +304,8 @@ mise exec --no-deps -- npm run release:phoenix -- --prepare-only     # 只做到
 [release-phoenix-ui.mjs](../scripts/release-phoenix-ui.mjs) 依次执行，任一步失败即停：
 
 1. 核对当前分支为 `main`、工作树干净、npm 上还没有这个版本，找到该提交最新一次成功的 Phoenix CI run（也可用 `--run-id` 指定）。
-2. 从这次 run 下载 UI 与 Diagram 各四个平台的 engine 制品（`phoenix-ui-<平台>`、`phoenix-diagram-<平台>`），逐个核对 GitHub digest，并确认 CI 构建所用的两个 bundle 与当前提交一致、提交的生成文件与源码一致。
-3. 用 `aws s3api put-object --if-none-match '*'` 把八个 engine 上传到 R2 的 `<前缀>/<工具>/v<版本>/ci-<run>/<平台>/<文件>`，从不覆盖：对象已存在时只接受字节相同的；随后从每个公共 URL 回读，核对大小与 SHA-256。凭据取已导出的 `AGENT_RELEASE_R2_*`，没有时读仓根 `.env.cf` 里的同名行。已上传的对象有误时，为同一提交手动再触发一次 Phoenix CI（得到新 run ID；Actions 页面的 Re-run 沿用原 ID）后重新发布，不会撞上旧对象。
+2. 从这次 run 下载 UI 与 Diagram 各三个目标的 engine 制品（`phoenix-ui-<平台>`、`phoenix-diagram-<平台>`），逐个核对 GitHub digest，并确认 CI 构建所用的两个 bundle 与当前提交一致、提交的生成文件与源码一致。
+3. 用 `aws s3api put-object --if-none-match '*'` 把六个 engine 上传到 R2 的 `<前缀>/<工具>/v<版本>/ci-<run>/<平台>/<文件>`，从不覆盖：对象已存在时只接受字节相同的；随后从每个公共 URL 回读，核对大小与 SHA-256。凭据取已导出的 `AGENT_RELEASE_R2_*`，没有时读仓根 `.env.cf` 里的同名行。已上传的对象有误时，为同一提交手动再触发一次 Phoenix CI（得到新 run ID；Actions 页面的 Re-run 沿用原 ID）后重新发布，不会撞上旧对象。
 4. 从 HEAD（`git archive`）只打一次联合 tarball：写入两个工具的 release 清单及其副本（UI 的 `skills/phoenix-ui/scripts/ENGINE.json`，Diagram 的 `bundle/ENGINE.json` 与 `skills/phoenix-diagram/ENGINE.json`），第三方许可取自 darwin-arm64 的 CI 制品，最终包再次通过发布校验。`xgent-skills install` 默认安装两者。
 5. 用 [check-phoenix-ui-release.mjs](../scripts/check-phoenix-ui-release.mjs) 在 Node 18 和维护 Node 上联合新装（两个 engine 从公共 URL 下载），核对 Diagram 引擎摘要、可运行入口及重复安装；另检查 Phoenix 副本覆盖重装和重复安装。
 6. `npm publish` 这个 tarball，再从 registry 下载回来核对 shasum、integrity 和 SHA-256。
@@ -322,4 +322,4 @@ mise exec --no-deps -- npm run release:phoenix -- --reuse-engines 0.7.10 [--prep
 
 在仓库根目录直接 `npm publish` 会被 `prepublishOnly` 拒绝：检出里没有 release 清单，`dist/phoenix-ui/VERSION.json` 不提交，开发构建写出的也只是没有 engine 下载地址的开发清单。发布过的 R2 对象和 npm 版本都不能覆盖，出错只能发新版本。
 
-替身、开发包和四平台 CI 都不能单独证明线上 URL 或最终包可用。
+替身、开发包和 CI 都不能单独证明线上 URL 或最终包可用。

@@ -4,7 +4,8 @@
 
 ## 0.7.14
 
-- Phoenix UI 引擎升级至 0.1.1。安装时不再自动注册 Phoenix UI hooks；重装会清理所选项目工具中旧版自动注册的 hooks，保留用 `phoenix-ui hooks on` 显式启用的配置。传入 `--no-phoenix-ui` 时不清理旧 hooks。
+- Phoenix UI 0.1.2 与 Phoenix Diagram 0.2.1 不再提供 macOS Intel 引擎。支持的平台为 macOS Apple Silicon、Linux x64 和 Linux ARM64；此前发布的版本不受影响。
+- Phoenix UI 安装时不再自动注册 Phoenix UI hooks；重装会清理所选项目工具中旧版自动注册的 hooks，保留用 `phoenix-ui hooks on` 显式启用的配置。传入 `--no-phoenix-ui` 时不清理旧 hooks。
 - 新增 `agent-browser` 和 `use-decision-model` 两个 skill，分别提供浏览器 CLI 操作指引和代码中类型化语义判断的模型选型与接入指引。
 
 ## 0.7.13

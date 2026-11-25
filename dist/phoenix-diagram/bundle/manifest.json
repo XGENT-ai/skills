@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "tool": "phoenix-diagram",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "files": [
     {
       "path": "SKILL.md",
-      "size": 19949,
-      "sha256": "a6c30d1d7856e0f2eaceafdcdfce671ebb356da96c1a250bc8774c72de7758ac",
+      "size": 20060,
+      "sha256": "1411bf87e7d3f688cd9e39c8502e26fbc42539edd95abcb96a681454d71b05e6",
       "mode": 420
     },
     {
@@ -257,8 +257,8 @@
     },
     {
       "path": "scripts/phoenix-bootstrap.cjs",
-      "size": 15418,
-      "sha256": "917d88fa86446cc85955f657ba1323ae67325749eafe2fe9d6d849b88575a78b",
+      "size": 15606,
+      "sha256": "ad226ce8fd18d5dcbf8cd09086e24c6814a686a62381be2612f065a3082fab4a",
       "mode": 420
     },
     {

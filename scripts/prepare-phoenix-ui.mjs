@@ -35,14 +35,9 @@ export function nativePlatform(platform = process.platform, arch = process.arch)
 
 export function validatePins() {
   if (assets.schemaVersion !== 1) throw new Error('Unsupported build-tool asset schema');
-  const bootstrap = assets.nativeBootstrap['darwin-x64'];
-  if (bootstrap.tool !== 'mr-boxington' || bootstrap.package !== 'mbx' || bootstrap.version !== versions.mrBoxington
-      || bootstrap.url !== 'https://github.com/jdx/mr-boxington' || !/^[a-f0-9]{40}$/.test(bootstrap.revision)) {
-    throw new Error('Invalid pinned Intel macOS mbx source');
-  }
   for (const tool of ['wasmBindgen', 'binaryen']) {
     if (String(assets.tools[tool].version) !== String(versions[tool])) throw new Error(`${tool} asset catalog differs from build-tools.lock.json`);
-    if (Object.keys(assets.tools[tool].assets).sort().join() !== Object.keys(assets.platforms).sort().join()) throw new Error(`${tool} must pin all five native platforms`);
+    if (Object.keys(assets.tools[tool].assets).sort().join() !== Object.keys(assets.platforms).sort().join()) throw new Error(`${tool} must pin every supported native platform`);
     for (const asset of Object.values(assets.tools[tool].assets)) {
       if (!Number.isSafeInteger(asset.size) || asset.size <= 0 || asset.size > 128 * 1024 * 1024
           || !/^[a-f0-9]{64}$/.test(asset.sha256) || !asset.url.startsWith(`${assets.tools[tool].release.replace('/tag/', '/download/')}/`)
@@ -193,20 +188,10 @@ export function extractArchive(bytes, asset, destination) {
   return path.join(destination, ...safeRelative(asset.executable).split('/'));
 }
 
-export function preparationCommands(platform, boxingtonAvailable = false) {
+export function preparationCommands(platform) {
   const nativeTarget = assets.platforms[platform]?.rustTarget;
   if (!nativeTarget) throw new Error('Unsupported native preparation platform');
-  const bootstrap = assets.nativeBootstrap[platform];
-  const sourceRoot = path.join(toolRoot, platform, `mr-boxington-${versions.mrBoxington}`);
   return [
-    ...(bootstrap && !boxingtonAvailable ? [
-      ['mise', ['install', `rust@${versions.rust}`, `node@${versions.node}`, `bun@${versions.bun}`]],
-      // mbx cannot wrap its own initial build. Use the explicitly installed
-      // toolchain just for this dependency, then register it with mise.
-      ['mise', ['exec', '--no-deps', '--', 'rustup', 'run', versions.rust, 'cargo', 'install', '--locked',
-        '--git', bootstrap.url, '--rev', bootstrap.revision, '--root', sourceRoot, bootstrap.package]],
-      ['mise', ['link', `mr-boxington@${versions.mrBoxington}`, sourceRoot]],
-    ] : []),
     ['mise', ['install']],
     ['mise', ['exec', '--no-deps', '--', 'rustup', 'target', 'add', '--toolchain', versions.rust, nativeTarget, versions.wasmTarget]],
     ['mise', ['exec', '--no-deps', '--', 'rustup', 'component', 'add', '--toolchain', versions.rust, 'rustfmt', 'clippy']],
@@ -224,7 +209,10 @@ export function preparationCommands(platform, boxingtonAvailable = false) {
 
 async function prepare() {
   validatePins(); const platform = nativePlatform();
-  if (process.env.PHOENIX_UI_BUILD_TARGET && process.env.PHOENIX_UI_BUILD_TARGET !== assets.platforms[platform].rustTarget) throw new Error('Preparation requires the runner native Rust target');
+  if (process.env.CARGO_BUILD_TARGET === 'x86_64-apple-darwin'
+      || (process.env.PHOENIX_UI_BUILD_TARGET && process.env.PHOENIX_UI_BUILD_TARGET !== assets.platforms[platform].rustTarget)) {
+    throw new Error('Preparation requires the runner native Rust target');
+  }
   const record = { schemaVersion: 1, startedAt: new Date().toISOString(), platform, status: 'preparing', tools: versions, commands: [], archives: [] };
   noSymlinkParents(evidenceRoot); fs.mkdirSync(evidenceRoot, { recursive: true });
   const recordPath = path.join(evidenceRoot, `${platform}.json`);
@@ -237,9 +225,7 @@ async function prepare() {
     return result.stdout;
   };
   try {
-    const selected = JSON.parse(run('mise', ['ls', '--current', '--json'], true));
-    const boxingtonAvailable = selected['mr-boxington']?.some(tool => tool.version === versions.mrBoxington && tool.installed);
-    for (const [program, args] of preparationCommands(platform, boxingtonAvailable)) run(program, args);
+    for (const [program, args] of preparationCommands(platform)) run(program, args);
     if (platform === 'linux-arm64') {
       env.PHOENIX_UI_BROWSER = run('mise', ['exec', '--no-deps', '--', 'node', '-e', "process.stdout.write(require('playwright').chromium.executablePath())"], true).trim();
       const browser = JSON.parse(fs.readFileSync(path.join(workspace, 'node_modules/playwright-core/browsers.json'))).browsers.find(entry => entry.name === 'chromium');

@@ -356,7 +356,7 @@ async function install(args) {
   if (options.diagram && !diagramBootstrap.TARGETS.includes(`${process.platform}-${process.arch}`)) {
     if (diagramReleaseDir !== undefined) diagramBootstrap.platformTarget();
     options.diagram = false;
-    console.log(`  跳过 Phoenix Diagram: ${process.platform}/${process.arch} 不在支持的四个 macOS/Linux 平台内。`);
+    console.log(`  跳过 Phoenix Diagram: ${process.platform}/${process.arch} 不在支持的平台内 (macOS ARM64、Linux x64/ARM64)。`);
   }
 
   const targetDir = path.resolve(dirArg || process.cwd());

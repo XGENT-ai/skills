@@ -43,6 +43,11 @@ fn collect(root: &Path, path: &Path, files: &mut Vec<PathBuf>) {
 }
 
 fn main() {
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("macos")
+        && env::var("CARGO_CFG_TARGET_ARCH").as_deref() == Ok("x86_64")
+    {
+        panic!("Unsupported Phoenix Diagram target: darwin-x64");
+    }
     let root = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").expect("Cargo manifest directory"))
         .join("../..")
         .canonicalize()

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Release @xgent-ai/skills from a clean checkout whose HEAD passed the Phoenix CI:
-// take the UI and Diagram engines built by one CI run, upload all eight to R2, pack the npm tarball once,
+// take the UI and Diagram engines built by one CI run, upload their supported targets to R2, pack the npm tarball once,
 // install-check it from the public URLs, then `npm publish` that same tarball and verify the registry.
 // Records stay under local/phoenix-ui/releases/v<version>-<sha>/<ci-RUN|reuse-VERSION>/; rerunning resumes from them.
 //
@@ -20,13 +20,12 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { assertReleaseBranch, assertPublishablePackage } from './require-release-package.mjs';
+import { assertReleaseBranch, assertPublishablePackage, releaseTargets as targets, releaseManifestPaths } from './require-release-package.mjs';
 import { sourceInputs as diagramSourceInputs, bundleFiles as diagramBundleFiles } from './build-phoenix-diagram.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = 'XGENT-ai/skills';
 const tools = ['phoenix-ui', 'phoenix-diagram'];
-const targets = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64'];
 const sidecarFiles = ['THIRD-PARTY.json', 'THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-LICENSES'];
 const sha = (bytes, algorithm = 'sha256', encoding = 'hex') => crypto.createHash(algorithm).update(bytes).digest(encoding);
 const json = value => JSON.stringify(value, null, 2) + '\n';
@@ -165,7 +164,11 @@ export function assertGeneratedCurrent(repoRoot = root) {
 }
 
 // Engine fields stay as built; package identity and bundle digest follow this checkout.
-export function releaseManifest(tool, base, engines, { version, head, tree }) {
+export function releaseManifest(tool, base, availableEngines, { version, head, tree }) {
+  const engines = Object.fromEntries(targets.map(target => {
+    assert(availableEngines[target], `Missing ${tool} engine for ${target}`);
+    return [target, availableEngines[target]];
+  }));
   return { ...base, distribution: 'release', npmPackageVersion: version, sourceCommit: head, ...(tool === 'phoenix-ui' && { sourceTree: tree }),
     bundleSha256: fileSha(root, `dist/${tool}/bundle/manifest.json`), engines };
 }
@@ -177,16 +180,14 @@ function packRelease(packDir, manifests, sidecars, provenance) {
   fs.rmSync(packDir, { recursive: true, force: true });
   fs.mkdirSync(stage, { recursive: true }); fs.mkdirSync(tarballs);
   command('tar', ['-xf', '-', '-C', stage], { input: bytesOf('git', ['archive', '--format=tar', 'HEAD']) });
-  const ui = json(manifests['phoenix-ui']), diagram = json(manifests['phoenix-diagram']);
-  for (const name of ['dist/phoenix-ui/VERSION.json', 'skills/phoenix-ui/scripts/ENGINE.json']) fs.writeFileSync(path.join(stage, name), ui);
-  for (const name of ['dist/phoenix-diagram/VERSION.json', 'dist/phoenix-diagram/bundle/ENGINE.json', 'skills/phoenix-diagram/ENGINE.json']) fs.writeFileSync(path.join(stage, name), diagram);
+  for (const tool of tools) for (const name of releaseManifestPaths[tool]) fs.writeFileSync(path.join(stage, name), json(manifests[tool]));
   for (const tool of tools) for (const name of sidecarFiles) {
     fs.rmSync(path.join(stage, 'dist', tool, name), { recursive: true, force: true });
     fs.cpSync(path.join(sidecars[tool], name), path.join(stage, 'dist', tool, name), { recursive: true });
   }
   assertPublishablePackage(stage);
   const [packed] = JSON.parse(npm(['pack', '--json', '--pack-destination', tarballs], { cwd: stage }).stdout);
-  fs.writeFileSync(path.join(packDir, 'VERSION.json'), ui);
+  fs.writeFileSync(path.join(packDir, 'VERSION.json'), json(manifests['phoenix-ui']));
   fs.writeFileSync(path.join(packDir, 'pack-record.json'), json({ provenance, tarball: packed.filename }));
 }
 
@@ -258,10 +259,10 @@ async function packFromCi(runId, options, pkg, head, tree, dir) {
   for (const tool of tools) {
     assert.equal(built[tool][targets[0]].bundleSha256, fileSha(root, `dist/${tool}/bundle/manifest.json`), `CI built ${tool} against another bundle than this commit's; regenerate and commit it`);
   }
-  console.log('eight engine artifacts match their GitHub digests');
+  console.log(`${tools.length * targets.length} engine artifacts match their GitHub digests`);
 
   step('R2 engines');
-  await confirm(`Upload the eight engines of CI run ${runId} to R2 for v${pkg.version}? Uploaded objects cannot be replaced.`, pkg.version, options);
+  await confirm(`Upload the ${tools.length * targets.length} engines of CI run ${runId} to R2 for v${pkg.version}? Uploaded objects cannot be replaced.`, pkg.version, options);
   const envFile = path.join(root, '.env.cf');
   const config = r2Config(releaseEnv(process.env, fs.existsSync(envFile) ? fs.readFileSync(envFile, 'utf8') : ''));
   const manifests = {}, sidecars = {};
@@ -299,12 +300,12 @@ async function packReusingEngines(version, pkg, head, tree, dir) {
   assert(previous.ui.distribution === 'release' && previous.diagram.distribution === 'release', `${version} does not carry release engines`);
   assertEnginesReusable(previous);
   assertGeneratedCurrent();
-  for (const tool of ['ui', 'diagram']) for (const engine of Object.values(previous[tool].engines)) console.log(engine.url);
 
   step('Pack');
   const identity = { version: pkg.version, head, tree };
   const manifests = { 'phoenix-ui': releaseManifest('phoenix-ui', previous.ui, previous.ui.engines, identity),
     'phoenix-diagram': releaseManifest('phoenix-diagram', previous.diagram, previous.diagram.engines, identity) };
+  for (const tool of tools) for (const engine of Object.values(manifests[tool].engines)) console.log(engine.url);
   // Third-party notices describe the reused engines' dependencies.
   const sidecars = Object.fromEntries(tools.map(tool => [tool, path.join(extracted, 'dist', tool)]));
   packRelease(path.join(dir, 'pack'), manifests, sidecars, { reusedEngines: { version, uiSourceCommit: previous.ui.sourceCommit, diagramSourceCommit: previous.diagram.sourceCommit } });

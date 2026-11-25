@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { assertPublishablePackage } from './require-release-package.mjs';
+import { assertPublishablePackage, releaseTargets } from './require-release-package.mjs';
 
 // Install the packed release tarball like a consumer: fresh install with the engine downloaded from its
 // public URL, overwritten Phoenix copies and repeat installs, on Node 18 and the maintenance Node.
@@ -37,7 +37,7 @@ assert.equal(B.data.distribution, 'release', 'Final B must use the frozen releas
 assert(member(options['--tarball'], 'dist/phoenix-ui/VERSION.json').equals(B.bytes), 'Final tarball manifest bytes differ');
 const pkg = JSON.parse(member(options['--tarball'], 'package.json'));
 assert.equal(pkg.name, '@xgent-ai/skills'); assert.equal(pkg.version, B.data.npmPackageVersion);
-assert.deepEqual(Object.keys(B.data.engines).sort(), ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64']);
+assert.deepEqual(Object.keys(B.data.engines).sort(), releaseTargets);
 for (const engine of Object.values(B.data.engines)) assert(engine.url.startsWith('https://'), 'Release engines must have public HTTPS URLs');
 const out = path.resolve(options['--output-dir']); fs.mkdirSync(out, { recursive: false });
 const raw = path.join(out, 'raw-inputs'); fs.mkdirSync(raw);
@@ -156,7 +156,12 @@ for (const major of [18, 25]) {
         assert.equal(tree(project)['.phoenix-ui/config.json'], original['.phoenix-ui/config.json']);
       } else if (kind === 'fresh') {
         assert.match(first.stdout, /命令  \.claude: \/phoenix-ui/); assert.doesNotMatch(first.stdout, /impeccable →/); assert.match(first.stdout, /重载  \.claude: 重启 Claude Code 会话/);
-        assert(first.stdout.indexOf('.claude/hooks/xgent-statusline.js') < first.stdout.indexOf(`Phoenix UI ${B.data.toolVersion}`));
+        const statusLine = first.stdout.indexOf('.claude/hooks/xgent-statusline.js');
+        assert(statusLine !== -1 && statusLine < first.stdout.indexOf(`Phoenix UI ${B.data.toolVersion}`));
+        const settings = JSON.parse(fs.readFileSync(path.join(project, '.claude/settings.json')));
+        assert.match(settings.statusLine.command, /xgent-statusline\.js/);
+        assert.equal(settings.hooks, undefined, 'Fresh installs must not register Phoenix UI hooks');
+        assert(!fs.existsSync(path.join(project, '.claude/settings.local.json')));
       }
       assert(fs.existsSync(path.join(project, '.claude/skills/phoenix-ui/SKILL.md')));
       assert(!fs.existsSync(path.join(project, '.phoenix-ui/install')));

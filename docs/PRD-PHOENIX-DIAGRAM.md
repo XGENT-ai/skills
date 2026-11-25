@@ -267,7 +267,7 @@ SPMS 查重：项目需求列表为空且无后续分页；`phoenix-diagram`、`
 > **分期与终验**：本需求跨 P1 / P3 交付，**终验期 = P3**。P1 完成后请停在交付段（已提交 / 可测试），**不要转「已上线」**——「已上线」是整条需求的验收，不是某一期的完工。
 
 - **优先级 / 重要度**：high / critical。**承接**：R4 · G3 · S1、S6。**分期**：P1 / P3，终验期 P3。
-- **行为与边界**：参照 phoenix-ui 的 npm-only 渠道与项目/provider 选择规则，随 `@xgent-ai/skills` 安装匹配 skill 资源与固定原生引擎。支持 darwin-arm64、darwin-x64、linux-x64、linux-arm64；使用者不需 Rust。diagram 的版本、缓存和安装状态可辨认；其操作不改变 Phoenix UI 或其他工具的有效配置。
+- **行为与边界**：参照 phoenix-ui 的 npm-only 渠道与项目/provider 选择规则，随 `@xgent-ai/skills` 安装匹配 skill 资源与固定原生引擎。支持 darwin-arm64、linux-x64、linux-arm64；使用者不需 Rust。diagram 的版本、缓存和安装状态可辨认；其操作不改变 Phoenix UI 或其他工具的有效配置。
 
 | AC ID | 验收原文 | 期次 |
 | --- | --- | --- |
@@ -359,7 +359,7 @@ SPMS 查重：项目需求列表为空且无后续分页；`phoenix-diagram`、`
 
 - 用户约束：名称 `phoenix-diagram`；参考 `local/archify-main` 做 Rust 版并替换 `skills/archify`；其他 infographic 另立 PRD。用户已确认本文首部列明的边界，分发参照 phoenix-ui。
 - 源码基线：[参考包版本](../local/archify-main/archify/package.json)、[十类 CLI](../local/archify-main/archify/bin/archify.mjs)、[finalize](../local/archify-main/archify/bin/finalize.mjs)、[Viewer 来源与导出合同](../local/archify-main/viewer/README.md)、[五种界面语言清单](../local/archify-main/archify/locales/manifest.json)。实现前固定可取回来源、来源标识与许可；不能用未核对的上游 latest 替换本次基线。
-- 分发约束：[phoenix-ui](phoenix-ui.md) 的 npm-only、固定资源、四平台、零网络离线安装、预检/事务/冲突/回滚及 provider 选择是参照范围；其设计 hook 和旧名称提示 shim 不转入本产品。
+- 分发约束：[phoenix-ui](phoenix-ui.md) 的 npm-only、固定资源、支持矩阵、零网络离线安装、预检/事务/冲突/回滚及 provider 选择是参照范围；其设计 hook 和旧名称提示 shim 不转入本产品。
 - 外部前提：宿主 Agent 提供意图理解与材料整理；无模型能力时已有 JSON 路径仍成立。Chrome/Chromium 提供自动浏览器证据；缺席为未完成该门，执行失败不能改成缺席。图像能力或人提供默认视觉审核；缺席不得宣称完整通过。
 - 外部资源：品牌采集仅接受用户提供的官方来源和固定内容身份；离线缺少所需资源时明确指出，不能隐式换图。仓库事实验证需要可访问的固定版本；无来源时只能保留明确的不确定/示意状态。
 - 本产品不是 portal 微应用，不套用其租户、HTTP 业务错误、分页或席位计量契约。日期未由用户限定，不承诺开发或发布日期。
@@ -441,7 +441,7 @@ SPMS 查重：项目需求列表为空且无后续分页；`phoenix-diagram`、`
 
 | 期次 | 新增用户价值 | 出口判据（引用验收原文） | 前置 / 计划规模预算 |
 | --- | --- | --- | --- |
-| P1 | 使用者在四个平台用 Rust 候选完成原有五类图，从安装到离线阅读、导出和真实审核形成闭环 | WORK-F1/AC-1：五类独立 HTML 均保留对应事实；WORK-F11/AC-1：无需本地编译 Rust；以及本期全部 AC | 固定源码与许可、匹配原生资源、浏览器与图像能力；建议 5–8 个 Milestone |
+| P1 | 使用者在支持矩阵内的各平台用 Rust 候选完成原有五类图，从安装到离线阅读、导出和真实审核形成闭环 | WORK-F1/AC-1：五类独立 HTML 均保留对应事实；WORK-F11/AC-1：无需本地编译 Rust；以及本期全部 AC | 固定源码与许可、匹配原生资源、浏览器与图像能力；建议 5–8 个 Milestone |
 | P2 | 作者获得完整十类图与仓库/时间依据，读者能探索结构、时间和执行过程 | WORK-F1/AC-2：新增五类具备相同校验、阅读和导出能力；WORK-F3/AC-1：来源可定位；以及本期全部 AC | P1 的可用候选；建议 5–8 个 Milestone |
 | P3 | 既有项目可迁移到唯一新入口，作者获得品牌、预览和架构比较，维护者可安全升级恢复 | WORK-F10/AC-1：无指向已删除活跃入口的调用；WORK-F11/AC-4：后来修改和无关内容得到保留；以及本期全部 AC | P2 全十类与兼容证据；建议 5–8 个 Milestone |
 

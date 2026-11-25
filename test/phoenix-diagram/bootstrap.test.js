@@ -15,9 +15,9 @@ const source = path.join(root, 'skills/phoenix-diagram/scripts/phoenix-bootstrap
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const boot = () => require(source);
 const packageVersion = () => JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).version;
-const supportedUnix=['darwin-arm64','darwin-x64','linux-x64','linux-arm64'].includes(`${process.platform}-${process.arch}`);
-const nativeTest=(name,fn)=>test(name,{skip:!process.env.PHOENIX_DIAGRAM_BIN?'Requires explicit PHOENIX_DIAGRAM_BIN from V-10; npm test does not build or download':!supportedUnix?'Native engine supports only the four declared Unix targets':false},fn);
-const filesystemTest=(name,fn)=>test(name,{skip:!supportedUnix?'POSIX resource checks apply to the four declared Unix targets':false},fn);
+const supportedUnix=['darwin-arm64','linux-x64','linux-arm64'].includes(`${process.platform}-${process.arch}`);
+const nativeTest=(name,fn)=>test(name,{skip:!process.env.PHOENIX_DIAGRAM_BIN?'Requires explicit PHOENIX_DIAGRAM_BIN from V-10; npm test does not build or download':!supportedUnix?'Native engine supports only the declared Unix targets':false},fn);
+const filesystemTest=(name,fn)=>test(name,{skip:!supportedUnix?'POSIX resource checks apply to the declared Unix targets':false},fn);
 let native;
 function realEngine() {
   if (native) return native;
@@ -26,7 +26,7 @@ function realEngine() {
   assert.ok(fs.existsSync(file), 'A built native engine is required; this success path never uses a fake probe');
   const probe = spawnSync(file, ['engine-probe'], { encoding: 'utf8' });
   assert.equal(probe.status, 0, probe.stderr);
-  assert.equal(probe.stdout, 'phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2\n');
+  assert.equal(probe.stdout, 'phoenix-diagram-engine 0.2.1 receipt=1 viewer=phoenix-v2\n');
   const doctor = spawnSync(file, ['doctor', '--json'], { encoding: 'utf8' });
   const engine = JSON.parse(doctor.stdout).engine;
   return native = { file, bytes: fs.readFileSync(file), engine };
@@ -60,13 +60,13 @@ function fixture(t, changes = {}) {
     ]),
   ];
   for (const [name, bytes, mode] of files) write(path.join(bundleRoot, name), bytes, mode);
-  const inventory = { schemaVersion: 1, tool: 'phoenix-diagram', version: '0.2.0', files: files.map(([name, bytes, mode]) => ({ path: name, size: bytes.length, sha256: hash(bytes), mode })) };
+  const inventory = { schemaVersion: 1, tool: 'phoenix-diagram', version: '0.2.1', files: files.map(([name, bytes, mode]) => ({ path: name, size: bytes.length, sha256: hash(bytes), mode })) };
   write(path.join(bundleRoot, 'manifest.json'), JSON.stringify(inventory) + '\n');
   // Metadata-only fixtures cannot execute successfully. They keep structural
   // and pre-acquisition refusal tests available in a fresh source checkout.
   const {bytes,engine}=process.env.PHOENIX_DIAGRAM_BIN?realEngine():{bytes:Buffer.from('Inert pre-execution metadata fixture; not an engine.'),engine:{sourceInputSha256:'a'.repeat(64)}};
   const engines = Object.fromEntries(boot().TARGETS.map(target => [target, { asset: `phoenix-diagram-${target}`, size: bytes.length, sha256: hash(bytes) }]));
-  const version = { schemaVersion: 1, distribution: 'development', tool: 'phoenix-diagram', toolVersion: '0.2.0', npmPackageVersion: packageVersion(), sourceCommit: 'a'.repeat(40), sourceInputSha256: engine.sourceInputSha256, receiptSchema: 1, viewerRevision: 'phoenix-v2', bundleSha256: hash(fs.readFileSync(path.join(bundleRoot, 'manifest.json'))), engines, ...changes };
+  const version = { schemaVersion: 1, distribution: 'development', tool: 'phoenix-diagram', toolVersion: '0.2.1', npmPackageVersion: packageVersion(), sourceCommit: 'a'.repeat(40), sourceInputSha256: engine.sourceInputSha256, receiptSchema: 1, viewerRevision: 'phoenix-v2', bundleSha256: hash(fs.readFileSync(path.join(bundleRoot, 'manifest.json'))), engines, ...changes };
   const manifestPath = path.join(dist, 'VERSION.json');
   const env = { ...process.env, PHOENIX_DIAGRAM_HOME: home, PHOENIX_UI_HOME: path.join(temp, 'ui-home'), HTTP_PROXY: '', http_proxy: '', HTTPS_PROXY: '', https_proxy: '', ALL_PROXY: '', all_proxy: '', NO_PROXY: '', no_proxy: '' };
   const f = { temp, pkg, dist, bundleRoot, project, home, release, packageJsonPath, manifestPath, inventory, version, env, bytes, target: supportedUnix?boot().platformTarget():boot().TARGETS[0] };
@@ -119,14 +119,25 @@ test('bootstrap entry points exist and expose the isolated preflight API', () =>
   for (const file of [source, path.join(root, 'skills/phoenix-diagram/scripts/phoenix-launcher.cjs'), path.join(root, 'skills/phoenix-diagram/scripts/phoenix-diagram'), path.join(root, 'bin/phoenix-diagram.js')]) assert.ok(fs.existsSync(file), file);
   for (const name of ['preflight', 'manifestAt', 'enginePath', 'setupCommand', 'main']) assert.equal(typeof boot()[name], 'function', name);
 });
-test('only four declared Unix platforms are accepted; proxy precedence stays explicit', () => {
+test('only three declared Unix platforms are accepted; proxy precedence stays explicit', () => {
   const { TARGETS, platformTarget, proxyFor } = boot();
-  assert.deepEqual(TARGETS, ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64']);
+  assert.deepEqual(TARGETS, ['darwin-arm64', 'linux-x64', 'linux-arm64']);
   for (const target of TARGETS) assert.equal(platformTarget(...target.split('-')), target);
   assert.throws(() => platformTarget('win32', 'x64'), /Unsupported/);
+  assert.throws(() => platformTarget('darwin', 'x64'), /Unsupported.*darwin\/x64/);
   const url = new URL('https://download.example.test/engine');
   assert.equal(proxyFor(url, { HTTP_PROXY: 'http://127.0.0.1:1', HTTPS_PROXY: 'http://127.0.0.1:2' }).port, '2');
   assert.equal(proxyFor(url, { HTTPS_PROXY: 'http://127.0.0.1:2', NO_PROXY: '.example.test' }), null);
+});
+test('Intel Mac engine installation refuses before manifest lookup without recommending a retry', async t => {
+  const f = fixture(t);
+  const script = `Object.defineProperties(process, {platform:{value:'darwin'}, arch:{value:'x64'}}); require(process.argv[1]);`;
+  fs.unlinkSync(f.manifestPath);
+  const result = await command(process.execPath, ['-e', script, path.join(f.pkg, 'bin/phoenix-diagram.js'), 'engine', 'install', '--project', f.project, '--json'], { cwd: f.project, env: f.env });
+  assert.equal(result.code, 4);
+  assert.match(result.stderr, /Unsupported.*darwin\/x64/);
+  assert.equal(JSON.parse(result.stdout).setupCommand, undefined);
+  assert.equal(fs.existsSync(f.home), false);
 });
 test('help and pinned recovery instructions work without manifests, engines or network', async t => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'phoenix-diagram help '));
@@ -221,7 +232,7 @@ nativeTest('explicit complete offline installation verifies a real engine in a d
   const ready = await boot().preflight(f.options);
   assert.equal(ready.bundleRoot, f.bundleRoot);
   assert.equal(ready.version.npmPackageVersion, packageVersion());
-  const expected = path.join(f.home, 'bin', '0.2.0', f.target, f.version.engines[f.target].sha256, 'phoenix-diagram');
+  const expected = path.join(f.home, 'bin', '0.2.1', f.target, f.version.engines[f.target].sha256, 'phoenix-diagram');
   assert.equal(ready.enginePath, expected); assert.equal(hash(fs.readFileSync(expected)), hash(f.bytes));
   assert.equal(fs.existsSync(f.env.PHOENIX_UI_HOME), false); assert.deepEqual(fs.readdirSync(f.project), ['.git']);
   const scenario = 'workflow ; $(touch never-created) with spaces';

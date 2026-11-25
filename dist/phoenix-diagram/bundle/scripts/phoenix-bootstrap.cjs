@@ -18,8 +18,9 @@ const net = require('node:net');
 const { spawn, spawnSync } = require('node:child_process');
 
 const TOOL = 'phoenix-diagram';
-const TOOL_VERSION = '0.2.0';
-const TARGETS = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
+const TOOL_VERSION = '0.2.1';
+const TARGETS = ['darwin-arm64', 'linux-x64', 'linux-arm64'];
+const INTEL_MAC = process.platform === 'darwin' && process.arch === 'x64';
 const PROBE = `phoenix-diagram-engine ${TOOL_VERSION} receipt=1 viewer=phoenix-v2\n`;
 const MAX_ENGINE = 256 * 1024 * 1024;
 const USAGE = 'Usage: phoenix-diagram engine install --project DIR [--release-dir DIR] [--json]';
@@ -29,7 +30,7 @@ const encoded = value => Buffer.from(JSON.stringify(value) + '\n');
 
 function platformTarget(platform = process.platform, arch = process.arch) {
   const target = `${platform}-${arch}`;
-  if (!TARGETS.includes(target)) throw failure(`Unsupported Phoenix Diagram platform ${platform}/${arch}; the engine supports the four declared macOS/Linux targets.`);
+  if (!TARGETS.includes(target)) throw failure(`Unsupported Phoenix Diagram platform ${platform}/${arch}; supported targets: ${TARGETS.join(', ')}.`);
   return target;
 }
 function readFile(file, limit) {
@@ -166,6 +167,7 @@ function projectRoot(start) {
 async function preflight(options = {}) {
   const env = { ...process.env, ...options.env };
   const skillDir = path.resolve(options.skillDir || path.join(__dirname, '..'));
+  if (INTEL_MAC) platformTarget(); // No package manifest can provide this retired target.
   const manifest = manifestAt(manifestPath(options));
   const target = platformTarget();
   const project = projectRoot(options.project || process.cwd());
@@ -238,9 +240,9 @@ async function main(args, options = {}) {
     return code;
   } catch (error) {
     if (wantsHelp) { process.stdout.write(help(options)); return 0; }
-    manifest ||= knownManifest(options);
-    const recovery = setupCommand(manifest, project, options);
-    process.stderr.write(`Phoenix Diagram: ${error.message}\n${recovery}\n`);
+    const recovery = INTEL_MAC ? undefined : setupCommand(manifest || knownManifest(options), project, options);
+    process.stderr.write(`Phoenix Diagram: ${error.message}\n`);
+    if (recovery) process.stderr.write(`${recovery}\n`);
     if (json) process.stdout.write(encoded({ schemaVersion: 1, tool: TOOL, toolVersion: TOOL_VERSION, command: args.slice(0, args[0] === 'engine' ? 2 : 1).join(' '), status: 'unavailable', diagnostics: [{ stage: 'bootstrap', code: 'bootstrap/unavailable', severity: 'error', message: error.message }], target, setupCommand: recovery }));
     return error.code === 2 || error.code === 3 ? error.code : 4;
   }

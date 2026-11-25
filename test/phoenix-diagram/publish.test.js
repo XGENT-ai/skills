@@ -7,7 +7,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { pathToFileURL } = require('node:url');
 const root = path.resolve(__dirname, '../..');
-const targets = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64'];
+const targets = ['darwin-arm64', 'linux-x64', 'linux-arm64'];
 const tools = ['phoenix-ui', 'phoenix-diagram'];
 function write(dir, name, value) {
   const file = path.join(dir, name); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, value);
@@ -24,7 +24,12 @@ function fixture(t, change = () => {}) {
   write(dir, 'package.json', JSON.stringify(pkg));
   for (const tool of tools) {
     write(dir, `bin/${tool}.js`, ''); write(dir, `skills/${tool}/scripts/phoenix-bootstrap.cjs`, ''); write(dir, `dist/${tool}/bundle/manifest.json`, '{}');
-    if (manifests[tool]) write(dir, `dist/${tool}/VERSION.json`, JSON.stringify(manifests[tool]));
+    if (manifests[tool]) {
+      const bytes = JSON.stringify(manifests[tool]);
+      write(dir, `dist/${tool}/VERSION.json`, bytes);
+      if (tool === 'phoenix-ui') write(dir, 'skills/phoenix-ui/scripts/ENGINE.json', bytes);
+      else for (const name of ['dist/phoenix-diagram/bundle/ENGINE.json', 'skills/phoenix-diagram/ENGINE.json']) write(dir, name, bytes);
+    }
   }
   return dir;
 }
@@ -38,7 +43,7 @@ test('the publish guard refuses development packages when invoked through a work
   assert.match(result.stderr, /Refusing to publish:[\s\S]*npm run release:phoenix/);
 });
 
-test('the publish guard accepts both release manifests with four public HTTPS engine URLs', t => {
+test('the publish guard accepts both release manifests with three public HTTPS engine URLs', t => {
   const result = guard(fixture(t));
   assert.equal(result.status, 0, result.stderr);
 });
@@ -47,7 +52,9 @@ test('the publish guard refuses either tool without a complete release manifest 
   const changes = {
     missing: (m, tool) => delete m[tool],
     development: (m, tool) => { m[tool].distribution = 'development'; },
-    'missing platform': (m, tool) => delete m[tool].engines['darwin-x64'],
+    'missing platform': (m, tool) => delete m[tool].engines['darwin-arm64'],
+    'retired platform': (m, tool) => { m[tool].engines['darwin-x64'] = { url: 'https://download.example.test/retired' }; },
+    'unexpected platform': (m, tool) => { m[tool].engines['windows-x64'] = { url: 'https://download.example.test/extra' }; },
     'other package version': (m, tool) => { m[tool].npmPackageVersion = '9.9.9'; },
     'loopback URL': (m, tool) => { m[tool].engines['linux-x64'].url = 'http://127.0.0.1:48765/engine'; },
     'missing URL': (m, tool) => delete m[tool].engines['linux-arm64'].url,
@@ -58,6 +65,16 @@ test('the publish guard refuses either tool without a complete release manifest 
     assert.equal(result.status, 1, `${tool} ${name}`);
     assert.match(result.stderr, new RegExp(tool), `${tool} ${name}`);
   }
+});
+
+test('the publish guard refuses a packaged skill manifest that still advertises a retired engine', t => {
+  const dir = fixture(t), name = 'skills/phoenix-diagram/ENGINE.json';
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, name)));
+  manifest.engines['darwin-x64'] = { url: 'https://download.example.test/retired' };
+  write(dir, name, JSON.stringify(manifest));
+  const result = guard(dir);
+  assert.equal(result.status, 1);
+  assert.ok(result.stderr.includes(name));
 });
 
 test('releases require main and reject release branches and detached HEAD', async () => {

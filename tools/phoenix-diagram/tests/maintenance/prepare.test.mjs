@@ -2,31 +2,36 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { preparationCommands } from '../../../../scripts/prepare-phoenix-diagram.mjs';
+import { preparationCommands, browserPreparationCommands } from '../../../../scripts/prepare-phoenix-diagram.mjs';
 
 const versions = { rust: '1.99.0', node: '25.2.1', mrBoxington: '1.21.1' };
 
 test('explicit preparation selects only the pinned native diagram tools', () => {
-  const commands = preparationCommands(versions, true);
+  const commands = preparationCommands(versions, true, { platform: 'darwin-arm64' });
   assert.deepEqual(commands[0], ['mise', ['install', 'rust@1.99.0', 'node@25.2.1', 'mr-boxington@1.21.1']]);
   assert.doesNotMatch(JSON.stringify(commands), /bun|wasm|binaryen|phoenix-ui|npm (?:install|publish)/i);
 });
 
+test('Intel Macs receive no native tool or browser preparation plan', () => {
+  assert.throws(() => preparationCommands(versions, true, { platform: 'darwin-x64' }), /Unsupported.*darwin-x64/);
+  assert.throws(() => browserPreparationCommands('darwin-x64'), /Unsupported.*darwin-x64/);
+});
+
 test('preparation preserves an existing lock and fetches exactly its dependency set', () => {
-  const commands = preparationCommands(versions, true);
+  const commands = preparationCommands(versions, true, { platform: 'darwin-arm64' });
   assert.equal(commands.some(([, args]) => args.includes('generate-lockfile')), false);
   assert.deepEqual(commands.at(-1), ['mise', ['exec', '--no-deps', '--', 'mbx', 'fetch', '--locked']]);
 });
 
 test('only a missing lock enables initial lock generation', () => {
-  const commands = preparationCommands(versions, false);
+  const commands = preparationCommands(versions, false, { platform: 'linux-arm64' });
   assert.deepEqual(commands.at(-2), ['mise', ['exec', '--no-deps', '--', 'mbx', 'generate-lockfile']]);
 });
 
 test('an explicit lock update enables dependency changes without weakening ordinary preparation', () => {
-  const commands = preparationCommands(versions, true, { updateLock: true });
+  const commands = preparationCommands(versions, true, { platform: 'linux-x64', updateLock: true });
   assert.deepEqual(commands.at(-2), ['mise', ['exec', '--no-deps', '--', 'mbx', 'generate-lockfile']]);
-  assert.equal(preparationCommands(versions, true).some(([, args]) => args.includes('generate-lockfile')), false);
+  assert.equal(preparationCommands(versions, true, { platform: 'linux-x64' }).some(([, args]) => args.includes('generate-lockfile')), false);
 });
 
 test('preparation requires its one explicit command before running maintenance', () => {

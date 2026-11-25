@@ -12,9 +12,11 @@ const workflow = () => fs.readFileSync(path.join(root, '.github/workflows/phoeni
 const job = (text, name) => new RegExp(`^  ${name}:\\n([\\s\\S]*?)(?=^  [a-z][a-z0-9-]*:|$(?![\\s\\S]))`, 'm').exec(text)?.[1] || '';
 function temporary(t) { const directory = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'diagram workflow ')); t.after(() => fs.rmSync(directory, { recursive: true, force: true })); return directory; }
 
-test('workflow uses four native runners and only the already fixed UI action commits', () => {
+test('workflow uses the supported native runners and only the already fixed UI action commits', () => {
   const text = workflow(), native = job(text, 'native');
-  for (const name of ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64']) {
+  const targets = ['darwin-arm64', 'linux-x64', 'linux-arm64'];
+  assert.deepEqual([...native.matchAll(/- platform: (\S+)/g)].map(match => match[1]), targets);
+  for (const name of targets) {
     const pin = assets.platforms[name];
     assert.match(native, new RegExp(`platform: ${name}\\s+runner: ${pin.runner}\\s+rust-target: ${pin.rustTarget}`));
   }
@@ -63,12 +65,4 @@ test('ARM browser preparation is diagram-local, explicitly online and binds the 
   assert.ok(encoded.includes(directory)); assert.doesNotMatch(encoded, /bun|wasm|binaryen|phoenix-ui|fetch.*latest/i);
   assert.deepEqual(preparer.browserPreparationCommands('darwin-arm64', { directory }), []);
   assert.deepEqual(preparer.browserPreparationCommands('linux-x64', { directory }), []);
-});
-
-test('Intel preparation uses the fixed native mbx bootstrap without importing UI tool preparation', async () => {
-  const preparer = await prepare, versions = (await source).loadVersions();
-  const commands = preparer.preparationCommands(versions, true, { platform: 'darwin-x64', boxingtonAvailable: false });
-  const bootstrap = commands.find(([, args]) => args.includes('--git'));
-  assert.ok(bootstrap); assert.ok(bootstrap[1].includes(assets.nativeBootstrap['darwin-x64'].revision));
-  assert.doesNotMatch(JSON.stringify(commands), /bun|wasm|binaryen/);
 });

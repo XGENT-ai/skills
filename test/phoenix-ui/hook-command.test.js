@@ -96,9 +96,9 @@ test('a hook engine that exits before reading the whole event keeps the hook res
   const target = platformTarget();
   const asset = `phoenix-ui-${target}`;
   // A protocol fixture engine that answers the hook without reading its input.
-  const bytes = Buffer.from(`#!/usr/bin/env node\nif (process.argv[2] === 'engine-probe') { console.log('phoenix-ui-engine 0.1.1'); } else { console.log(JSON.stringify({ argv: process.argv.slice(2) })); process.exit(0); }\n`);
+  const bytes = Buffer.from(`#!/usr/bin/env node\nif (process.argv[2] === 'engine-probe') { console.log('phoenix-ui-engine 0.1.2'); } else { console.log(JSON.stringify({ argv: process.argv.slice(2) })); process.exit(0); }\n`);
   const manifest = {
-    schemaVersion: 1, distribution: 'development', toolVersion: '0.1.1', npmPackageVersion: '0.7.0-rc.0',
+    schemaVersion: 1, distribution: 'development', toolVersion: '0.1.2', npmPackageVersion: '0.7.0-rc.0',
     sourceCommit: 'a'.repeat(40), bundleSchema: 1, bundleSha256: 'b'.repeat(64), reviewSchema: 1,
     engines: { [target]: { asset, sha256: sha256(bytes), size: bytes.length } },
   };

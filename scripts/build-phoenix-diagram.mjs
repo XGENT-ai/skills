@@ -14,12 +14,11 @@ import { root, workspace, preflight, miseEnvironment, verifySources, readBrandLi
 
 export const TARGETS = Object.freeze({
   'darwin-arm64': 'aarch64-apple-darwin',
-  'darwin-x64': 'x86_64-apple-darwin',
   'linux-x64': 'x86_64-unknown-linux-gnu',
   'linux-arm64': 'aarch64-unknown-linux-gnu',
 });
 const TOOL = 'phoenix-diagram';
-const TOOL_VERSION = '0.2.0';
+const TOOL_VERSION = '0.2.1';
 const VIEWER_REVISION = 'phoenix-v2';
 const HASH = /^[a-f0-9]{64}$/;
 const COMMIT = /^[a-f0-9]{40}$/;

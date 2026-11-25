@@ -74,6 +74,10 @@ export function preflight() {
   if (process.versions.node !== versions.node) {
     throw new Error(`Node ${process.versions.node} is running this script; expected ${versions.node}. Run it through mise exec --no-deps.`);
   }
+  if ((process.platform === 'darwin' && process.arch === 'x64')
+      || [process.env.PHOENIX_UI_BUILD_TARGET, process.env.CARGO_BUILD_TARGET].includes('x86_64-apple-darwin')) {
+    throw new Error('Phoenix UI no longer supports Intel macOS (darwin-x64)');
+  }
   applyPreparedEnvironment();
   const selected = JSON.parse(mise(['mise', 'ls', '--current', '--json']));
   for (const [tool, version] of [['rust', versions.rust], ['mr-boxington', versions.mrBoxington],
@@ -91,6 +95,7 @@ export function preflight() {
   }
   const installed = mise(['rustup', 'target', 'list', '--installed']).trim().split(/\r?\n/);
   const host = /^host: (.+)$/m.exec(mise(['rustc', '-vV']))[1];
+  if (host === 'x86_64-apple-darwin') throw new Error('Phoenix UI no longer supports Intel macOS (darwin-x64)');
   const target = process.env.PHOENIX_UI_BUILD_TARGET || host;
   if (![target, versions.wasmTarget].every(t => installed.includes(t))) {
     throw new Error(`Missing native/WASM target; explicitly prepare rustup target add ${target} ${versions.wasmTarget}.`);

@@ -6,6 +6,9 @@
 //! and stream flushing are decided (behavior pinned by `tests/oracle/`). A few
 //! verbs carry aliases (`signals` for context-signals, `hooks` for hook-admin).
 
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+compile_error!("Phoenix UI no longer supports Intel macOS (darwin-x64)");
+
 use std::io::Write;
 
 use impeccable_common::Io;

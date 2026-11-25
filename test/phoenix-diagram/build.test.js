@@ -56,7 +56,7 @@ test('failed doctor diagnostics remain visible instead of a combined identity as
   if (process.platform === 'win32') { t.skip('Unix protocol refusal fixture'); return; }
   const api = await moduleReady, directory = temporary(t);
   // Refusal-only protocol fixture; successful probes need a real native engine.
-  const executable = write(directory, 'refused engine', `#!${process.execPath}\nif(process.argv[2]==='engine-probe')console.log('phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2');else{console.log(JSON.stringify({toolVersion:'0.2.0',diagnostics:[{code:'engine/doctor',message:'fixture doctor failure'}]}));process.exitCode=4;}\n`, 0o700);
+  const executable = write(directory, 'refused engine', `#!${process.execPath}\nif(process.argv[2]==='engine-probe')console.log('phoenix-diagram-engine 0.2.1 receipt=1 viewer=phoenix-v2');else{console.log(JSON.stringify({toolVersion:'0.2.1',diagnostics:[{code:'engine/doctor',message:'fixture doctor failure'}]}));process.exitCode=4;}\n`, 0o700);
   assert.throws(() => api.probeNativeArtifact(executable, { binaryBytes: fs.readFileSync(executable), sourceSha: 'a'.repeat(64), target: `${process.platform}-${process.arch}` }), error => /engine identity is missing/.test(error.message) && /"exitCode":4/.test(error.message) && /engine\/doctor/.test(error.message) && /fixture doctor failure/.test(error.message));
 });
 
@@ -95,7 +95,7 @@ test('source paths use full UTF-8 byte order for module siblings and Unicode, ne
 
 test('Cargo JSON selects exactly the reported native diagram binary and its own build-script output', async t => {
   const api = await moduleReady, directory = temporary(t), workspace = path.join(root, 'tools/phoenix-diagram');
-  const packageId = `path+file://${workspace}#0.2.0`;
+  const packageId = `path+file://${workspace}#0.2.1`;
   const executable = path.join(workspace, 'target/debug/phoenix-diagram');
   const artifact = { reason: 'compiler-artifact', package_id: packageId, manifest_path: path.join(workspace, 'Cargo.toml'), target: { name: 'phoenix-diagram', kind: ['bin'] }, profile: { test: false }, executable };
   const buildScript = { reason: 'build-script-executed', package_id: packageId, out_dir: directory };
@@ -146,17 +146,26 @@ test('bundle excludes derived ENGINE and Finder metadata without weakening its a
 test('locked Rust inventory is complete and license metadata cannot replace full matching materials', async () => {
   const api = await moduleReady, lock = fs.readFileSync(path.join(root, 'tools/phoenix-diagram/Cargo.lock'), 'utf8');
   const packages = api.parseCargoLock(lock);
-  assert.ok(packages.length > 100); assert.ok(packages.some(p => p.name === 'phoenix-diagram' && p.version === '0.2.0'));
+  assert.ok(packages.length > 100); assert.ok(packages.some(p => p.name === 'phoenix-diagram' && p.version === '0.2.1'));
   assert.throws(() => api.collectLicenses({ repoRoot: root, metadata: { packages: [] }, locked: packages }), /lock|metadata|package/i);
   assert.throws(() => api.parseCargoLock('version = 4\n'), /Cargo.lock|inventory/);
 });
 
 test('license collection requires actual prepared Rust standard-library resources', async t => {
-  const api = await moduleReady, directory = legalSourceFixture(t), locked = [{ name: 'phoenix-diagram', version: '0.2.0' }];
+  const api = await moduleReady, directory = legalSourceFixture(t), locked = [{ name: 'phoenix-diagram', version: '0.2.1' }];
   const metadata = { packages: [{ ...locked[0], license: 'MIT', source: null, manifest_path: path.join(directory, 'tools/phoenix-diagram/Cargo.toml') }] };
   assert.throws(() => api.collectLicenses({ repoRoot: directory, metadata, locked }), /Rust.*sysroot|standard.library.*resource/i);
   const rustSysroot = path.join(directory, 'empty sysroot'); fs.mkdirSync(rustSysroot);
   assert.throws(() => api.collectLicenses({ repoRoot: directory, metadata, locked, rustSysroot }), /standard.library|ENOENT/i);
+});
+
+test('native build rejects an Intel Mac before invoking maintenance tools', async t => {
+  const outputDir = path.join(temporary(t), 'out');
+  const script = `Object.defineProperties(process, {platform:{value:'darwin'}, arch:{value:'x64'}}); const { buildDevelopment } = await import('./scripts/build-phoenix-diagram.mjs'); buildDevelopment({outputDir:process.argv[1]});`;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', script, outputDir], { cwd: root, encoding: 'utf8', env: { ...process.env, PATH: '' } });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Unsupported.*darwin-x64/);
+  assert.equal(fs.existsSync(outputDir), false);
 });
 
 test('build CLI rejects occupied output and source aliases before invoking any maintenance tool', async t => {

@@ -77,7 +77,6 @@ fn snapshot(root: &Path) -> BTreeMap<String, (String, u32)> {
 fn platform() -> &'static str {
     match (std::env::consts::OS, std::env::consts::ARCH) {
         ("macos", "aarch64") => "darwin-arm64",
-        ("macos", "x86_64") => "darwin-x64",
         ("linux", "aarch64") => "linux-arm64",
         ("linux", "x86_64") => "linux-x64",
         other => panic!("unsupported native test platform: {other:?}"),
@@ -118,7 +117,7 @@ fn fixture(root: &Workspace) -> InstallRequest {
         })
         .collect();
     let manifest = serde_json::to_vec(&json!({
-        "schemaVersion":1,"tool":"phoenix-diagram","version":"0.2.0","files":files
+        "schemaVersion":1,"tool":"phoenix-diagram","version":"0.2.1","files":files
     }))
     .unwrap();
     write(&bundle.join("manifest.json"), &manifest, 0o644);
@@ -149,7 +148,7 @@ fn fixture(root: &Workspace) -> InstallRequest {
     assert_eq!(digest(&fs::read(&engine).unwrap()), *engine_sha256);
     let version = serde_json::to_vec(&json!({
         "schemaVersion":1,"distribution":"development","tool":"phoenix-diagram",
-        "toolVersion":"0.2.0","npmPackageVersion":"0.0.0-fixture","sourceCommit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "toolVersion":"0.2.1","npmPackageVersion":"0.0.0-fixture","sourceCommit":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "sourceInputSha256":env!("PHOENIX_DIAGRAM_SOURCE_INPUT_SHA256"),
         "receiptSchema":1,"viewerRevision":"phoenix-v2",
         "bundleSha256":digest(&manifest),
@@ -339,7 +338,7 @@ fn install_rejects_bundle_tampering_before_any_project_write() {
             "engine" => write(&request.bundle_root.join("ENGINE.json"), b"{}", 0o644),
             "probe" => {
                 let fake = root.path("fake-engine");
-                write(&fake, b"#!/bin/sh\nprintf 'phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2\\n'\n", 0o755);
+                write(&fake, b"#!/bin/sh\nprintf 'phoenix-diagram-engine 0.2.1 receipt=1 viewer=phoenix-v2\\n'\n", 0o755);
                 request.engine = fake;
             }
             _ => unreachable!(),

@@ -10,10 +10,10 @@ const { createHash } = require('node:crypto');
 const { spawn, spawnSync } = require('node:child_process');
 const { pathToFileURL } = require('node:url');
 const root=path.resolve(__dirname,'../..');
-const targets=['darwin-arm64','darwin-x64','linux-x64','linux-arm64'];
+const targets=['darwin-arm64','linux-x64','linux-arm64'];
 const target=`${process.platform}-${process.arch}`;
 const uiToolVersion=fs.readFileSync(path.join(root,'skills/phoenix-ui/src/scripts/VERSION'),'utf8').trim();
-const skip=!process.env.PHOENIX_UI_BIN||!process.env.PHOENIX_DIAGRAM_BIN?'Requires explicit PHOENIX_UI_BIN and PHOENIX_DIAGRAM_BIN; fresh npm test does not build or download':!targets.includes(target)?'Joint native test supports the four Unix targets':false;
+const skip=!process.env.PHOENIX_UI_BIN||!process.env.PHOENIX_DIAGRAM_BIN?'Requires explicit PHOENIX_UI_BIN and PHOENIX_DIAGRAM_BIN; fresh npm test does not build or download':!targets.includes(target)?'Joint native test supports macOS ARM64 and Linux x64/ARM64':false;
 const nativeTest=(name,fn)=>test(name,{skip},fn);
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const encoded=value=>JSON.stringify(value,null,2)+'\n';
@@ -24,7 +24,7 @@ test.after(()=>{if(engines?.warmUiCache)fs.rmSync(engines.warmUiCache,{recursive
 function realEngines(){
   if(engines)return engines;
   const ui=process.env.PHOENIX_UI_BIN,diagram=process.env.PHOENIX_DIAGRAM_BIN;
-  for(const [file,expected] of [[ui,`phoenix-ui-engine ${uiToolVersion}\n`],[diagram,'phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2\n']]){
+  for(const [file,expected] of [[ui,`phoenix-ui-engine ${uiToolVersion}\n`],[diagram,'phoenix-diagram-engine 0.2.1 receipt=1 viewer=phoenix-v2\n']]){
     const probe=spawnSync(file,['engine-probe'],{encoding:'utf8',timeout:3000,maxBuffer:4096});
     assert.equal(probe.status,0,probe.error?.message||probe.stderr);assert.equal(probe.stdout,expected);
   }
@@ -64,7 +64,7 @@ async function fixture(t,{warmUi=true}={}){
   }
   write(path.join(diagramDist,'bundle/manifest.json'),bundle.bytes);
   const npmPackageVersion=JSON.parse(fs.readFileSync(path.join(pkg,'package.json'))).version;
-  const diagramVersion={schemaVersion:1,distribution:'development',tool:'phoenix-diagram',toolVersion:'0.2.0',npmPackageVersion,sourceCommit:'a'.repeat(40),sourceInputSha256:engine.identity.sourceInputSha256,receiptSchema:1,viewerRevision:'phoenix-v2',bundleSha256:bundle.sha256,engines:Object.fromEntries(targets.map(key=>[key,{asset:`phoenix-diagram-${key}`,size:engine.diagramBytes.length,sha256:sha(engine.diagramBytes)}]))};
+  const diagramVersion={schemaVersion:1,distribution:'development',tool:'phoenix-diagram',toolVersion:'0.2.1',npmPackageVersion,sourceCommit:'a'.repeat(40),sourceInputSha256:engine.identity.sourceInputSha256,receiptSchema:1,viewerRevision:'phoenix-v2',bundleSha256:bundle.sha256,engines:Object.fromEntries(targets.map(key=>[key,{asset:`phoenix-diagram-${key}`,size:engine.diagramBytes.length,sha256:sha(engine.diagramBytes)}]))};
   for(const file of [path.join(diagramDist,'VERSION.json'),path.join(diagramDist,'bundle/ENGINE.json'),path.join(pkg,'skills/phoenix-diagram/ENGINE.json')])write(file,encoded(diagramVersion));
   // Declared legal inventory is complete for this format fixture. M6 separately
   // verifies the actual complete Rust/font/upstream release license closure.

@@ -16,28 +16,30 @@ function install(dir, flags) {
   return spawnSync(process.execPath, [path.join(root, 'bin/xgent-skills.js'), 'install', dir, ...flags], { encoding: 'utf8', input: '', env: { ...process.env, PHOENIX_DIAGRAM_HOME: path.join(dir, 'cache') } });
 }
 
-function installOnWindows(dir, flags) {
-  const script = `Object.defineProperty(process, 'platform', { value: 'win32' }); process.argv = [process.execPath, ...process.argv.slice(1)]; require(process.argv[1]);`;
+function installUnsupported(dir, platform, flags) {
+  const script = `Object.defineProperties(process, { platform: { value: ${JSON.stringify(platform)} }, arch: { value: 'x64' } }); require(process.argv[1]);`;
   return spawnSync(process.execPath, ['-e', script, path.join(root, 'bin/xgent-skills.js'), 'install', dir, '--no-phoenix-ui', ...flags], { encoding: 'utf8', input: '' });
 }
 
-test('unsupported platforms skip the default diagram branch and preserve the XGENT installation', t => {
-  const dir = project(t), result = installOnWindows(dir, []);
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /跳过.*Phoenix Diagram.*win32/);
-  assert.ok(fs.existsSync(path.join(dir, '.claude/hooks/xgent-statusline.js')));
-  assert.ok(fs.existsSync(path.join(dir, '.claude/settings.json')));
-  assert.deepEqual(fs.readdirSync(dir), ['.claude']);
-  assert.ok(!fs.existsSync(path.join(dir, '.claude/skills/phoenix-diagram')));
-});
+for (const platform of ['win32', 'darwin']) {
+  test(`${platform}/x64 skips the default Diagram install but preserves the XGENT installation`, t => {
+    const dir = project(t), result = installUnsupported(dir, platform, []);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, new RegExp(`跳过.*Phoenix Diagram.*${platform}/x64`));
+    assert.ok(fs.existsSync(path.join(dir, '.claude/hooks/xgent-statusline.js')));
+    assert.ok(fs.existsSync(path.join(dir, '.claude/settings.json')));
+    assert.deepEqual(fs.readdirSync(dir), ['.claude']);
+    assert.ok(!fs.existsSync(path.join(dir, '.claude/skills/phoenix-diagram')));
+  });
 
-test('an explicit diagram resource request still fails on unsupported platforms before writing', t => {
-  const dir = project(t), result = installOnWindows(dir, [`--diagram-release-dir=${path.join(dir, 'release')}`]);
-  assert.equal(result.status, 4);
-  assert.match(result.stderr, /Unsupported Phoenix Diagram platform win32/);
-  assert.doesNotMatch(result.stderr, /可用 --diagram-release-dir/);
-  assert.deepEqual(fs.readdirSync(dir), []);
-});
+  test(`${platform}/x64 refuses explicit Diagram resources before writing`, t => {
+    const dir = project(t), result = installUnsupported(dir, platform, [`--diagram-release-dir=${path.join(dir, 'release')}`]);
+    assert.equal(result.status, 4);
+    assert.match(result.stderr, new RegExp(`Unsupported Phoenix Diagram platform ${platform}/x64`));
+    assert.doesNotMatch(result.stderr, /可用 --diagram-release-dir/);
+    assert.deepEqual(fs.readdirSync(dir), []);
+  });
+}
 
 test('missing diagram resources stop the installer before any project write', t => {
   const dir = project(t);

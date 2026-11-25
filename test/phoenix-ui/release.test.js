@@ -58,8 +58,9 @@ else process.exit(2);
 
 test('a release manifest keeps the built engine fields and takes package identity and bundle digest from this checkout', async () => {
   const { releaseManifest } = await import(release);
-  const engines = { 'linux-x64': { asset: 'phoenix-ui-linux-x64', size: 1, sha256: 'a'.repeat(64), url: 'https://download.example/x' } };
-  const development = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.1', npmPackageVersion: '0.0.1', sourceCommit: 'old', sourceInputSha256: 'b'.repeat(64), bundleSha256: 'old', engines: {} };
+  const engines = Object.fromEntries(['darwin-arm64', 'linux-arm64', 'linux-x64'].map(target =>
+    [target, { asset: `phoenix-ui-${target}`, size: 1, sha256: 'a'.repeat(64), url: `https://download.example/${target}` }]));
+  const development = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.2', npmPackageVersion: '0.0.1', sourceCommit: 'old', sourceInputSha256: 'b'.repeat(64), bundleSha256: 'old', engines: {} };
   const identity = { version: '1.2.3', head: 'c'.repeat(40), tree: 'd'.repeat(40) };
   const ui = releaseManifest('phoenix-ui', development, engines, identity);
   assert.deepEqual(ui, { ...development, distribution: 'release', npmPackageVersion: '1.2.3', sourceCommit: identity.head, sourceTree: identity.tree,
@@ -67,6 +68,20 @@ test('a release manifest keeps the built engine fields and takes package identit
   const diagram = releaseManifest('phoenix-diagram', development, engines, identity);
   assert.equal(diagram.sourceTree, undefined);
   assert.equal(diagram.bundleSha256, sha256(fs.readFileSync(path.join(checkout, 'dist/phoenix-diagram/bundle/manifest.json'))));
+});
+
+test('reusing a historical release keeps only current engine targets without changing the source', async () => {
+  const { releaseManifest } = await import(release);
+  for (const tool of ['phoenix-ui', 'phoenix-diagram']) {
+    const engines = Object.fromEntries(['darwin-arm64', 'linux-x64', 'linux-arm64'].map(target =>
+      [target, { asset: `${tool}-${target}`, size: 1, sha256: 'a'.repeat(64), url: `https://download.example/${tool}-${target}` }]));
+    const previous = { engines: { ...engines, 'darwin-x64': { url: 'https://download.example/retired' } } };
+    const identity = { version: '1.2.3', head: 'a'.repeat(40), tree: 'b'.repeat(40) };
+    assert.deepEqual(releaseManifest(tool, previous, previous.engines, identity).engines, engines);
+    assert.ok(previous.engines['darwin-x64']);
+    delete previous.engines['linux-arm64'];
+    assert.throws(() => releaseManifest(tool, previous, previous.engines, identity), /linux-arm64/);
+  }
 });
 
 test('release credentials come only from AGENT_RELEASE_R2_* lines and exported values win', async () => {

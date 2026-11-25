@@ -9,7 +9,7 @@ const https = require('node:https');
 const tls = require('node:tls');
 const { spawn, spawnSync } = require('node:child_process');
 
-const TARGETS = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64', 'windows-x64'];
+const TARGETS = ['darwin-arm64', 'linux-x64', 'linux-arm64', 'windows-x64'];
 const HOOKS = new Set(['hook', 'hook-before-edit']);
 const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const failure = (message, code = 4) => Object.assign(new Error(message), { code });

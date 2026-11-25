@@ -1,12 +1,12 @@
 # Phoenix Diagram
 
-Phoenix Diagram 0.2.0 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall、statechart、chart、annotation 十三类的原生生成、独立 HTML 阅读与导出、可内联静态 SVG，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。输入按各类型 schema 校验，`meta` 中未列出的字段直接拒绝。statechart 从有限模型穷举状态、判定规则并画出最短出错路径。chart 承载数值图表的柱状图、折线图、饼图与限额对比图四种形态，每张图附带可展开的数据表。annotation 对一句或几句原文逐词点评；workflow、lifecycle、tree、erd 可在一份输入里标记新增、删除、变更。仓库以 phoenix-diagram 为唯一活跃图解入口。仪表盘、多图联动及其他 infographic 不在范围内。
+Phoenix Diagram 0.2.1 提供 architecture、workflow、sequence、dataflow、lifecycle、erd、class、tree、timeline、waterfall、statechart、chart、annotation 十三类的原生生成、独立 HTML 阅读与导出、可内联静态 SVG，可对固定提交核对仓库来源，阅读器界面支持 en、zh-CN、zh-TW、es、ko。输入按各类型 schema 校验，`meta` 中未列出的字段直接拒绝。statechart 从有限模型穷举状态、判定规则并画出最短出错路径。chart 承载数值图表的柱状图、折线图、饼图与限额对比图四种形态，每张图附带可展开的数据表。annotation 对一句或几句原文逐词点评；workflow、lifecycle、tree、erd 可在一份输入里标记新增、删除、变更。仓库以 phoenix-diagram 为唯一活跃图解入口。仪表盘、多图联动及其他 infographic 不在范围内。
 
 UI 与 Diagram 共用 [Phoenix CI](../.github/workflows/phoenix.yml)：同一次运行完成两个工具的检查，发布仍使用同一个 `@xgent-ai/skills` npm 包。
 
 ## npm 发布安装
 
-npm 发布包与仓库的 `xgent-skills install` 默认同时安装 Phoenix UI 和 Phoenix Diagram，可用 `--no-phoenix-diagram` 单独跳过 Diagram。首次 npm 安装会重装所选 provider 下没有 Diagram 安装记录的旧 skill 副本或软链接；软链接只替换入口，不删除其指向的源目录。已有安装记录交由引擎校验，跳过 Diagram 时保留旧入口。安装 Diagram 时默认删除所选 provider 下项目级与个人级的 `skills/archify` 及 `skills-lock.json`、`.agents/.skill-lock.json` 中的 archify 记录，不备份、不迁移，已生成的图解文件不动；交互终端以 `[Y/n]` 确认，`--keep-archify` 保留。Diagram skill 随 npm 安装器与固定引擎一起安装、更新；`metadata.internal: true` 将它从 `npx skills add XGENT-ai/skills` 的默认列表排除，避免不同渠道覆盖配套版本。维护发布统一从 `main` 运行 `npm run release:phoenix`，不创建发布分支或使用 detached HEAD。该命令从同一次 Phoenix CI run 取 Diagram 与 UI 的四平台引擎（制品 `phoenix-diagram-<平台>`），用同一上传器传到 R2 并回读，再写入 Diagram 的 release 清单与 `ENGINE.json` 副本，和 UI 一起打包；开发清单不能发布。引擎不绑定 npm 版本：源码输入未变时，`--reuse-engines <已发布版本>` 直接复用该版本的 Diagram 与 UI 引擎，见 [Phoenix UI 发布](phoenix-ui.md)。最终 tarball 在 Node 18 与维护 Node 上验证联合安装、Diagram 入口和重复安装后才进入 npm 发布。
+npm 发布包与仓库的 `xgent-skills install` 默认同时安装 Phoenix UI 和 Phoenix Diagram，可用 `--no-phoenix-diagram` 单独跳过 Diagram。首次 npm 安装会重装所选 provider 下没有 Diagram 安装记录的旧 skill 副本或软链接；软链接只替换入口，不删除其指向的源目录。已有安装记录交由引擎校验，跳过 Diagram 时保留旧入口。安装 Diagram 时默认删除所选 provider 下项目级与个人级的 `skills/archify` 及 `skills-lock.json`、`.agents/.skill-lock.json` 中的 archify 记录，不备份、不迁移，已生成的图解文件不动；交互终端以 `[Y/n]` 确认，`--keep-archify` 保留。Diagram skill 随 npm 安装器与固定引擎一起安装、更新；`metadata.internal: true` 将它从 `npx skills add XGENT-ai/skills` 的默认列表排除，避免不同渠道覆盖配套版本。维护发布统一从 `main` 运行 `npm run release:phoenix`，不创建发布分支或使用 detached HEAD。该命令从同一次 Phoenix CI run 取 Diagram 与 UI 各自的 macOS Apple Silicon、Linux x64 和 Linux ARM64 引擎，不再提供 macOS Intel 版（制品 `phoenix-diagram-<平台>`），用同一上传器传到 R2 并回读，再写入 Diagram 的 release 清单与 `ENGINE.json` 副本，和 UI 一起打包；开发清单不能发布。引擎不绑定 npm 版本：源码输入未变时，`--reuse-engines <已发布版本>` 直接复用该版本的 Diagram 与 UI 引擎，见 [Phoenix UI 发布](phoenix-ui.md)。最终 tarball 在 Node 18 与维护 Node 上验证联合安装、Diagram 入口和重复安装后才进入 npm 发布。
 
 ## 离线安装
 

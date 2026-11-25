@@ -309,7 +309,12 @@ export function mise(args, options = {}) {
   return result.stdout;
 }
 
+export function rejectIntelMac(platform = `${process.platform}-${process.arch}`) {
+  if (platform === 'darwin-x64') throw new Error(`Unsupported native Diagram platform: ${platform}`);
+}
+
 export function preflight({ checkDependencies = true } = {}) {
+  rejectIntelMac();
   const versions = loadVersions();
   // Test scripts spawn process.execPath, so `mise node --version` below cannot vouch for it.
   if (process.versions.node !== versions.node) throw new Error(`Node ${process.versions.node} is running this script; expected ${versions.node}. Run it through mise exec --no-deps.`);
