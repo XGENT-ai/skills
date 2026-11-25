@@ -24,6 +24,7 @@
 | 2c321830-4050-44f9-aafe-f39c5f38d40d | [ELINTP-VISUALS P5 R1 代码评审](../../../../docs/plan/ELINTP-VISUALS-P5.code-review.md) | [状态](2c321830-4050-44f9-aafe-f39c5f38d40d.md) | 活动 |
 | 2ced5278-54e4-49fb-be27-b2d781ef3286 | [ELINTP-VISUALS P2 R2代码修复效果复审](../../../../docs/plan/ELINTP-VISUALS-P2.code-review.r2.md) | [状态](2ced5278-54e4-49fb-be27-b2d781ef3286.md) | 活动 |
 | 2fc34df8-6142-4b7a-9484-8bee4fa7a248 | [ELINTP-VISUALS P2 gaps R1代码评审](../../../../docs/plan/ELINTP-VISUALS-P2-gaps.code-review.md) | [状态](2fc34df8-6142-4b7a-9484-8bee4fa7a248.md) | 活动 |
+| 33331736-46f1-4f56-a308-b30e88e3f12b | [Phoenix UI P4 gaps R1代码评审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4-gaps.code-review.md) | [状态](33331736-46f1-4f56-a308-b30e88e3f12b.md) | 活动 |
 | 339c267d-7815-49f2-8218-e1da08b57ac1 | [Phoenix UI 方案对比页与设计指引 P4 开发计划完整评审](../../../../docs/plan/PHOENIX-UI-EVIDENCE-CRAFT-P4.review.md) | [状态](339c267d-7815-49f2-8218-e1da08b57ac1.md) | 活动 |
 | 34b7fd03-7cd8-4674-9b0e-0eae97c40a69 | [ELINTP-VISUALS P4 gaps R1代码评审](../../../../docs/plan/ELINTP-VISUALS-P4-gaps.code-review.md) | [状态](34b7fd03-7cd8-4674-9b0e-0eae97c40a69.md) | 活动 |
 | 35023c29-3fe3-47d6-9752-0749fe184b57 | [ELINTP-VISUALS P4 gaps R3代码修复效果复审](../../../../docs/plan/ELINTP-VISUALS-P4-gaps.code-review.r3.md) | [状态](35023c29-3fe3-47d6-9752-0749fe184b57.md) | 活动 |
