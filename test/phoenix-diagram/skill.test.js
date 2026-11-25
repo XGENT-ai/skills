@@ -22,7 +22,8 @@ test('the skill has a bounded thirteen-type description with its exclusions up f
   assert.ok(Array.from(description).length <= 200);
   const first100 = Array.from(description).slice(0, 100).join('');
   for (const word of ['架构', '工作流', '时序', '数据流', '状态', 'ER', '类', '树', '时间线', '瀑布', 'Mermaid', '数值图表', '逐词标注', '仪表盘', 'infographic']) assert.ok(first100.includes(word), word);
-  assert.match(frontmatter, /^ {2}version: "0\.2\.0"$/m);
+  const manifest = fs.readFileSync(path.join(root, 'tools/phoenix-diagram/Cargo.toml'), 'utf8');
+  assert.equal(/^ {2}version: "([^"]+)"$/m.exec(frontmatter)?.[1], /^version = "([^"]+)"$/m.exec(manifest)[1]);
   assert.doesNotMatch(frontmatter, /disable-model-invocation|allow_implicit_invocation/);
   assert.equal(fs.existsSync(path.join(skill, 'agents/openai.yaml')), false);
 });

@@ -30,7 +30,8 @@ test('reader is a complete offline Phoenix artifact with exactly eight native sl
   assert.deepEqual([...html.matchAll(/\{\{PHOENIX:([^}]+)\}\}/g)].map(match => match[1]).sort(), [...slots].sort());
   assert.equal((html.match(/id="phoenix-diagram-metadata"/g) || []).length, 1);
   assert.match(html, /window\.PhoenixDiagram\s*=/);
-  assert.match(html, /name="generator" content="phoenix-diagram 0\.2\.0"/);
+  const version = /^version = "([^"]+)"$/m.exec(read('Cargo.toml'))[1];
+  assert.equal(/name="generator" content="phoenix-diagram ([^"]+)"/.exec(html)?.[1], version);
   assert.doesNotMatch(html, /\{\{i18n:|\[PROJECT NAME\]|\bvar Archify\b|localStorage[^\n]*archify-/);
   assert.doesNotMatch(html, /<(?:script|link)\b[^>]*(?:src|href)\s*=\s*["'](?:https?:|\/\/)/i);
   assert.doesNotMatch(html, /@import\s|url\(["']?https?:|\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon)\s*\(/);
