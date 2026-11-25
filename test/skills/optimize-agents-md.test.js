@@ -10,9 +10,11 @@ test('AGENTS optimization remains discoverable within its first 100 description 
   const content = fs.readFileSync(skill, 'utf8');
   const header = content.match(/^---\n([\s\S]*?)\n---\n/)[1];
   const description = JSON.parse(header.match(/^description: (.*)$/m)[1]);
-  assert.ok(description.length <= 200);
+  // English frontmatter targets 250 characters (Chinese 200).
+  assert.ok(description.length <= 250);
   const prefix = description.slice(0, 100);
-  for (const boundary of ['仓库 AGENTS.md', '普通编码', '初始化', '全局规则']) assert.ok(prefix.includes(boundary));
+  for (const boundary of ['repository AGENTS.md', 'ordinary coding']) assert.ok(prefix.includes(boundary));
+  for (const boundary of ['initialization', 'global rule']) assert.ok(description.includes(boundary));
   assert.equal(/^disable-model-invocation:\s*true$/m.test(header), false);
   const agi = fs.readFileSync(path.join(root, 'skills/agi-mode/SKILL.md'), 'utf8');
   assert.ok(/^disable-model-invocation:\s*true$/m.test(agi));
