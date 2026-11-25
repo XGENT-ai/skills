@@ -1,11 +1,13 @@
 //! Project installation: copy the bundle's provider files into the project,
-//! write ENGINE.json beside each installed skill and splice the Phoenix hook
-//! handlers into shared hook configuration, keeping every other handler.
+//! write ENGINE.json beside each installed skill and retire automatic hooks
+//! from earlier project installs without disturbing other handlers.
 //! Rerunning the install is the repair path; nothing is journaled or backed up.
 pub mod cli;
 
 use impeccable_context::hook_markers::parse_manifest_jsonc;
-use impeccable_skills::hook_manifest::{merge_hook_manifests, provider_hook_artifacts};
+use impeccable_skills::hook_manifest::{
+    get_hook_consent, provider_hook_artifacts, strip_impeccable_hook_entries,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -57,7 +59,7 @@ pub struct Report {
     pub providers: Vec<String>,
     pub writes: Vec<String>,
     pub shared_json: Vec<String>,
-    /// Files the package no longer ships and symlinked skill folders replaced by a copy.
+    /// Retired hook manifests, obsolete skill files and skill symlinks replaced by a copy.
     pub removals: Vec<String>,
 }
 
@@ -182,28 +184,76 @@ fn is_hook_config(provider: &str, path: &str) -> bool {
         .any(|spec| spec.source_provider == provider && spec.rel == path)
 }
 
-/// The Phoenix handlers spliced into the project's configuration at `path`.
-fn merged_hooks(path: &Path, fresh: &[u8]) -> Result<Vec<u8>, Error> {
-    let fresh: Value = serde_json::from_slice(fresh).map_err(|e| failed(path, e))?;
-    let existing = match fs::read_to_string(path) {
+/// Plan cleanup only where a previous project install registered hooks.
+fn retire_hooks(
+    project: &Path,
+    relative: String,
+    opted_in: bool,
+    writes: &mut Vec<Write>,
+    report: &mut Report,
+) -> Result<(), Error> {
+    let path = project.join(&relative);
+    let mut settings = match fs::read_to_string(&path) {
         Ok(text) => match parse_manifest_jsonc(&text) {
-            Some((value @ Value::Object(_), _)) => value,
+            Some((Value::Object(settings), _)) => settings,
             _ => {
                 return Err(failed(
-                    path,
+                    &path,
                     "not a JSON object; fix it and rerun the Phoenix UI install",
                 ))
             }
         },
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Value::Object(Default::default()),
-        Err(e) => return Err(failed(path, e)),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(e) => return Err(failed(&path, e)),
     };
-    let merged = merge_hook_manifests(&existing, &fresh);
-    Ok(format!(
-        "{}\n",
-        serde_json::to_string_pretty(&merged).unwrap_or_default()
-    )
-    .into_bytes())
+    if opted_in {
+        return Ok(());
+    }
+    let Some(Value::Object(hooks)) = settings.get_mut("hooks") else {
+        return Ok(());
+    };
+    let mut changed = false;
+    hooks.retain(|_, entries| {
+        if !entries.is_array() {
+            return true;
+        }
+        let kept = strip_impeccable_hook_entries(Some(entries));
+        if entries.as_array() == Some(&kept) {
+            return true;
+        }
+        changed = true;
+        let keep_event = !kept.is_empty();
+        *entries = Value::Array(kept);
+        keep_event
+    });
+    if !changed {
+        return Ok(());
+    }
+    if hooks.is_empty() {
+        settings.shift_remove("hooks");
+    }
+    // Cursor and Copilot also wrote the schema version in otherwise hook-only files.
+    if settings.is_empty()
+        || (matches!(
+            relative.as_str(),
+            ".cursor/hooks.json" | ".github/hooks/phoenix-ui.json"
+        ) && settings.len() == 1
+            && settings.get("version") == Some(&Value::from(1)))
+    {
+        report.removals.push(relative);
+    } else {
+        let bytes = format!(
+            "{}\n",
+            serde_json::to_string_pretty(&settings).expect("JSON value")
+        );
+        report.shared_json.push(relative.clone());
+        writes.push(Write {
+            relative,
+            bytes: bytes.into_bytes(),
+            mode: None,
+        });
+    }
+    Ok(())
 }
 
 fn is_symlink(path: &Path) -> bool {
@@ -256,27 +306,32 @@ pub fn install(
         .map(|p| format!("{p}/{SKILL_DIR}"))
         .filter(|dir| is_symlink(&project.join(dir)))
         .collect();
+    let opted_in = get_hook_consent(&project.to_string_lossy()).as_deref() == Some("accepted");
     let mut writes = Vec::new();
     let mut shipped = std::collections::BTreeSet::new();
     for provider in &providers {
         let entry = &bundle.providers[provider];
         let mut files = Vec::new();
         for (relative, sha) in &entry.files {
-            let path = project.join(provider).join(relative);
-            let bytes = bundle.blob(sha)?;
-            files.push(if is_hook_config(provider, relative) {
-                (relative.as_str(), merged_hooks(&path, &bytes)?, None)
-            } else {
-                let exec = entry.exec.contains(relative);
-                (
-                    relative.as_str(),
-                    bytes,
-                    Some(if exec { 0o755 } else { 0o644 }),
-                )
-            });
+            if is_hook_config(provider, relative) {
+                retire_hooks(
+                    project,
+                    format!("{provider}/{relative}"),
+                    opted_in,
+                    &mut writes,
+                    &mut report,
+                )?;
+                continue;
+            }
+            let exec = entry.exec.contains(relative);
+            files.push((
+                relative.as_str(),
+                bundle.blob(sha)?,
+                if exec { 0o755 } else { 0o644 },
+            ));
         }
         if entry.files.contains_key(MAIN_SKILL) {
-            files.push((RUNTIME_MANIFEST, bundle.version.clone(), Some(0o644)));
+            files.push((RUNTIME_MANIFEST, bundle.version.clone(), 0o644));
         }
         for (relative, bytes, mode) in files {
             let relative = format!("{provider}/{relative}");
@@ -287,19 +342,15 @@ pub fn install(
                 .any(|dir| relative.starts_with(&format!("{dir}/")));
             let current = !replaced
                 && fs::read(&path).is_ok_and(|b| b == bytes)
-                && (cfg!(not(unix)) || mode.is_none() || file_mode(&path) == mode);
+                && (cfg!(not(unix)) || file_mode(&path) == Some(mode));
             if current {
                 continue;
             }
-            if mode.is_some() {
-                report.writes.push(relative.clone());
-            } else {
-                report.shared_json.push(relative.clone());
-            }
+            report.writes.push(relative.clone());
             writes.push(Write {
                 relative,
                 bytes,
-                mode,
+                mode: Some(mode),
             });
         }
     }
@@ -325,15 +376,14 @@ pub fn install(
     if dry_run {
         return Ok(report);
     }
-    for dir in &linked {
-        let path = project.join(dir);
-        fs::remove_file(&path)
-            .or_else(|_| fs::remove_dir(&path))
-            .map_err(|e| failed(&path, e))?;
-    }
-    for relative in &stale {
+    for relative in &report.removals {
         let path = project.join(relative);
-        fs::remove_file(&path).map_err(|e| failed(&path, e))?;
+        let removed = fs::remove_file(&path);
+        if removed.is_err() && linked.contains(relative) {
+            fs::remove_dir(&path).map_err(|e| failed(&path, e))?;
+        } else {
+            removed.map_err(|e| failed(&path, e))?;
+        }
     }
     for write in writes {
         let path = project.join(&write.relative);

@@ -71,7 +71,7 @@ fn install_overwrites_tools_removes_unshipped_files_and_repeats_unchanged() {
         .writes
         .iter()
         .any(|p| p == ".claude/skills/phoenix-ui/scripts/ENGINE.json"));
-    assert_eq!(planned.shared_json, [".claude/settings.json"]);
+    assert!(planned.shared_json.is_empty());
     assert_eq!(
         planned.removals,
         [".claude/skills/phoenix-ui/reference/retired.md"]
@@ -97,9 +97,7 @@ fn install_overwrites_tools_removes_unshipped_files_and_repeats_unchanged() {
         .exists());
     assert_eq!(f.read(".claude/agents/mine.md"), "user agent");
     assert_eq!(f.read(".phoenix-ui/config.json"), "{\"user\":true}");
-    let settings: Value = serde_json::from_str(&f.read(".claude/settings.json")).unwrap();
-    assert!(settings["hooks"].to_string().contains("phoenix-ui"));
-    assert!(settings.get("description").is_none(), "{settings}");
+    assert!(!f.0.join(".claude/settings.json").exists());
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
@@ -116,7 +114,7 @@ fn install_overwrites_tools_removes_unshipped_files_and_repeats_unchanged() {
 }
 
 #[test]
-fn hook_merge_replaces_only_phoenix_handlers() {
+fn reinstall_removes_only_phoenix_handlers_unless_explicitly_enabled() {
     let f = Fixture::new();
     let other = json!({"type":"command","command":"my-other-hook"});
     let settings = json!({"keep":true,"hooks":{"Stop":[{"matcher":"keep","hooks":[
@@ -124,15 +122,37 @@ fn hook_merge_replaces_only_phoenix_handlers() {
         other.clone()
     ]}]}});
     f.write(".claude/settings.json", &settings.to_string());
+    let planned = f.run(".claude", true);
+    assert_eq!(planned.shared_json, [".claude/settings.json"]);
+    assert_eq!(f.read(".claude/settings.json"), settings.to_string());
     assert_eq!(f.run(".claude", false).status, Status::Installed);
     let after: Value = serde_json::from_str(&f.read(".claude/settings.json")).unwrap();
-    assert_eq!(after["keep"], true);
     assert_eq!(
-        after["hooks"]["Stop"][0],
-        json!({"matcher":"keep","hooks":[other]})
+        after,
+        json!({"keep":true,"hooks":{"Stop":[{"matcher":"keep","hooks":[other]}]}})
     );
-    assert!(after["hooks"]["Stop"].as_array().unwrap().len() > 1);
     assert_eq!(f.run(".claude", false).status, Status::Unchanged);
+
+    f.write(".claude/settings.json", &settings.to_string());
+    f.write(
+        ".phoenix-ui/config.local.json",
+        r#"{"hook":{"consent":"accepted"}}"#,
+    );
+    assert_eq!(f.run(".claude", false).status, Status::Unchanged);
+    assert_eq!(f.read(".claude/settings.json"), settings.to_string());
+}
+
+#[test]
+fn reinstall_removes_retired_dedicated_manifest_without_touching_other_providers() {
+    let f = Fixture::new();
+    let old = r#"{"version":1,"hooks":{"preToolUse":[{"command":".cursor/skills/phoenix-ui/scripts/phoenix-ui hook-before-edit"}]}}"#;
+    f.write(".cursor/hooks.json", old);
+    f.write(".codex/hooks.json", "{}");
+    assert_eq!(f.run(".cursor", true).removals, [".cursor/hooks.json"]);
+    assert_eq!(f.read(".cursor/hooks.json"), old);
+    assert_eq!(f.run(".cursor", false).status, Status::Installed);
+    assert!(!f.0.join(".cursor/hooks.json").exists());
+    assert_eq!(f.read(".codex/hooks.json"), "{}");
 }
 
 #[test]

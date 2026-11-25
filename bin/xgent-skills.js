@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // xgent-skills — 为目标项目安装 XGENT 的 Claude Code hooks 与 agents、启用相关 settings,
-// 并安装 Phoenix UI:skills 与 hooks 随包,engine 按包内 manifest 校验后放入用户 cache。
+// 并安装 Phoenix UI:skill 随包,不注册设计 hooks,engine 按包内 manifest 校验后放入用户 cache。
 // 零依赖,Node >= 18。
 
 'use strict';
@@ -27,7 +27,7 @@ const MANAGED_SETTINGS = {
 
 // ─── Phoenix UI ─────────────────────────────────────────────────────────────
 // Phoenix 工具文件由 Rust 执行器直接覆盖(符号链接的 skill 目录换成副本),
-// 共享 hooks 只更新本工具条目。旧工具是否删除由 npm 安装入口询问,不备份、不迁移旧数据。
+// 共享 hooks 只清理本安装器注册的旧 Phoenix handler。旧工具是否删除由 npm 安装入口询问,不备份、不迁移旧数据。
 
 const bootstrap = require('../skills/phoenix-ui/scripts/phoenix-bootstrap.cjs');
 const PHOENIX_DIR = path.join(PKG_ROOT, 'dist', 'phoenix-ui');
@@ -260,9 +260,9 @@ function groupedPaths(paths) {
 }
 
 function reloadStep(provider) {
-  if (provider === '.claude') return '.claude: 重启 Claude Code 会话,在 /hooks 核对 Phoenix 设计 hook';
-  if (provider === '.agents') return '.agents/.codex: 在 Codex 中运行 /hooks,重新审阅并信任本项目 .codex/hooks.json 的 Phoenix handler';
-  return `${provider}: 重新打开该工具的会话以加载新的 skill 与 hooks`;
+  if (provider === '.claude') return '.claude: 重启 Claude Code 会话以加载 /phoenix-ui';
+  if (provider === '.agents') return '.agents/.codex: 新开 Codex 项目会话以加载 $phoenix-ui';
+  return `${provider}: 重新打开该工具的会话以加载 /phoenix-ui`;
 }
 
 function printPhoenix(report, manifest) {
@@ -295,14 +295,16 @@ function usage() {
 
 命令:
   install [dir]   按选中的 provider 为目标项目(默认当前目录)安装:
-                  .claude 写入全部 hook、agent 并在 settings.json 中启用
-                  对应配置,.agents 写入全部 agent;并安装
-                  Phoenix UI(设计 skill 与 hooks;engine 校验后
-                  放入用户 cache;默认删除旧 impeccable,可选择保留)${includesDiagram ? ',\n                  以及 Phoenix Diagram(十三类图解 skill 与独立原生 engine;\n                  默认删除旧 archify,可选择保留)' : ''}
+                  .claude 安装 XGENT agents 并启用 XGENT statusline,
+                  .agents 安装 XGENT agents;并安装
+                  Phoenix UI(设计 skill;engine 校验后放入用户 cache;
+                  不注册 Phoenix UI hooks;重装时清理所选 provider 的旧自动注册,
+                  保留通过 hooks on 启用的配置及其他 hooks;
+                  默认删除旧 impeccable,可选择保留)${includesDiagram ? ',\n                  以及 Phoenix Diagram(十三类图解 skill 与独立原生 engine;\n                  默认删除旧 archify,可选择保留)' : ''}
   help            显示本帮助
 
 install 选项:
-  --no-phoenix-ui       跳过 Phoenix UI,仍安装 XGENT 的 hooks、agents 与 settings(不删除已装版本,也不处理 impeccable)
+  --no-phoenix-ui       跳过 Phoenix UI,仍安装 XGENT 的 hooks、agents 与 settings(保留已装版本及旧 Phoenix UI hooks,也不处理 impeccable)
   --keep-impeccable     保留旧 impeccable,与 Phoenix UI 共存(默认删除项目及个人级
                         impeccable 工具、hooks 和 skills 锁记录,不备份)
 ${includesDiagram ? `  --no-phoenix-diagram  跳过 Phoenix Diagram(不删除已装版本,也不处理 archify)
@@ -315,7 +317,7 @@ ${includesDiagram ? '  --diagram-release-dir=DIR 离线安装 Phoenix Diagram:�
 }
 
 // install 统一选一次 provider,再显式传给两个执行器:写入 XGENT 部分后才探测目录,
-// 会把刚建的目录也算进去。Codex 的 skill 和 hook 分居 .agents 与 .codex,统一记为 .agents。
+// 会把刚建的目录也算进去。Codex 的 skill 位于 .agents,旧 hook 配置位于 .codex,统一记为 .agents。
 function selectProviders(requested, targetDir) {
   const known = Object.keys(readJson(path.join(PHOENIX_DIR, 'bundle', 'manifest.json')).providers);
   const dirs = (requested || '').split(',').map((v) => v.trim()).filter(Boolean)

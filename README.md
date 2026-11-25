@@ -33,7 +33,7 @@ npx @xgent-ai/skills install
 
 | 选项 | 说明 |
 | --- | --- |
-| `--no-phoenix-ui` | 跳过 Phoenix UI,仍安装 XGENT 的 hooks、agents 与 settings;不删除已装版本,也不处理 impeccable |
+| `--no-phoenix-ui` | 跳过 Phoenix UI,仍安装 XGENT 的 hooks、agents 与 settings;保留已装版本及旧 Phoenix UI hooks,也不处理 impeccable |
 | `--keep-impeccable` | 保留旧 impeccable,与 Phoenix UI 共存;默认(交互时回车、无交互环境)删除所选工具目录中项目级及个人级 impeccable 入口、hooks 与 skills 锁记录,不备份 |
 | `--no-phoenix-diagram` | 跳过独立 Phoenix Diagram,不删除已装版本,也不处理 archify |
 | `--keep-archify` | 保留旧 archify,与 Phoenix Diagram 共存;默认(交互时回车、无交互环境)删除所选工具目录中项目级及个人级 archify skill 与 skills 锁记录,不备份 |
@@ -51,7 +51,7 @@ Phoenix UI 和 Phoenix Diagram skill 均由 npm 安装器随匹配引擎安装�
 
 只有 `phoenix-ui` skill 随 Phoenix UI 工具附带，`phoenix-diagram` skill 随 Phoenix Diagram 工具附带；其余所有 skill 均独立于这两个工具。
 
-Phoenix UI 是 XGENT 自主维护的设计工具,版本、规则与发布由本仓控制,三方许可见 `dist/phoenix-ui/NOTICE.md`。它只随 npm 安装器分发:`install` 只装入 `phoenix-ui` skill、对应 hooks 与固定 engine。design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 由 `npx skills add XGENT-ai/skills` 独立安装和更新,Phoenix 不覆盖或比对它们的版本。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
+Phoenix UI 是 XGENT 自主维护的设计工具,版本、规则与发布由本仓控制,三方许可见 `dist/phoenix-ui/NOTICE.md`。它只随 npm 安装器分发:`install` 安装 `phoenix-ui` skill 与匹配的 engine,不注册 Phoenix UI hooks。重装时清理所选项目工具中旧版自动注册的 Phoenix UI hook；明确用 `phoenix-ui hooks on` 启用的配置、其他 hooks 和 XGENT statusline 保留。UI 验收仍走 SDLC 的 `review-ui`。design-md、design-reference、ui-pattern-research、review-ui、apply-ui-review 由 `npx skills add XGENT-ai/skills` 独立安装和更新,Phoenix 不覆盖或比对它们的版本。对话里用 `/phoenix-ui`(Codex 用 `$phoenix-ui`);终端命令为 `npm exec --package=@xgent-ai/skills -- phoenix-ui --help`。
 
 Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoenix-ui init` 可独立完成产品上下文初始化,不依赖其他初始化 skill。subagent 与并行策略由 coding agent 自主安排,Phoenix 不额外要求询问或等待授权。
 

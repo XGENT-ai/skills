@@ -40,7 +40,7 @@ function cargo(args) {
 function git(args) { return command('git', args).trim(); }
 
 function sourceInputs() {
-  const paths = ['Cargo.toml', 'Cargo.lock', 'build-tools.lock.json', '.cargo/config.toml'];
+  const paths = ['Cargo.toml', 'Cargo.lock', 'ENGINE_VERSION', 'build-tools.lock.json', '.cargo/config.toml'];
   const walk = dir => {
     for (const entry of fs.readdirSync(path.join(workspace, dir), { withFileTypes: true })) {
       if (entry.name === '.DS_Store') continue;
@@ -76,6 +76,9 @@ function sourceInputs() {
 }
 
 try {
+  const toolVersion = fs.readFileSync(path.join(workspace, 'ENGINE_VERSION'), 'utf8').trim();
+  assert.equal(fs.readFileSync(path.join(root, 'skills/phoenix-ui/src/scripts/VERSION'), 'utf8').trim(), toolVersion,
+    'The Phoenix UI skill and engine versions must match');
   command('mise', ['exec', '--no-deps', '--', 'bun', 'scripts/render.mjs']);
   cargo(['xtask', 'bundle']);
   cargo(['xtask', 'bundle', '--check']);
@@ -86,7 +89,7 @@ try {
     .find(record => record.reason === 'compiler-artifact' && record.target.kind.includes('bin')
       && record.target.name === 'phoenix-ui' && record.executable)?.executable;
   assert(executable && fs.existsSync(executable), 'Cargo must report the actual native executable');
-  assert.equal(command(executable, ['engine-probe']).trim(), 'phoenix-ui-engine 0.1.0');
+  assert.equal(command(executable, ['engine-probe']).trim(), `phoenix-ui-engine ${toolVersion}`);
   assert.equal(sha(JSON.stringify(sourceInputs())), inputSha256, 'Source changed during native build');
   const bytes = fs.readFileSync(executable), target = bootstrap.platformTarget();
   const asset = `phoenix-ui-${target}${target === 'windows-x64' ? '.exe' : ''}`;
@@ -96,7 +99,7 @@ try {
   const sourceTree = git(['rev-parse', 'HEAD^{tree}']);
   const sourceState = git(['status', '--porcelain']).length ? 'dirty' : 'clean';
   const engine = { asset, sha256: sha(bytes), size: bytes.length };
-  const manifest = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.0', npmPackageVersion: packageVersion,
+  const manifest = { schemaVersion: 1, distribution: 'development', toolVersion, npmPackageVersion: packageVersion,
     sourceCommit, sourceTree, sourceState, sourceInputSha256: inputSha256,
     bundleSchema: 1, bundleSha256, reviewSchema: 1, engines: { [target]: engine } };
   const manifestBytes = Buffer.from(json(manifest));

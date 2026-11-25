@@ -13,17 +13,17 @@ npx @xgent-ai/skills install
 
 一次安装分两段，先完成全部只读预检再写项目：
 
-1. **预检**：校验参数、`.claude/settings.json` 与 guard 配置；把包内 `dist/phoenix-ui/VERSION.json` 固定的 engine 下载或从 `--release-dir` 读取，按大小、SHA-256 和 `engine-probe` 身份核对后放进用户 cache；再以 dry-run 计算 Phoenix 的写入和合并；共享 hook 配置不是合法 JSON 对象等预检失败不写项目。
-2. **写入**：按下节的选择删除待替换工具，写入 XGENT 部分，随后直接覆盖 Phoenix UI 的 skill、agents 和启动文件；符号链接的 `skills/phoenix-ui` 目录换成副本，不改链接目标。共享配置只替换 Phoenix hook，保留其他 handler 和配置；重写后为标准 JSON，原有注释不保留。安装不创建回执、日志或备份，保留配置和业务数据。中断后重跑同一命令覆盖安装。
+1. **预检**：校验参数与所选 Claude 项目的 `.claude/settings.json`；把包内 `dist/phoenix-ui/VERSION.json` 固定的 engine 下载或从 `--release-dir` 读取，按大小、SHA-256 和 `engine-probe` 身份核对后放进用户 cache；再以 dry-run 计算 Phoenix 的写入和合并；共享 hook 配置不是合法 JSON 对象等预检失败不写项目。
+2. **写入**：按下节的选择删除待替换工具，写入 XGENT 部分，随后直接覆盖 Phoenix UI 的 skill、agents 和启动文件；符号链接的 `skills/phoenix-ui` 目录换成副本，不改链接目标。安装器不注册 Phoenix UI hooks。重装时移除目标项目所选 provider 中旧版自动注册的 Phoenix UI handler；明确通过 `phoenix-ui hooks on` 启用的配置、其他 handler 和 XGENT statusline 保留。UI 验收仍走独立的 `review-ui`；共享配置重写后为标准 JSON，原有注释不保留。安装不创建回执、日志或备份，保留配置和业务数据。中断后重跑同一命令覆盖安装。
 
 安装输出列出写入、合并与移除及重载步骤；相同内容重复安装显示「未变」。预检失败不写项目，写入失败显示未完成并提示处理错误后重跑。
 
 | 选项 | 作用 |
 | --- | --- |
-| `--no-phoenix-ui` | 跳过 Phoenix，仍安装 XGENT 部分；不删除已装版本，也不处理 impeccable |
+| `--no-phoenix-ui` | 跳过 Phoenix，仍安装 XGENT 部分；保留已装版本及旧 Phoenix UI hooks，也不处理 impeccable |
 | `--keep-impeccable` | 保留旧 impeccable，与 Phoenix UI 共存，不再询问 |
 | `--release-dir=DIR` | 离线安装 engine：DIR 是发布者整理的完整 release 目录（`VERSION.json`、各平台 engine、许可与清单），必须与当前包的 manifest 完全一致，零网络 |
-| `--providers=a,b` | 指定安装目标目录；`codex` 同时选择 `.agents`（skills）与 `.codex`（hooks）。默认按项目里已有的目录判断，都没有时只装 `.claude` |
+| `--providers=a,b` | 指定安装目标目录；`codex` 的 skill 写入 `.agents`，旧 Phoenix UI handler 从项目 `.codex/hooks.json` 清理。默认按项目里已有的目录判断，都没有时只装 `.claude` |
 
 **engine**：放在 `~/.phoenix-ui/bin/<版本>/<平台>/<engineSha256>/`（可用 `PHOENIX_UI_HOME` 改 engine cache 的根目录；提醒去重标记也在其中），按引擎摘要隔离，新旧项目固定的引擎可以共存，也不覆盖旧版缓存。hook、context 等普通运行不联网补下载：engine 缺失或版本不符时 hook 放行并每会话提醒一次补装命令，CLI 返回 4 并给出固定包版本的命令：
 
@@ -52,17 +52,14 @@ Phoenix UI 文件直接按当前包覆盖，包括 skills.sh 或手动复制修�
 
 其他平台在预检阶段以退出码 4 停止，不写项目；可加 `--no-phoenix-ui` 安装其余部分。用户不需要 Rust 编译器。
 
-| 目录 | 工具 | 写入 | 安装后 |
-| --- | --- | --- | --- |
-| `.claude` | Claude Code | skills、agents、`.claude/settings.json` hooks | 重启会话，在 `/hooks` 核对 Phoenix 设计 hook |
-| `.agents` + `.codex` | Codex | `.agents/skills`、`.codex/hooks.json` | 在 Codex 中运行 `/hooks`，重新审阅并信任本项目的 Phoenix handler |
-| `.cursor` | Cursor | skills、`.cursor/hooks.json` | 重新打开会话 |
-| `.github` | GitHub Copilot | skills、`.github/hooks/phoenix-ui.json` | 重新打开会话 |
-| `.grok` | Grok | skills、`.grok/hooks/phoenix-ui.json` | 重新打开会话 |
-| `.gemini` | Gemini CLI | skills、`.gemini/settings.json` hooks | 重新打开会话 |
-| `.agent`、`.dsh`、`.hermes`、`.kiro`、`.opencode`、`.pi`、`.qoder`、`.rovodev`、`.trae`、`.trae-cn`、`.veto`、`.vibe` | 对应工具 | skills（无 hooks） | 重新打开会话 |
+| 目录 | 工具 | Phoenix UI 安装内容 |
+| --- | --- | --- |
+| `.claude`、`.cursor`、`.github`、`.grok` | Claude Code、Cursor、GitHub Copilot、Grok | skills、agents |
+| `.agents` + `.codex` | Codex | `.agents/skills` |
+| `.opencode` | OpenCode | skills、commands |
+| `.gemini`、`.agent`、`.dsh`、`.hermes`、`.kiro`、`.pi`、`.qoder`、`.rovodev`、`.trae`、`.trae-cn`、`.veto`、`.vibe` | Gemini CLI 等对应工具 | skills |
 
-Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具（含旧版 goal guard）的分组（包括都没有 matcher 的分组）互不影响，重复安装不产生重复 handler。安装器测试覆盖各目录的文件与 hook 合并；工具真实加载以各自会话为准，同名 skill 的优先级按工具规则（Claude Code 个人级优先于项目级），安装器无法确定时会提示待人工核对。
+安装后新开项目会话加载 skill，不需要在 `/hooks` 中启用或信任 Phoenix。手动运行 `phoenix-ui detect`、`capture` 等命令的方式不变。工具实际加载的同名 skill 仍取决于各自的优先级规则（Claude Code 个人级优先于项目级）。
 
 ## 渠道
 
@@ -71,7 +68,7 @@ Phoenix 的 hook 按完整分组写入；同一事件里已有其他工具（含
 
 ## XGENT 自有检测规则
 
-Phoenix UI 在 61 条内置规则之外，另带一组 XGENT 自有规则（ID 以 `xgent/` 开头）。它们默认启用、与内置规则分开定义，可以按规则单独关闭。规则包只装进原生 `phoenix-ui` 二进制：`detect`（源码文件与 URL 目标）和设计 hook 会运行它；live 叠层与浏览器扩展在页面内使用 WASM 检测、不加载这个规则包，所以同一页面在叠层或扩展里看不到下面这些发现，结果可能与 `detect <url>` 不同；需要这部分发现时以 `detect` 的结果为准。
+Phoenix UI 在 61 条内置规则之外，另带一组 XGENT 自有规则（ID 以 `xgent/` 开头）。它们默认启用、与内置规则分开定义，可以按规则单独关闭。规则包只装进原生 `phoenix-ui` 二进制：`detect`（源码文件与 URL 目标）和被显式调用的设计 hook 会运行它；live 叠层与浏览器扩展在页面内使用 WASM 检测、不加载这个规则包，所以同一页面在叠层或扩展里看不到下面这些发现，结果可能与 `detect <url>` 不同；需要这部分发现时以 `detect` 的结果为准。
 
 | 规则 ID | 检测方式 | 级别 | 关闭方式 |
 | --- | --- | --- | --- |
@@ -89,7 +86,7 @@ Phoenix UI 在 61 条内置规则之外，另带一组 XGENT 自有规则（ID �
 | `xgent/cjk-split-unit` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
 | `xgent/cjk-font-fallback` | 页面（`detect <url>`，浏览器渲染） | advisory | `detector.ignoreRules`、`hooks ignore-rule`、`--no-advisory` |
 
-「源码文件」指文本扫描，覆盖 CSS、HTML、Vue、JSX、TSX 等前端源文件；「页面」指把 http(s):// 或 file:// URL 交给 `detect`，由真实浏览器渲染后检查，可用 `--viewport <W>x<H>` 指定视口（默认 1280x800）。warning 级发现计入失败数，可能让退出码为 2；advisory 单独列出、不改变退出码，`--no-advisory` 只能隐藏 advisory 级发现。两条文本规则也随设计 hook 在编辑后运行：`xgent/focus-outline-removed` 会在 Stop 深检提醒中给出，并在 Cursor before-edit 中拒绝写入；`xgent/transition-all` 是 advisory，hook 默认不输出 advisory 发现。页面规则依赖浏览器渲染，hook 不会产生它们，需要时单独运行 `detect <url>`。
+「源码文件」指文本扫描，覆盖 CSS、HTML、Vue、JSX、TSX 等前端源文件；「页面」指把 http(s):// 或 file:// URL 交给 `detect`，由真实浏览器渲染后检查，可用 `--viewport <W>x<H>` 指定视口（默认 1280x800）。warning 级发现计入失败数，可能让退出码为 2；advisory 单独列出、不改变退出码，`--no-advisory` 只能隐藏 advisory 级发现。若宿主另行配置了设计 hook，两条文本规则也可随编辑运行：`xgent/focus-outline-removed` 会在 Stop 深检提醒中给出，并在 Cursor before-edit 中拒绝写入；`xgent/transition-all` 是 advisory，hook 默认不输出 advisory 发现。页面规则依赖浏览器渲染，hook 不会产生它们，需要时单独运行 `detect <url>`。
 
 五条 `xgent/cjk-*` 规则只作用于以汉字为主的文本：去掉空白与标点后，汉字超过可见字符的一半。其中正文指 `p`、`li`、`td`、`th`、`dd`、`blockquote`、`figcaption` 里超过 10 个字符的直接文本，标题指 `h1`–`h6`；日文、韩文和夹少量中文的拉丁文本不在其内，标识符或路径密集、汉字不过半的中文技术段落也不在其内，仍按内置规则判定。
 
@@ -110,7 +107,7 @@ Phoenix UI 在 61 条内置规则之外，另带一组 XGENT 自有规则（ID �
 - inline 豁免：前缀为 `phoenix-ui-disable*`，词形为 `disable`（整个文件）、`disable-line`、`disable-next-line`（单行），后接一个或多个规则 ID（逗号分隔）或 `*`，可带 `: 理由` 或 `-- 理由`。内联标记按源文件内容生效；URL 扫描读取渲染后的页面，页面规则的例外用项目级忽略。`--no-inline-ignores`（或 `--no-config`）可绕过内联豁免。
 - `detect --no-advisory`：只在单次扫描中隐藏 advisory 级发现，warning 级发现与退出码不受影响。
 
-在 Cursor 上启用新版本后，本来含无替代 `focus:outline-none` 的文件会对任何编辑触发 before-edit 拒绝：该检查扫描整份投影后的文件，不扣除编辑前已经存在的发现，所以与该焦点样式无关的编辑也会被拒。处理方式是先修掉该文件的焦点样式；确需临时放行时用 `phoenix-ui hooks ignore-value xgent/focus-outline-removed "*" --file <path>` 只关这个文件中的这一条。不要为绕过拒绝改用 inline 豁免。例外默认通过 `ignore-value` 写入项目 config；`ignore-file`、`ignore-rule` 影响面更大，应先征得用户同意。
+若在 Cursor 中另行启用了 Phoenix before-edit hook，本来含无替代 `focus:outline-none` 的文件会对任何编辑触发 before-edit 拒绝：该检查扫描整份投影后的文件，不扣除编辑前已经存在的发现，所以与该焦点样式无关的编辑也会被拒。处理方式是先修掉该文件的焦点样式；确需临时放行时用 `phoenix-ui hooks ignore-value xgent/focus-outline-removed "*" --file <path>` 只关这个文件中的这一条。不要为绕过拒绝改用 inline 豁免。例外默认通过 `ignore-value` 写入项目 config；`ignore-file`、`ignore-rule` 影响面更大，应先征得用户同意。
 
 ## 取证命令（capture）
 

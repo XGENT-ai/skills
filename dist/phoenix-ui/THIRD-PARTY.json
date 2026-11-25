@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "inputs": {
-    "cargoLockSha256": "a1bea86427fe67cd1befbe5b6126ed0f961217567814061481cd88708a6f9106",
+    "cargoLockSha256": "449ba6ce9443b3b40a0551a1dce209cd07ce217d5784bc9eaeb8ceb0f7154098",
     "bunLockSha256": "c77e9373b5193a6ee154c9c44238a042dc449e583356cb172e94ecf006875230",
     "policySha256": "ca369705c8ce28efdbdc96fcc666e579f17f394fb4c6696e993c3b2b8e46b095",
     "checkerSha256": "67d690df826d4745cc4804ffe8b348936de5b26f51ad3662a34a14bf995811ec",
@@ -1241,7 +1241,7 @@
     },
     {
       "name": "impeccable-browser",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/browser",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1265,7 +1265,7 @@
     },
     {
       "name": "impeccable-common",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/common",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1289,7 +1289,7 @@
     },
     {
       "name": "impeccable-comp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/comp",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1313,7 +1313,7 @@
     },
     {
       "name": "impeccable-comp-verbs",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/comp-verbs",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1337,7 +1337,7 @@
     },
     {
       "name": "impeccable-context",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/context",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1361,7 +1361,7 @@
     },
     {
       "name": "impeccable-core",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/core",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1385,7 +1385,7 @@
     },
     {
       "name": "impeccable-detect",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/detect",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1409,7 +1409,7 @@
     },
     {
       "name": "impeccable-foundation",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/foundation",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1433,7 +1433,7 @@
     },
     {
       "name": "impeccable-hook",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/hook",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1457,7 +1457,7 @@
     },
     {
       "name": "impeccable-html",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/html",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1481,7 +1481,7 @@
     },
     {
       "name": "impeccable-live",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/live",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1505,7 +1505,7 @@
     },
     {
       "name": "impeccable-skills",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/skills",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -1529,7 +1529,7 @@
     },
     {
       "name": "impeccable-wasm",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/wasm",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -2085,7 +2085,7 @@
     },
     {
       "name": "phoenix-ui",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/cli",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",
@@ -2109,7 +2109,7 @@
     },
     {
       "name": "phoenix-ui-install",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceEvidence": "New local Phoenix workspace source; not present in the pinned upstream import",
       "localManifest": "tools/phoenix-ui/crates/install/Cargo.toml",
@@ -2132,7 +2132,7 @@
     },
     {
       "name": "phoenix-ui-rules",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceEvidence": "New local Phoenix workspace source; not present in the pinned upstream import",
       "localManifest": "tools/phoenix-ui/crates/rules/Cargo.toml",
@@ -4294,7 +4294,7 @@
     },
     {
       "name": "xtask",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/pbakaus/impeccable/tree/508d7e8955de3b3caf2d8676e85206723d41a887/crates/xtask",
       "sourceEvidence": "Imported Apache-2.0 base; local workspace version/modifications are not an upstream release",

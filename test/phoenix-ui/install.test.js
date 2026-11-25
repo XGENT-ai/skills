@@ -11,6 +11,7 @@ const { spawnSync } = require('node:child_process');
 
 const repository = path.resolve(__dirname, '../..');
 const engine = process.env.PHOENIX_UI_BIN;
+const toolVersion = fs.readFileSync(path.join(repository, 'skills/phoenix-ui/src/scripts/VERSION'), 'utf8').trim();
 const skip = engine ? false : 'explicit local Phoenix engine (PHOENIX_UI_BIN) needed; npm run test:phoenix supplies it';
 const sha256 = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
 
@@ -43,7 +44,7 @@ function packageFor(t, executable) {
   const asset = `phoenix-ui-${target}${target.startsWith('windows-') ? '.exe' : ''}`;
   const bytes = fs.readFileSync(executable);
   const manifest = { schemaVersion: 1, distribution: 'development',
-    toolVersion: fs.readFileSync(path.join(repository, 'skills/phoenix-ui/src/scripts/VERSION'), 'utf8').trim(),
+    toolVersion,
     npmPackageVersion: JSON.parse(fs.readFileSync(path.join(repository, 'package.json'))).version, sourceCommit: 'a'.repeat(40),
     bundleSchema: 1, bundleSha256: sha256(fs.readFileSync(path.join(repository, 'dist/phoenix-ui/bundle/manifest.json'))), reviewSchema: 1,
     engines: { [target]: { asset, sha256: sha256(bytes), size: bytes.length } } };
@@ -95,9 +96,7 @@ test('--keep-impeccable installs Phoenix beside customized project and personal 
   const result = install(pkg, project, ['--keep-impeccable', '--providers=codex']);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   for (const root of [project, pkg.home]) assert.equal(fs.readFileSync(path.join(root, old), 'utf8'), 'customized Impeccable tool\n');
-  const commands = JSON.stringify(JSON.parse(fs.readFileSync(path.join(project, '.codex/hooks.json'))).hooks);
-  assert.match(commands, /impeccable/);
-  assert.match(commands, /phoenix-ui/);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(project, '.codex/hooks.json'))), hooks);
   assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
 });
 
@@ -186,21 +185,36 @@ test('Phoenix overwritten by a source install is refreshed', { skip }, (t) => {
   assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
 });
 
-test('source refresh preserves custom hooks while restoring Phoenix hooks', { skip }, (t) => {
+test('upgrade removes the old npm hook while preserving its neighbors across reinstalls', { skip }, (t) => {
   const pkg = packageFor(t, engine);
-  const project = sandbox(t, 'phoenix managed hook conflict');
-  const flags = ['--keep-impeccable', '--providers=codex'];
-  const first = install(pkg, project, flags);
-  assert.equal(first.status, 0, first.stdout + first.stderr);
-  fs.writeFileSync(path.join(project, '.agents/skills/phoenix-ui/SKILL.md'), 'source-channel skill update\n');
-  const hook = path.join(project, '.codex/hooks.json');
-  const settings = JSON.parse(fs.readFileSync(hook, 'utf8'));
-  Object.values(settings.hooks)[0][0].hooks.push({ type: 'command', command: 'custom-hook' });
-  fs.writeFileSync(hook, JSON.stringify(settings));
+  const project = sandbox(t, 'phoenix hook upgrade');
+  const flags = ['--keep-impeccable', '--providers=claude,codex'];
+  // The old npm installer wrote shared Claude settings, never the user's local file.
+  const local = path.join(project, '.claude/settings.local.json');
+  const localHook = { type: 'command', command: '"${CLAUDE_PROJECT_DIR}/.claude/skills/phoenix-ui/scripts/phoenix-ui" hook' };
+  const localBytes = JSON.stringify({ hooks: { Stop: [{ hooks: [localHook] }] } });
+  fs.mkdirSync(path.dirname(local));
+  fs.writeFileSync(local, localBytes);
+  const file = path.join(project, '.codex/hooks.json');
+  fs.mkdirSync(path.dirname(file));
+  const custom = { type: 'command', command: 'custom-hook', timeout: 3, customHandlerField: true };
+  const group = { matcher: 'Edit|Write|apply_patch', customGroupField: 42, hooks: [custom] };
+  const expected = { customSetting: { nested: ['preserve'] }, hooks: { PostToolUse: [group], Stop: [{ hooks: [custom] }] } };
+  const legacy = { type: 'command', command: '".agents/skills/phoenix-ui/scripts/phoenix-ui" hook',
+    commandWindows: 'cmd /d /c ".agents\\skills\\phoenix-ui\\scripts\\phoenix-ui.cmd" hook', timeout: 5, statusMessage: 'Checking UI changes' };
+  const previous = structuredClone(expected);
+  previous.hooks.PostToolUse[0].hooks.unshift(legacy);
+  previous.hooks.Stop.unshift({ hooks: [{ ...legacy, timeout: 30, statusMessage: 'Design deep pass' }] });
+  fs.writeFileSync(file, JSON.stringify(previous));
   const result = install(pkg, project, flags);
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.match(fs.readFileSync(hook, 'utf8'), /custom-hook/);
-  assert.notEqual(fs.readFileSync(path.join(project, '.agents/skills/phoenix-ui/SKILL.md'), 'utf8'), 'source-channel skill update\n');
+  assert.deepEqual(JSON.parse(fs.readFileSync(file)), expected);
+  assert.equal(fs.readFileSync(local, 'utf8'), localBytes);
+  const before = tree(project);
+  const repeat = install(pkg, project, flags);
+  assert.equal(repeat.status, 0, repeat.stdout + repeat.stderr);
+  assert.match(repeat.stdout, /Phoenix UI .*: 未变/);
+  assert.deepEqual(tree(project), before);
 });
 
 test('fresh install activates Phoenix after the XGENT part and a rerun changes nothing', { skip }, (t) => {
@@ -208,13 +222,15 @@ test('fresh install activates Phoenix after the XGENT part and a rerun changes n
   const project = sandbox(t, 'phoenix fresh project');
   const first = install(pkg, project);
   assert.equal(first.status, 0, first.stdout + first.stderr);
-  assert.match(first.stdout, /Phoenix UI 0\.1\.0 \(@xgent-ai\/skills@[^)]+\): 已安装/);
+  const report = `Phoenix UI ${toolVersion} (@xgent-ai/skills@${JSON.parse(fs.readFileSync(path.join(pkg.root, 'package.json'))).version}): 已安装`;
+  assert.ok(first.stdout.includes(report), first.stdout);
   assert.match(first.stdout, /命令  \.claude: \/phoenix-ui/);
   assert.doesNotMatch(first.stdout, /impeccable →/);
   assert.doesNotMatch(first.stdout, /回滚|事务|备份/);
   assert.equal(fs.existsSync(path.join(project, '.phoenix-ui/install')), false);
   assert.match(first.stdout, /重载  \.claude: 重启 Claude Code 会话/);
-  assert.ok(first.stdout.indexOf('.claude/hooks/xgent-statusline.js') < first.stdout.indexOf('Phoenix UI 0.1.0'));
+  const statusLine = first.stdout.indexOf('.claude/hooks/xgent-statusline.js');
+  assert.ok(statusLine !== -1 && statusLine < first.stdout.indexOf(report));
   assert.match(first.stdout, /完成: /);
   for (const file of ['.claude/skills/phoenix-ui/SKILL.md']) {
     assert.ok(fs.existsSync(path.join(project, file)), file);
@@ -283,22 +299,40 @@ test('an invalid hook configuration stops installation before any project write'
   assert.deepEqual(tree(project), original);
 });
 
-test('repeated installs keep the Phoenix hooks and project state unchanged', { skip }, (t) => {
+test('fresh install does not register hooks for any of the six hook-capable providers', { skip }, (t) => {
   const pkg = packageFor(t, engine);
-  const project = sandbox(t, 'phoenix repeat project');
-  const flags = ['--providers=claude,codex'];
-  let first;
-  for (let i = 0; i < 2; i += 1) {
-    const result = install(pkg, project, flags);
-    assert.equal(result.status, 0, result.stdout + result.stderr);
-    const handlers = [path.join(project, '.claude/settings.json'), path.join(project, '.claude/settings.local.json'), path.join(project, '.codex/hooks.json')]
-      .filter((file) => fs.existsSync(file))
-      .flatMap((file) => Object.values(JSON.parse(fs.readFileSync(file, 'utf8')).hooks || {}).flat().flatMap((entry) => entry.hooks || []));
-    assert.ok(handlers.some((handler) => /skills\/phoenix-ui\/scripts\/phoenix-ui/.test(handler.command)), 'Phoenix design hook');
-    const snapshot = tree(project, (rel) => rel.startsWith('.phoenix-ui/'));
-    if (first) assert.deepEqual(snapshot, first);
-    first = snapshot;
+  const project = sandbox(t, 'phoenix providers');
+  const result = install(pkg, project, ['--providers=claude,codex,cursor,gemini,github,grok']);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  for (const dir of ['.claude', '.agents', '.cursor', '.gemini', '.github', '.grok']) {
+    assert.ok(fs.existsSync(path.join(project, dir, 'skills/phoenix-ui/SKILL.md')), dir);
   }
+  const settings = JSON.parse(fs.readFileSync(path.join(project, '.claude/settings.json')));
+  assert.equal(settings.hooks, undefined);
+  assert.match(settings.statusLine.command, /xgent-statusline\.js/);
+  for (const file of ['.claude/settings.local.json', '.codex/hooks.json', '.cursor/hooks.json', '.gemini/settings.json',
+    '.github/hooks/phoenix-ui.json', '.grok/hooks/phoenix-ui.json']) {
+    assert.equal(fs.existsSync(path.join(project, file)), false, file);
+  }
+});
+
+test('reinstall leaves explicit hooks on choices intact without registering missing hooks', { skip }, (t) => {
+  const pkg = packageFor(t, engine);
+  const project = sandbox(t, 'phoenix manual hooks');
+  const flags = ['--providers=claude,codex,cursor'];
+  const first = install(pkg, project, flags);
+  assert.equal(first.status, 0, first.stdout + first.stderr);
+  const on = spawnSync(path.resolve(engine), ['hooks', 'on'], { cwd: project, encoding: 'utf8', timeout: 10000,
+    env: { ...process.env, HOME: pkg.home, USERPROFILE: pkg.home, PHOENIX_UI_HOME: pkg.cache } });
+  assert.equal(on.status, 0, on.stdout + on.stderr);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(project, '.phoenix-ui/config.local.json'))).hook.consent, 'accepted');
+  assert.match(fs.readFileSync(path.join(project, '.codex/hooks.json'), 'utf8'), /phoenix-ui/);
+  fs.unlinkSync(path.join(project, '.cursor/hooks.json'));
+  const before = tree(project);
+  const again = install(pkg, project, flags);
+  assert.equal(again.status, 0, again.stdout + again.stderr);
+  assert.match(again.stdout, /Phoenix UI .*: 未变/);
+  assert.deepEqual(tree(project), before);
 });
 
 test('a Rust apply failure after the XGENT part leaves Phoenix inactive, reports an unfinished install and a rerun completes', {

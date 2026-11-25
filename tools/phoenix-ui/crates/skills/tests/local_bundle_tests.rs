@@ -37,7 +37,7 @@ impl Fixture {
             let skill = flat.join(provider).join("skills/phoenix-ui");
             write(
                 skill.join("SKILL.md"),
-                "---\nname: phoenix-ui\nmetadata:\n  version: 0.1.0\n---\nPhoenix local fixture.\n",
+                "---\nname: phoenix-ui\nmetadata:\n  version: 0.1.1\n---\nPhoenix local fixture.\n",
             );
             write(skill.join("scripts/phoenix-ui"), "#!/bin/sh\nexit 0\n");
             write(

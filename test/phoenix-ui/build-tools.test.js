@@ -334,7 +334,7 @@ async function runtimeFixture(t) {
   const asset = `phoenix-ui-${target}${target.startsWith('windows') ? '.exe' : ''}`;
   const bundle = Buffer.from('{"schema":1,"providers":{}}\n');
   const engine = { asset, sha256: sha256(bytes), size: bytes.length };
-  const manifest = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.0', npmPackageVersion: '0.7.0-rc.0',
+  const manifest = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.1', npmPackageVersion: '0.7.0-rc.0',
     sourceCommit: 'a'.repeat(40), bundleSchema: 1, bundleSha256: sha256(bundle), reviewSchema: 1, engines: { [target]: engine } };
   const version = Buffer.from(JSON.stringify(manifest, null, 2) + '\n');
   fs.writeFileSync(path.join(release, asset), bytes);

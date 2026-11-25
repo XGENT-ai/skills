@@ -237,7 +237,7 @@ nativeTest('explicit complete offline installation verifies a real engine in a d
 });
 test('a manifest for another tool or version is refused', t => {
   const f = fixture(t);
-  for (const [field, value] of [['tool', 'phoenix-ui'], ['toolVersion', '0.1.0']]) {
+  for (const [field, value] of [['tool', 'phoenix-ui'], ['toolVersion', '0.1.1']]) {
     const original = f.version[field]; f.version[field] = value; f.seal();
     assert.throws(() => boot().manifestAt(f.manifestPath), /another tool or version/, field);
     f.version[field] = original;
@@ -302,7 +302,7 @@ filesystemTest('a digest-matching foreign probe is rejected and never published 
   const f = fixture(t);
   // Fake executables are confined to rejection tests. Every success uses the
   // actual compiled native engine above.
-  const bytes = Buffer.from('#!/usr/bin/env node\nconsole.log("phoenix-ui-engine 0.1.0");\n');
+  const bytes = Buffer.from('#!/usr/bin/env node\nconsole.log("phoenix-ui-engine 0.1.1");\n');
   const url = await serveTls(t, (_req, res) => res.end(bytes));
   for (const meta of Object.values(f.version.engines)) meta.url = `${url}/engine`;
   f.version.engines[f.target] = { ...f.version.engines[f.target], size: bytes.length, sha256: hash(bytes) }; f.seal();

@@ -12,6 +12,7 @@ const { pathToFileURL } = require('node:url');
 const root=path.resolve(__dirname,'../..');
 const targets=['darwin-arm64','darwin-x64','linux-x64','linux-arm64'];
 const target=`${process.platform}-${process.arch}`;
+const uiToolVersion=fs.readFileSync(path.join(root,'skills/phoenix-ui/src/scripts/VERSION'),'utf8').trim();
 const skip=!process.env.PHOENIX_UI_BIN||!process.env.PHOENIX_DIAGRAM_BIN?'Requires explicit PHOENIX_UI_BIN and PHOENIX_DIAGRAM_BIN; fresh npm test does not build or download':!targets.includes(target)?'Joint native test supports the four Unix targets':false;
 const nativeTest=(name,fn)=>test(name,{skip},fn);
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -23,7 +24,7 @@ test.after(()=>{if(engines?.warmUiCache)fs.rmSync(engines.warmUiCache,{recursive
 function realEngines(){
   if(engines)return engines;
   const ui=process.env.PHOENIX_UI_BIN,diagram=process.env.PHOENIX_DIAGRAM_BIN;
-  for(const [file,expected] of [[ui,'phoenix-ui-engine 0.1.0\n'],[diagram,'phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2\n']]){
+  for(const [file,expected] of [[ui,`phoenix-ui-engine ${uiToolVersion}\n`],[diagram,'phoenix-diagram-engine 0.2.0 receipt=1 viewer=phoenix-v2\n']]){
     const probe=spawnSync(file,['engine-probe'],{encoding:'utf8',timeout:3000,maxBuffer:4096});
     assert.equal(probe.status,0,probe.error?.message||probe.stderr);assert.equal(probe.stdout,expected);
   }
@@ -48,7 +49,7 @@ async function fixture(t,{warmUi=true}={}){
   const engine=realEngines();
   const uiDist=path.join(pkg,'dist/phoenix-ui'),uiRelease=path.join(temp,'ui-release');
   copy(path.join(root,'dist/phoenix-ui'),uiDist);
-  const uiVersion={schemaVersion:1,distribution:'development',toolVersion:fs.readFileSync(path.join(root,'skills/phoenix-ui/src/scripts/VERSION'),'utf8').trim(),
+  const uiVersion={schemaVersion:1,distribution:'development',toolVersion:uiToolVersion,
     npmPackageVersion:JSON.parse(fs.readFileSync(path.join(root,'package.json'))).version,sourceCommit:'a'.repeat(40),
     bundleSchema:1,bundleSha256:sha(fs.readFileSync(path.join(uiDist,'bundle/manifest.json'))),reviewSchema:1,
     engines:Object.fromEntries(targets.map(key=>[key,{asset:`phoenix-ui-${key}`,size:engine.uiBytes.length,sha256:sha(engine.uiBytes)}]))};
@@ -90,7 +91,7 @@ async function fixture(t,{warmUi=true}={}){
       // Explicit fixture preparation loads the copied Mach-O before the joint
       // transaction lane. The production probe below still has its 3s/4KiB cap.
       const loaded=spawnSync(destination,['--version'],{env:{...env,PHOENIX_UI_HOME:owned},encoding:'utf8',timeout:30000,maxBuffer:4096});
-      assert.equal(loaded.status,0,loaded.error?.message||loaded.stderr);assert.equal(loaded.stdout,'0.1.0\n');
+      assert.equal(loaded.status,0,loaded.error?.message||loaded.stderr);assert.equal(loaded.stdout,`${uiToolVersion}\n`);
     }
     uiCache=engine.warmUiCache;env.PHOENIX_UI_HOME=uiCache;
     ui.verifyEngine(ui.enginePath(manifest,target,env),manifest,target,env);

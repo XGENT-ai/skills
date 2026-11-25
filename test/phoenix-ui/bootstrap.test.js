@@ -27,7 +27,7 @@ if (copiedNode || require.main === module) {
   // Node resolves its script argument before executing NODE_OPTIONS preloads.
   if (copiedNode && argv[0]) argv[0] = path.basename(argv[0]);
   if (argv[0] === 'engine-probe') {
-    console.log('phoenix-ui-engine 0.1.0'); process.exit(0);
+    console.log('phoenix-ui-engine 0.1.1'); process.exit(0);
   }
   if (process.env.PHOENIX_UI_FIXTURE_TRACE) fs.appendFileSync(process.env.PHOENIX_UI_FIXTURE_TRACE, 'executed\\n');
   console.log(JSON.stringify({argv, provider:process.env.PHOENIX_UI_PROVIDER_ID}));
@@ -42,7 +42,7 @@ if (copiedNode || require.main === module) {
   const target = platformTarget();
   const asset = `phoenix-ui-${target}${target.startsWith('windows-') ? '.exe' : ''}`;
   const manifest = {
-    schemaVersion: 1, distribution: 'development', toolVersion: '0.1.0', npmPackageVersion: '0.7.0-rc.0',
+    schemaVersion: 1, distribution: 'development', toolVersion: '0.1.1', npmPackageVersion: '0.7.0-rc.0',
     sourceCommit: 'a'.repeat(40), bundleSchema: 1, bundleSha256: 'b'.repeat(64), reviewSchema: 1,
     engines: { [target]: { asset, sha256: sha256(bytes), size: bytes.length } }, ...changes,
   };
@@ -98,7 +98,7 @@ test('offline explicit install verifies and runs the pinned executable with spac
 
 test('different engine builds coexist without replacing a pinned project or the legacy cache', async t => {
   const f = fixture(t);
-  const legacy = path.join(f.cache, 'bin/0.1.0', f.target, f.target.startsWith('windows') ? 'phoenix-ui.exe' : 'phoenix-ui');
+  const legacy = path.join(f.cache, 'bin/0.1.1', f.target, f.target.startsWith('windows') ? 'phoenix-ui.exe' : 'phoenix-ui');
   fs.mkdirSync(path.dirname(legacy), { recursive: true });
   fs.writeFileSync(legacy, 'existing pinned engine\n');
   const first = await installEngine(manifestAt(path.join(f.release, 'VERSION.json')), f.target, f.project, f.release, f.env);
@@ -238,7 +238,7 @@ test('a hook with a missing project directory still fails open and deduplicates 
   assert.equal(second.stdout, '');
   const records = fs.readdirSync(path.join(f.cache, 'unavailable')).map(name =>
     JSON.parse(fs.readFileSync(path.join(f.cache, 'unavailable', name))));
-  assert.equal(records[0].version, '0.1.0');
+  assert.equal(records[0].version, '0.1.1');
 });
 
 test('malformed event types remain nonblocking when the cached engine is absent', async t => {

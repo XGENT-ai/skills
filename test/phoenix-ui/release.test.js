@@ -59,7 +59,7 @@ else process.exit(2);
 test('a release manifest keeps the built engine fields and takes package identity and bundle digest from this checkout', async () => {
   const { releaseManifest } = await import(release);
   const engines = { 'linux-x64': { asset: 'phoenix-ui-linux-x64', size: 1, sha256: 'a'.repeat(64), url: 'https://download.example/x' } };
-  const development = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.0', npmPackageVersion: '0.0.1', sourceCommit: 'old', sourceInputSha256: 'b'.repeat(64), bundleSha256: 'old', engines: {} };
+  const development = { schemaVersion: 1, distribution: 'development', toolVersion: '0.1.1', npmPackageVersion: '0.0.1', sourceCommit: 'old', sourceInputSha256: 'b'.repeat(64), bundleSha256: 'old', engines: {} };
   const identity = { version: '1.2.3', head: 'c'.repeat(40), tree: 'd'.repeat(40) };
   const ui = releaseManifest('phoenix-ui', development, engines, identity);
   assert.deepEqual(ui, { ...development, distribution: 'release', npmPackageVersion: '1.2.3', sourceCommit: identity.head, sourceTree: identity.tree,
