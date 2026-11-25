@@ -4,6 +4,7 @@
 
 | 任务 ID | 名称 | 入口 |
 | --- | --- | --- |
+| 4dbef26f-467e-4869-90e3-28dbd68c8efc | 决策模型 skill 的供应商边界 | [记录](4dbef26f-467e-4869-90e3-28dbd68c8efc.md) |
 | 01a17618-767f-7291-94b9-51b1abaa2c8d | PRD 最终答复漏掉下一步 | [记录](01a17618-767f-7291-94b9-51b1abaa2c8d.md) |
 | 5dd62493-7017-4e84-82e7-fbd5cab75cd9 | context-goal-guard 默认不安装 | [记录](5dd62493-7017-4e84-82e7-fbd5cab75cd9.md) |
 | dbef8d1b-fa3c-4014-85cc-2e39025bcf3f | 验证 skill 生成器增强 | [记录](dbef8d1b-fa3c-4014-85cc-2e39025bcf3f.md) |

@@ -182,6 +182,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | [react](skills/react/SKILL.md) | 编写和评审 React 组件，处理 Hooks、Effects、渲染性能、数据请求与 React 19 迁移 |
 | [rust](skills/rust/SKILL.md) | 编写、评审、重构、测试和调试 Rust 代码，按所有权、API、错误、性能、Tokio、unsafe/FFI、Cargo、宏、行为模式及 Bevy 等场景提供指引 |
 | [sql-optimization](skills/sql-optimization/SKILL.md) | 分析 SQL 执行计划，优化查询、索引、分页与批量操作 |
+| [use-decision-model](skills/use-decision-model/SKILL.md) | 接入 [System One（TypeSafe 原厂与第三方兼容实现）](skills/use-decision-model/references/system-one.md)、OpenAI Decisions 或 Gemini Decisions；查阅离线 [Patterns](skills/use-decision-model/references/patterns.md) 与 [Cookbooks](skills/use-decision-model/references/cookbooks.md)，换模时重新校准阈值 |
 | [security-audit](skills/security-audit/SKILL.md) | 沿数据流与组件交互审查注入、认证授权、密钥泄露、依赖及业务逻辑漏洞 |
 | [gdpr-compliant](skills/gdpr-compliant/SKILL.md) | 将 GDPR 隐私工程要求应用到个人数据处理、权限、日志、保留与删除流程 |
 | [working-with-mbx](skills/working-with-mbx/SKILL.md) | 安装和排查 Cargo 共享编译缓存 mbx，核对命中、绕过与磁盘使用情况 |
