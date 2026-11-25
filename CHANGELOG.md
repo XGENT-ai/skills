@@ -2,6 +2,11 @@
 
 记录版本变更与历史开发事项；安装和使用方法见 [README.md](README.md)。以下为从 README 迁出的历史记录，不是完整发布历史。
 
+## 0.7.14
+
+- Phoenix UI 引擎升级至 0.1.1。安装时不再自动注册 Phoenix UI hooks；重装会清理所选项目工具中旧版自动注册的 hooks，保留用 `phoenix-ui hooks on` 显式启用的配置。传入 `--no-phoenix-ui` 时不清理旧 hooks。
+- 新增 `agent-browser` 和 `use-decision-model` 两个 skill，分别提供浏览器 CLI 操作指引和代码中类型化语义判断的模型选型与接入指引。
+
 ## 0.7.13
 
 - Phoenix Diagram 图类型增至十三类：新增 chart（柱状、折线、饼图与限额对比四种形态，每图附可展开数据表）与 annotation（逐词点评）类型；变更标记扩展到 workflow、lifecycle、tree、erd；新增静态图命令与字体策略，及多项渲染修复（饼图图例、负值条、limits 行、批注卡、树连线等）。
