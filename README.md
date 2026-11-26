@@ -196,6 +196,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | [optimize-agents-md](skills/optimize-agents-md/SKILL.md) | 精简所在代码仓库 AGENTS.md；用 use-prompt-dsl 形式化原则并补齐缺项，保留项目事实与作用域，缺 DSL skill 时停止并建议完整安装 |
 | [arena](skills/arena/SKILL.md) | agi-mode 的多候选比较兼容入口，选择基础版本并重新验证合成结果 |
 | [swarm](skills/swarm/SKILL.md) | 为任务选择多 agent 协作机制，设计角色、分工、执行与收尾流程 |
+| [use-spi](skills/use-spi/SKILL.md) | 让 IDE、管理工具或 CI 安装并调用 Super Pi（`spi`）；覆盖 ACP、原生 RPC、多轮会话、流式输出、工具审批与单次调用 |
 | [figure-it-out](skills/figure-it-out/SKILL.md) | 任务没有匹配的既有 playbook 时设计可审计的工作流：阶段、实验与决策记录 |
 | [automate-me](skills/automate-me/SKILL.md) | 把个人偏好和工作习惯固化成专属 `-mode` skill，按引导生成并试跑 |
 | [autoresearch](skills/autoresearch/SKILL.md) | agi-mode 的 Hillclimb 兼容入口，在固定协议下搜索并确认改进 |
@@ -218,6 +219,7 @@ $agi-mode <任务描述> 或 sdlc [流程/阶段/问题] 或 init-sdlc [PRD/计�
 | Skill | 说明 |
 | --- | --- |
 | [documentation-writer](skills/documentation-writer/SKILL.md) | 基于代码事实编写和更新 README、API、架构、代码库说明与用户手册 |
+| [patent-disclosure-cn](skills/patent-disclosure-cn/SKILL.md) | 根据研发材料编写或修订中国专利交底书（发明、实用新型、外观设计），以公开查新供撰写参考；不做独立检索、正式申请文件或专利布局 |
 | [phoenix-diagram](skills/phoenix-diagram/SKILL.md)（仅 npm 安装） | 十三类 Rust 图解（含状态机模型检查、数值图表与逐词标注），四类结构图可标记变更、Mermaid 语义转换、仓库来源、五语言离线阅读与可内联静态图；明确请求时提供品牌资源、本地预览、架构比较；实际图像审核与[安装说明](docs/phoenix-diagram.md) |
 | [elintp](skills/elintp/SKILL.md) | 将技术主题或文档改写成面向非研发读者、带图示的通俗 HTML 说明 |
 | [summarize](skills/summarize/SKILL.md) | 将需求、计划、Issue、文档或主题整理为 HTML 报告，并提交到指定 SPMS 项目的报告区 |

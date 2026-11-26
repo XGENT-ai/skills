@@ -497,6 +497,11 @@ manifest 里带**值**的 `deployDescriptor.env` 提交即拒（防生产密钥�
   只声明该 `requiredServices` 也会整组供给；显式列出五键便于启动校验与交付检查，只交键名、不交值。
   仅用 `requiredEnv` 的兼容路径以 `<PREFIX>_S3_ACCESS_KEY_ID` 为触发键，仍供给整组；
   只写 endpoint / region / bucket 不会触发自动供给。
+- **腾讯云 COS 必须用桶域名（virtual-hosted-style）寻址**，S3 SDK 设置 `forcePathStyle: false`。
+  现有五键不包含寻址模式；即使已取值，若后端仍默认用路径式请求，COS 会返回 `403 PathStyleDomainForbidden`，部署可能只显示 `/health` 超时。
+  遇到此错误，保留现有桶和凭据，只按该 App 的配置约定，在其部署环境关闭路径式寻址，
+  重部署后确认 `/health` 返回 200、部署状态为就绪。不需要重新取值，也不要全局关闭路径式寻址：RustFS 等池按实际配置。
+  若扩展平台供给契约，建议按所选池派生 `<PREFIX>_S3_FORCE_PATH_STYLE`（COS 为 `0`），由 App 映射到自己的 SDK 配置；该键目前不会自动注入。
 - **管理员不必逐键取值**：已匹配应用池时，审批页显示「批准时自动供给」，直接批准即可。
   需要手动选池或提前供给时，在五键任意一行选择 `objectStorage` 应用池并点击「取值」，
   一次写入全部五键，刷新后整组显示「已取值」。只切换下拉选项、不点「取值」不会保存选择；
