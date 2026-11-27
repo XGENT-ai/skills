@@ -39,7 +39,7 @@
 | 审 | `review-prd`、`review-dev-plan`、`review-code`、`review-ui` | 不改原文，不实施，不写 SPMS |
 | 改文档 | `apply-doc-review` | 不重跑评审，不修代码，不写 SPMS（[skills/apply-doc-review/SKILL.md](../skills/apply-doc-review/SKILL.md)） |
 | 改代码 | `apply-code-review` | 报告是待核实主张，不是补丁指令 |
-| 人确认取舍 | `spec-human-decision` | 不代替质量评审，不更新 SPMS，不实施 |
+| 人确认取舍 | `spec-human-decision` | 不代替质量评审，不实施；SPMS 写入仅限经用户同意提交决策终稿为项目报告 |
 | UI 修复与补证 | `apply-ui-review` | 不自行评分或宣称验收通过 |
 | 解计划阻塞 | `resolve-blocked` | 不实施，不重跑评审，不自动发送跨项目请求（[skills/resolve-blocked/SKILL.md](../skills/resolve-blocked/SKILL.md)） |
 
@@ -195,7 +195,7 @@ $spec-human-decision docs/PRD-<代号>.md
 
 需要把已有 PRD 的功能点逐项交给人确认、驳回或修改时使用。它生成交互式 HTML 表单，按实际提交修订指定文档，并在文档旁保存 `<文档名>.decisions.md`。选「修改」的条目及受影响条目需用修订稿再次确认；未答保持待决。已有明确且仍有效的答复不重复求批。
 
-`spec-human-decision` 的输入是已有 PRD、CRD 或开发计划及本次确认范围。agent 抽取能够独立决定的能力和重要取舍，呈现价值、备选、代价与依赖；人选择后，agent 处理连带影响、修订正文、保存决定并复核一致性。开发计划先确认架构决策，再确认功能、里程碑与验证安排。
+`spec-human-decision` 的输入是已有 PRD、CRD 或开发计划及本次确认范围。agent 抽取能够独立决定的能力和重要取舍，呈现价值、备选、代价与依赖；人选择后，agent 处理连带影响、修订正文、保存决定并复核一致性。开发计划先确认架构决策，再确认功能、里程碑与验证安排。全部取舍定案并复核后，把各轮最终决定合成一份只读 HTML 保存。SPMS 可用时询问是否提报；缺少明确项目则同次询问目标，只有用户同意才提交。
 
 表单在本机 `127.0.0.1` 运行，需要 Node 18 及以上和浏览器；只把实际提交结果视为答复。未提交、关闭页面或超时不算确认。退出条件是范围内条目都有最终决定或明确待决原因，文档和决定记录对应；没有可确认条目就结束，不造空表单。这个 skill 准备并落实 spec 确认，不替代质量评审。
 
@@ -513,7 +513,7 @@ agent 做的事：
 | `prd` | `docs/PRD-<代号>.md`；确认后的 `FR-N` / `NFR-N`（`draft`） | key、验收标准、终验期、排除项 |
 | `review-prd` | `<PRD名>.review.md` | findings、待核实、建议结论 |
 | `apply-doc-review` | 修订后的 PRD 或计划，加报告里的处置节 | 修订后的产品或技术结论，不是处置经过 |
-| `spec-human-decision` | 修订后的 PRD/计划、`<文档名>.decisions.md` | 最终取舍、仍待决项及关联同步需求 |
+| `spec-human-decision` | 修订文档、`<文档名>.decisions.md`；完成后保存 `<文档名>.decisions.html`，经用户同意可提交 SPMS 报告 | 最终取舍、仍待决项及关联同步需求 |
 | `summarize` | 项目报告 `RPT-N`，本地 HTML 在 `docs/` | 不作为下游合同 |
 | `elintp` | 离线 HTML 解读 | 原文出处与版本、解释、限制；不作为开发合同 |
 | `dev-plan` | `goal/<代号>.md` 或 `docs/plan/<代号>.md` | 实施须知、实施者定位、实施进度、Milestone |

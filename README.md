@@ -78,7 +78,7 @@ Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoe
 | [crd](skills/crd/SKILL.md) | 固定由提出方使用：起草或修订需求、整合接收方回复；基于目标和长期成本明确本方立场，收敛契约及 Q&A，不将未发送等同草案 |
 | [crd-respond](skills/crd-respond/SKILL.md) | 固定由接收方独立评估长期方案、明确本方结论并收敛 CRD 答复，或回告实现结果；需改码时生成带来源 CR 与完成回写约定的计划，不实施。仅原样追加/收录不重评或生成计划 |
 | [dev-plan](skills/dev-plan/SKILL.md) | 基于需求、仓库规则与代码事实撰写或评审可执行计划，明确开发对象、排除与外部前置；CR 来源可追溯，对应请求完成后回写答复，支持跨对话续做 |
-| [spec-human-decision](skills/spec-human-decision/SKILL.md) | 把 PRD/CRD 的功能点或开发计划的技术架构决策与功能点生成本地交互式 HTML 确认表，两类文档各用一套模板；一次提交确认、驳回、修改（须附说明），修订稿下一轮再确认，按结果修订文档 |
+| [spec-human-decision](skills/spec-human-decision/SKILL.md) | 用本地 HTML 表单确认 PRD/CRD 功能或开发计划的架构与功能取舍；修订稿下一轮再确认，按结果修订文档，完成后保存一份 HTML 决策终稿，可经用户确认提交为 SPMS 报告 |
 | [test-plan](skills/test-plan/SKILL.md) | 从需求与验收标准生成测试用例，覆盖正常、边界、权限和并发场景，可按授权写入 SPMS |
 | [story-points](skills/story-points/SKILL.md) | 按客观因子估算故事点，回写 SPMS 规划点数并复核 Sprint 容量 |
 | [review-prd](skills/review-prd/SKILL.md) | 核实代码现状，评审产品价值、体验、AI、SMAR、UAT 与分期终验，默认将完整报告落盘并回读核验 |
@@ -95,7 +95,7 @@ Phoenix UI 适用于独立网站、应用和嵌入式界面等 UI 项目。`phoe
 
 **手动闭环**：各 SDLC skill 结束时先给明确判定，再给可直接复制的下一条命令（Codex 写作 `$<skill>`，Claude Code 写作 `/<skill>`），由你决定是否执行。`P1`、`P2` 表示期次（Phase）。
 
-需要逐项确定功能或技术决策取舍时，可在 PRD、CRD 或开发计划成稿后使用 `spec-human-decision <文档>`：生成本地 HTML 确认表，每项简述功能与价值，开发计划另列架构决策及备选、功能做法；一次提交确认、驳回或附说明修改，修订稿与受影响条目下一轮再确认，并同步文档与决定记录。这是可选的用户决策环节，技术评审与开工条件仍按下述回路核对。
+需要逐项确定功能或技术决策取舍时，可在 PRD、CRD 或开发计划成稿后使用 `spec-human-decision <文档>`：生成本地 HTML 确认表，每项简述功能与价值，开发计划另列架构决策及备选、功能做法；一次提交确认、驳回或附说明修改，修订稿与受影响条目下一轮再确认，并同步文档与决定记录。完成后合并保存一份只读 HTML 终稿；SPMS 可用时询问是否提报，项目未明确则一并询问目标。这是可选的用户决策环节，技术评审与开工条件仍按下述回路核对。
 
 1. （可选）`prd` → `review-prd <PRD>`：需要修改时 `apply-doc-review <报告>`；可交接后 `dev-plan <PRD> P1`。临时或小任务可直接从 `dev-plan` 开始。
 2. `dev-plan` → `review-dev-plan <计划>`：需要修改时 `apply-doc-review <报告>`；之后 `Blocked` 用 `resolve-blocked <计划>`，自行查证，需用户处理的决定、前置和跨项目协调必须用 Ask User 类工具提出并等待明确答复，不能仅输出聊天消息；收到答复后继续处理，外部缺口实际用 `crd` 创建/续写本地请求，不自动发送；最终开头列全剩余阻塞、各方需提供什么、用户具体动作和解除条件，不只给重跑命令。先推进具体 CR 或本方验证，解除条件满足后再运行以重判就绪，`Ready` 用 `/goal 按 <计划> 开发`。从 PRD 派生的计划在顶部「需求来源」记录 PRD 与期次，开发范围区分本方改动与外部前置，不因端到端目标代建依赖系统。

@@ -1,4 +1,4 @@
 interface:
   display_name: "功能与决策确认"
-  short_description: "把 PRD/CRD 功能点或开发计划的架构决策与功能点做成交互式 HTML 确认表，按提交结果修订文档"
-  default_prompt: "使用 $spec-human-decision，把指定 PRD、CRD 或开发计划中的功能点（计划另含技术架构决策）生成本地交互式 HTML 确认表；每项可确认、驳回或附说明修改，提交后按结果修订文档，修订稿下一轮再确认。"
+  short_description: "逐项确认 PRD/CRD 功能或开发计划取舍，修订文档并保存 HTML 决策终稿"
+  default_prompt: "使用 $spec-human-decision，将指定 PRD、CRD 或开发计划的功能点（计划另含架构决策）做成本地 HTML 确认表。每项可确认、驳回或附说明修改；按结果修订文档，修订稿下一轮再确认。全部定案后合并保存一份只读 HTML 终稿。有可用的 SPMS 接入时，询问是否提交为项目报告；项目未明确时一并询问目标。"
