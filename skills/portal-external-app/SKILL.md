@@ -45,7 +45,7 @@ description: '用于开发、接入或排查 XGENT Portal App：后端鉴权、i
 | 经文件服务上传、列出、下载、版本与存储文件（选接入路径、清单前置、presign/finalize、`sdk.files.*`、空间角色、应用存储、`/latest`、错误码与限流） | [references/files-api.md](references/files-api.md) |
 | 上报用量指标（counter 与 gauge、`usageMetrics` 声明与 dims 白名单、整批拒绝的上报合同、两种 reporter 模式、排错） | [references/usage-reporting.md](references/usage-reporting.md) |
 | 服务账号签票、租户策略、管理控制面与撤销 | [服务令牌](references/service-tokens.md) |
-| 实现/评审资源服务器（四道闸、health、env、认证面划界、配置面） | [references/integration-contract.md](references/integration-contract.md) |
+| 实现/评审资源服务器（四道闸、SDK 鉴权缓存、health、env、认证面划界、配置面） | [集成契约](references/integration-contract.md)；鉴权缓存选型与用法见 [§3.3](references/integration-contract.md#33-app-后端鉴权缓存) |
 | 实现 `/health`、出仓迁移、发布镜像或健康检查失败（必读） | [references/health-contract.md](references/health-contract.md)：两种正确实现、实际判据、发布前检查命令 |
 | 写 manifest、注册布线、一盒联调、排查 | [references/registration-and-onebox.md](references/registration-and-onebox.md) |
 | 匿名页、后端直出 HTML、公开站点/独立域名、旧链接或 listingKey 迁移 | [references/public-entrypoints.md](references/public-entrypoints.md)：现有 /apps、/svc、Sites 三种通路及各自责任 |
@@ -61,7 +61,7 @@ description: '用于开发、接入或排查 XGENT Portal App：后端鉴权、i
 
 ## 共用约束与验收
 
-- 资源后端按 [集成契约](references/integration-contract.md) 自省及四道闸授权；Bun/TypeScript 使用 `@xgent/portal-server-sdk`。前端 ACL 只控制展示，平台管理员身份只认服务端自省。
+- Bun/TypeScript 资源后端用 `@xgent/portal-server-sdk` 统一自省与鉴权缓存。App 只接存储适配器，不另缓存鉴权结果；按 [缓存规则](references/integration-contract.md#33-app-后端鉴权缓存) 选择默认短缓存、可信 Redis 版本校验或严格自省。每个请求仍执行四道闸；前端 ACL 只控制展示。
 - **micro App 自带完整导航**：`navItems` 只是交给租户管理员挑选、提升到门户左侧导航的快捷方式候选，安装后默认全部关闭，很多租户不会开启。用户常从应用中心或启动器进入 App 首页，此时 `init.route` 为空。因此每个用户页面都要能从 App 自己的侧栏、顶栏或页内链接到达，不能用 navItems 代替菜单，否则页面会没有入口。详见 [微应用开发](references/micro-app.md#设计红线平台一致性)。
 - `@xgent/*` 从平台私有 npm 安装，不 vendor、不以 file/link/tar 顶替；安装步骤读 `xgent-app-release` 的 `references/private-npm.md`。缺凭证时获取开发者配置，不能改写 SDK 来绕过安装。
 - `/health` 按 [健康契约](references/health-contract.md) 验证平铺/信封与依赖故障。业务接口使用门户响应信封，数据不存在不返回路由 404。

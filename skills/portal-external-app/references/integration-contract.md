@@ -31,7 +31,7 @@
 
 ## 3. 运行时鉴权（四道闸）
 
-每个受保护请求：取 `Authorization: Bearer <TDT 或端点已接纳的长期凭证>` → 调门户自省并校验声明 → 四道闸。Bun/TypeScript 使用服务端 SDK `@xgent/portal-server-sdk`（`createPortalAuthenticator`，从平台私有包仓安装，不 vendor）；其他语言实现下述相同契约。
+每个受保护请求：取 `Authorization: Bearer <TDT 或端点已接纳的长期凭证>` → 由 SDK 从缓存取有效声明，未命中或须实时复核时才调门户自省 → 执行四道闸。Bun/TypeScript 使用 `@xgent/portal-server-sdk` 的 `createPortalAuthenticator`（从平台私有包仓安装，不 vendor），缓存接线见 [§3.3](#33-app-后端鉴权缓存)；其他语言实现同一鉴权契约。
 
 ```
 POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/introspect
@@ -57,8 +57,8 @@ POST {PORTAL_INTROSPECT_URL}            # 如 http://portal-api:3000/api/tokens/
 
 - **信封与故障**：门户响应先检查 `ok === true` 且 `data` 为对象，再校验声明；`ok:false`、缺/null data、坏 JSON、非法声明、自省 HTTP 401/403/5xx 或超时均返回资源端 503。不能从失败信封回退到顶层；合法 `active:false` 或真实到期才是 401。若实现兼容裸声明，只能在根本不存在 ok 字段时走独立完整校验分支。
 - **主体与凭证类型**：service 允许 tdt/service_access_key，user 允许 tdt/user_access_key；未知类型、互串类型返回 503。缺省 kind 仅兼容完整合法用户声明，不能推断服务身份。principal_id 是主体 UUID，user 时须与 user_id 一致；service 无 user_id/role/groups/permissions，bypass/isPlatformAdmin 为 false。用户长期 key 只在明确迁移的机器入口启用，并逐请求核验 credentialId 对应的本地业务绑定；普通 REST 默认只接纳 tdt/service_access_key。
-- **到期与缓存**：TDT 的 exp 必须存在且非 null；无过期长期 key 可省略（兼容旧 null）。exp 是非负安全整数 Unix 秒；0 为已到期，负数/非数值为 503。正缓存默认 30 秒、最高 55 秒，从自省请求开始计时，加门户配置最多 5 秒总撤权预算 60 秒；受真实 exp 截断，命中仍检查 exp，不滑动续期或伪造到期。键隔离完整自省地址、调用者配置及 bearer 哈希；同上下文并发合并，不缓存 inactive/故障，缓存依赖故障时直查门户，门户也故障则 503。
-- **全局身份字段**：`active:true` 始终带布尔 `isPlatformAdmin`，服务态恒为 `false`。虽然 Portal 在自省时实时计算，下游缓存会让身份变更最多延后 60s 生效；更敏感的操作应缩短缓存或直查。
+- **到期**：TDT 的 exp 必须存在且非 null；无过期长期 key 可省略（兼容旧 null）。exp 是非负安全整数 Unix 秒；0 为已到期，负数/非数值为 503。命中缓存仍判真实到期，不滑动续期或伪造到期，见 [§3.3](#33-app-后端鉴权缓存)。
+- **全局身份字段**：`active:true` 始终带布尔 `isPlatformAdmin`，服务态恒为 `false`。Portal 在自省时实时计算；短缓存会延迟身份更新。平台级跨租户及其他要求实时复核的操作用严格自省。
 - **门户三变量 all-or-nothing**：自省地址 + SA clientId + SA secret **全缺** → 门户鉴权停用、受门路由 503；**缺一不全** → 启动 fail-fast 打印缺失变量。避免半配置静默放行。
 - **租户隔离**按 `claims.tenant_id`（永不信任请求体）；限流自建 `(aud, tenant)` 每分钟窗口（参考默认 600/min）。
 - **一致性夹具**：非 TS 实现用 `@xgent/shared` 发布物里的 `fixtures/auth-contract.json` 做解析测试：`bases` 是三类主体的合法声明，`cases` 逐项改字段并给出期望 `active` / `inactive` / `protocol_error`（后者即资源端 503），`cacheCases` 覆盖缓存键隔离。
@@ -137,10 +137,40 @@ user_id/role/groups/permissions，bypass/isPlatformAdmin 恒 false；不要套�
 也不要把整个后端都改成接收终端用户。
 
 HTTP 自省须保留 `end_user_id/session_id/owner_app_key/site_key/euv`；
-SDK 的 EndUserAuthContext 使用相应驼峰字段。终端用户正缓存上限 **50 秒**（不是上面的 55 秒），
-仍受 exp 截断，端到端撤销预算 60 秒；敏感操作可用 strictIntrospection。
+SDK 的 EndUserAuthContext 使用相应驼峰字段。终端用户正缓存上限 **50 秒**，
+仍受 exp 截断，端到端撤销预算 60 秒；要求实时复核的操作用 `strictIntrospection`，见 §3.3。
 终端用户登录使用 `/api/public/end-user-auth/*`，不是成员 `/oauth/*`；
 业务资料留在 App，平台身份管理走专门的服务态权限。
+
+### 3.3 App 后端鉴权缓存
+
+在**模块级**按入口策略创建并复用 authenticator，别在处理每个请求时新建。SDK 负责自省协议、缓存键、TTL、并发合并、失效和故障处理；App 只提供存储，并在每次业务请求执行适用的身份、scope、ACL 数据范围及本地业务绑定检查。不要为入站鉴权另缓存原始 bearer、claims 或放行结果。
+
+| 使用场景 | SDK 配置 | 请求表现 |
+| --- | --- | --- |
+| 普通业务 API（独立 App 的默认做法） | 传 App 自己的 `cache` 适配器 | 正缓存默认 30 秒；命中不调门户，相同凭证的并发冷请求合并。不传适配器则没有正缓存，但仍合并并发自省。 |
+| **仅限与门户共用同一可信 Redis 数据库**的服务 | 在适配器上加 `getVersions`；需 SDK 0.6.13+ 和支持版本校验的门户 | 只针对成员 TDT，缓存命中批量核对撤销计数和租户 ACL 版本。凭证吊销后不再沿用旧结果；ACL 变更用原票读新权限。其他凭证类型不启用版本校验。独立 App 不连接门户 Redis。 |
+| 平台级跨租户操作、受控机器凭证、敏感写入等必须实时复核的入口 | 独立实例设 `strictIntrospection: true` | 每次独立向门户确认，不读写缓存、不共享在途自省。仅设置 `positiveCacheMs: 0` 仍可能合并在途请求，不能当作严格模式。 |
+
+Bun/TypeScript 接线示例：`portalConnection` 是启动时已校验的服务端配置（`introspectUrl`、`clientId`、`clientSecret`），`redis` 是 App 已有的 Redis 客户端。
+
+```ts
+import { createPortalAuthenticator, type AuthCache } from "@xgent/portal-server-sdk";
+
+const cache: AuthCache = {
+  get: key => redis.get(key),
+  set: (key, value, ttlMs) => redis.set(key, value, "PX", ttlMs),
+};
+const ordinaryAuth = createPortalAuthenticator({ ...portalConnection, cache });
+const strictAuth = createPortalAuthenticator({ ...portalConnection, strictIntrospection: true });
+// 在各自路由里用 ordinaryAuth.authenticate(bearer) 或 strictAuth.authenticate(bearer)，再做四道闸。
+```
+
+若平台确认 App 和门户使用**同一可信 Redis 实例及逻辑库**，在上例 `cache` 对象中增加 `getVersions: keys => redis.mget(...keys)`。独立 App 使用自有 Redis 时保持上例不变；不能指望只升级 SDK 就获得跨服务即时失效。
+
+SDK 从自省开始计时，正缓存受真实 `exp` 截断，上限 55 秒（终端用户 50 秒），端到端撤权预算 60 秒。缓存键隔离完整自省地址、调用者配置和 bearer 哈希，不在值中保存原始凭证；只缓存验证通过的有效声明。版本变化、版本证明缺失或缓存依赖故障时回门户自省，不继续用旧授权；门户也不可用时返回 503，不降级放行。已开始的请求不追溯中止。
+
+**验收**：同票并发冷请求只发一次自省，预热后的普通重复请求不再自省；严格路由逐请求自省。共用 Redis 的服务用两个独立 SDK 实例预热后，验证吊销旧票被拒、改 ACL 后同票读新权限、另一租户不受影响。模拟缓存或版本读取失败，确认回门户且不沿用旧授权。独立 App 的短缓存模式按真实到期和撤权预算验证，不承诺即时失效。
 
 ## 4. 健康检查
 

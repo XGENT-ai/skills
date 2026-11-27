@@ -21,7 +21,7 @@
 （micro 附 navItems JSON。）
 
 ## 2. 运行时契约（已实现）
-- 自省端点、Basic 凭证；校验 ok:true 和 data 对象后解析，失败信封不回退；正缓存默认 30 秒/最高 55 秒、调用者隔离、singleflight 与故障 503；
+- 自省端点、Basic 凭证；校验 ok:true 和 data 对象后解析，失败信封不回退；写明服务端 SDK、缓存适配器及各路由采用短缓存、可信共享 Redis 版本校验或严格自省的条件（见集成契约 §3.3）；
 - kind 与 credential_type 的矩阵、未知类型拒绝；TDT 必填真实 exp，无过期长期 key 可缺省，缓存命中仍判到期；
 - 自省的 `isPlatformAdmin` 是 Portal 按用户实时计算的全局身份，不在 JWT 里；服务态恒为 false；
 - 四道闸各自的失败码（401 INVALID_TOKEN / 403 INSUFFICIENT_SCOPE / FORBIDDEN / INSUFFICIENT_PERMISSION）；
@@ -76,7 +76,7 @@
 - 机制全貌（三态处理、兜底值、存量租户、已用上报）见 [quota-and-seats.md](quota-and-seats.md)。
 
 ## 8. 自测（无 UI 时的 curl 验收）
-（缺/错 token → 401/403；正确 aud+scope → 200 信封。）
+（缺/错 token → 401/403；正确 aud+scope → 200 信封。鉴权缓存按集成契约 §3.3 记录命中、撤权及依赖故障的实际结果。）
 （/health 单独验收：附 scripts/verify-health.ts 对待发布镜像直连及 /svc/<key>/health 的 ready 结果；新增/修改时在隔离环境验证依赖故障的 not-ready，恢复后再验 ready。不得只贴 HTTP 200。）
 
 ## 9. 信任边界（如有）
